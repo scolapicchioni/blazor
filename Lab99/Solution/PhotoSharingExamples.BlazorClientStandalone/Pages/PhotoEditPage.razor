@@ -1,0 +1,87 @@
+﻿@page "/photos/edit/{id:int}"
+
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using PhotoSharingExamples.Shared.Authorization
+
+@inject PhotoSharingExamples.Frontend.Core.Interfaces.IPhotosService PhotosService
+
+@inject IAccessTokenProvider AuthenticationService
+@inject IAuthorizationService AuthorizationService
+
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            @if (photo == null)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else if (mayEdit)
+            {
+                <PhotoEdit photo="photo" OnSave="OnSave" OnCancel="OnCancel"></PhotoEdit>
+                <p class="text-danger">@message</p>
+            }
+            else
+            {
+                <h1 class="alert alert-danger">FORBIDDEN</h1>
+                <p class="text-danger">You are not allowed to edit this photo</p>
+            }
+        </div>
+    </div>
+</div>
+@message
+
+@code {
+    [CascadingParameter]
+    Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    PhotoSharingExamples.Shared.Entities.Photo photo = new PhotoSharingExamples.Shared.Entities.Photo();
+    string message;
+    private System.Security.Claims.ClaimsPrincipal user;
+    private bool mayEdit = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        photo = await PhotosService.FindAsync(Id);
+        user = (await authenticationStateTask).User;
+        mayEdit = await MayEdit(photo);
+    }
+
+    async Task<bool> MayEdit(PhotoSharingExamples.Shared.Entities.Photo p)
+    {
+        AuthorizationResult ar = await AuthorizationService.AuthorizeAsync(user, p, Policies.EditDeletePhoto);
+        return user.Identity.IsAuthenticated && ar.Succeeded;
+    }
+
+    private async Task OnSave(PhotoSharingExamples.Shared.Entities.Photo photo)
+    {
+        var tokenResult = await AuthenticationService.RequestAccessToken(new AccessTokenRequestOptions() { Scopes = new string[] { "photos" } });
+
+        if (tokenResult.TryGetToken(out var token))
+        {
+            try
+            {
+                photo = await PhotosService.UpdateAsync(photo.Id, photo.Title, photo.PhotoFile, photo.ImageMimeType, photo.Description, token.Value);
+                NavigationManager.NavigateTo("photos/all");
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+
+        }
+        else
+        {
+            NavigationManager.NavigateTo(tokenResult.RedirectUrl);
+        }
+    }
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("photos/all");
+    }
+}

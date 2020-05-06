@@ -1,0 +1,39 @@
+﻿<Card>
+    <CardBody>
+        <CardTitle Size="5"><h1 class="text-danger">Are you sure you want to delete @CommentItem.Subject?</h1></CardTitle>
+        <CardText>
+            <p>@CommentItem.Body</p>
+        </CardText>
+    </CardBody>
+    <CardFooter>
+        <em>Submitted By @CommentItem.UserName On @CommentItem.SubmittedOn.ToShortDateString()</em>
+    </CardFooter>
+    <CardActions>
+        <Button Color="Color.Primary" @onclick="OnCancel">Cancel</Button>
+        <Button Color="Color.Danger" @onclick="@(async () => await OnDeleteConfirmed.InvokeAsync(CommentItem))">Confirm</Button>
+    </CardActions>
+</Card>
+
+
+
+@code {
+    [Parameter]
+    public bool CreateMode { get; set; }
+
+    private string SaveText => CreateMode ? "Create" : "Update";
+
+    [Parameter]
+    public PhotoSharingExamples.Shared.Entities.Comment CommentItem { get; set; }
+
+    [Parameter]
+    public bool Edit { get; set; }
+    [Parameter]
+    public bool Delete { get; set; }
+
+    [Parameter]
+    public EventCallback<PhotoSharingExamples.Shared.Entities.Comment> OnDeleteConfirmed { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+}

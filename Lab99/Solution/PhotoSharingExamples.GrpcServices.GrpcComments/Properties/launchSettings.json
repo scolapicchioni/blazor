@@ -1,0 +1,12 @@
+﻿{
+  "profiles": {
+    "PhotoSharingExamples.GrpcServices.GrpcComments": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5020;https://localhost:5021",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

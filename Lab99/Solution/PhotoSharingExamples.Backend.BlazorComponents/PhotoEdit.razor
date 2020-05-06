@@ -1,0 +1,54 @@
+﻿<EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <Field>
+        <FieldLabel>Title</FieldLabel>
+        <TextEdit @bind-Text="@photo.Title" />
+    </Field>
+    <Field>
+        <FieldLabel>Description</FieldLabel>
+        <InputTextArea @bind-Value="@photo.Description" class="form-control" rows="3"></InputTextArea>
+    </Field>
+    <Field>
+        <FieldLabel>Image</FieldLabel>
+        <InputFile OnChange="HandleFileSelected" class="form-control-file"/>
+        <img src="@ImageForSource" alt="@photo.Title" class="img-thumbnail">
+    </Field>
+    <input type="submit" class="btn btn-primary" value="@SaveText" />
+    <Button Color="Color.Primary" @onclick="OnCancel">Cancel</Button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public bool CreateMode { get; set; }
+
+    private string SaveText => CreateMode ? "Create" : "Update";
+
+    [Parameter]
+    public PhotoSharingExamples.Shared.Entities.Photo photo { get; set; }
+
+    [Parameter]
+    public EventCallback<PhotoSharingExamples.Shared.Entities.Photo> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    public string ImageForSource => photo.PhotoFile==null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}";
+
+    async Task HandleFileSelected(IFileListEntry[] files)
+    {
+        IFileListEntry file = files.FirstOrDefault();
+        photo.ImageMimeType = file.Type;
+
+        using (var streamReader = new System.IO.MemoryStream()){
+            await file.Data.CopyToAsync(streamReader);
+            photo.PhotoFile = streamReader.ToArray();
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await OnSave.InvokeAsync(photo);
+    }
+}

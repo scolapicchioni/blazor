@@ -1,0 +1,90 @@
+﻿@page "/photos/delete/{id:int}"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.Extensions.Logging;
+@using PhotoSharingExamples.Shared.Authorization
+
+@inject PhotoSharingExamples.Frontend.Core.Interfaces.IPhotosService PhotosService
+
+@inject IAccessTokenProvider AuthenticationService
+@inject IAuthorizationService AuthorizationService
+
+@inject NavigationManager Navigation
+
+@inject ILogger<FetchData> Logger
+
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+<h1>Photo</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            @if (photo == null)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else if (mayDelete)
+            {
+                <Photo PhotoItem="photo" DeleteConfirm OnDeleteConfirmed="OnDeleteConfirmed"></Photo>
+                <p><span class="alert alert-danger">@message</span></p>
+            }
+            else
+            {
+                <h1 class="alert alert-danger">FORBIDDEN</h1>
+                <p class="text-danger">You are not allowed to delete this photo</p>
+            }
+        </div>
+    </div>
+</div>
+@code {
+    [CascadingParameter]
+    Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private PhotoSharingExamples.Shared.Entities.Photo photo;
+    string message;
+    private System.Security.Claims.ClaimsPrincipal user;
+    private bool mayDelete = false;
+    protected override async Task OnInitializedAsync()
+    {
+        photo = await PhotosService.FindAsync(Id);
+        user = (await authenticationStateTask).User;
+        mayDelete = await MayDelete(photo);
+    }
+
+    async Task<bool> MayDelete(PhotoSharingExamples.Shared.Entities.Photo p)
+    {
+        AuthorizationResult ar = await AuthorizationService.AuthorizeAsync(user, p, Policies.EditDeletePhoto);
+        return user.Identity.IsAuthenticated && ar.Succeeded;
+    }
+
+    async Task OnDeleteConfirmed(int photoId)
+    {
+        var tokenResult = await AuthenticationService.RequestAccessToken(new AccessTokenRequestOptions() { Scopes = new string[] { "photos" } });
+
+        if (tokenResult.TryGetToken(out var token))
+        {
+            try
+            {
+                await PhotosService.RemoveAsync(Id, token.Value);
+
+                NavigationManager.NavigateTo("photos/all");
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+        }
+        else
+        {
+            NavigationManager.NavigateTo(tokenResult.RedirectUrl);
+        }
+
+    }
+
+}

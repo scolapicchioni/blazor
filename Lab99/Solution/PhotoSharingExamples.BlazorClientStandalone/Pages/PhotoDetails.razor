@@ -1,0 +1,68 @@
+﻿@page "/photos/details/{id:int}"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.Extensions.Logging;
+@using PhotoSharingExamples.Shared.Authorization
+
+@inject PhotoSharingExamples.Frontend.Core.Interfaces.IPhotosService PhotosService
+
+@inject IAccessTokenProvider AuthenticationService
+@inject IAuthorizationService AuthorizationService
+
+
+@inject NavigationManager NavigationManager
+
+<h1>Photo</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            @if (photo == null)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else
+            {
+                <Photo PhotoItem="photo" Edit="mayEditDeletePhoto" Delete="mayEditDeletePhoto" OnDelete="OnDeletePhoto" OnEdit="OnEditPhoto"></Photo>
+                <CommentsComponent PhotoId="photo.Id"></CommentsComponent>
+            }
+        </div>
+    </div>
+</div>
+@code {
+    [CascadingParameter]
+    Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private PhotoSharingExamples.Shared.Entities.Photo photo;
+
+    string message;
+    private System.Security.Claims.ClaimsPrincipal user;
+    private bool mayEditDeletePhoto = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        photo = await PhotosService.FindAsync(Id);
+        user = (await authenticationStateTask).User;
+        mayEditDeletePhoto = await MayEditDeletePhoto(photo);
+    }
+
+    async Task<bool> MayEditDeletePhoto(PhotoSharingExamples.Shared.Entities.Photo p)
+    {
+        AuthorizationResult ar = await AuthorizationService.AuthorizeAsync(user, p, Policies.EditDeletePhoto);
+        return user.Identity.IsAuthenticated && ar.Succeeded;
+    }
+
+    void OnDeletePhoto(int photoId)
+    {
+        NavigationManager.NavigateTo($"photos/delete/{photoId}");
+    }
+    void OnEditPhoto(int photoId)
+    {
+        NavigationManager.NavigateTo($"photos/edit/{photoId}");
+    }
+
+}

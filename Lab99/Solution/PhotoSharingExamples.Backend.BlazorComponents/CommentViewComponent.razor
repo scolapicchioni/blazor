@@ -1,0 +1,37 @@
+﻿<Card>
+    <CardBody>
+        <em>On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</em>
+        <CardTitle Size="5">@CommentItem.Subject</CardTitle>
+        <CardText>
+            <p>@CommentItem.Body</p>
+        </CardText>
+    </CardBody>
+    <CardActions>
+        @if (Edit)
+        {
+            <Button Color="Color.Primary" @onclick="@(async () => await OnEdit.InvokeAsync(CommentItem))">Edit</Button>
+        }
+        @if (Delete)
+        {
+            <Button Color="Color.Danger" @onclick="@(async () => await OnDelete.InvokeAsync(CommentItem))">Delete</Button>
+        }
+    </CardActions>
+</Card>
+
+@code {
+
+    [Parameter]
+    public PhotoSharingExamples.Shared.Entities.Comment CommentItem { get; set; }
+
+    [Parameter]
+    public bool Edit { get; set; }
+    [Parameter]
+    public bool Delete { get; set; }
+
+    [Parameter]
+    public EventCallback<PhotoSharingExamples.Shared.Entities.Comment> OnEdit { get; set; }
+
+    [Parameter]
+    public EventCallback<PhotoSharingExamples.Shared.Entities.Comment> OnDelete { get; set; }
+
+}

@@ -1,0 +1,62 @@
+﻿@page "/photos/all"
+@using PhotoSharingExamples.Shared.Authorization
+
+@inject PhotoSharingExamples.Frontend.Core.Interfaces.IPhotosService PhotosService
+
+@inject NavigationManager NavigationManager
+
+@inject IAuthorizationService AuthorizationService
+
+<h1>Photos</h1>
+
+<div class="container">
+    <div class="row">
+
+        @if (photos == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            @foreach (var photo in photos)
+            {
+                bool mayEditDelete = MayEditDelete(photo).Result;
+                <div class="col-sm-4">
+                    <Photo PhotoItem="photo" Details Edit="mayEditDelete" Delete="mayEditDelete" OnDetails="OnDetails" OnDelete="OnDelete" OnEdit="OnEdit"></Photo>
+                </div>
+            }
+        }
+    </div>
+</div>
+@code {
+    [CascadingParameter]
+    Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private IEnumerable<PhotoSharingExamples.Shared.Entities.Photo> photos;
+    private System.Security.Claims.ClaimsPrincipal user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        photos = await PhotosService.GetPhotosAsync(10);
+        user = (await authenticationStateTask).User;
+    }
+
+    async Task<bool> MayEditDelete(PhotoSharingExamples.Shared.Entities.Photo p) {
+        AuthorizationResult ar = await AuthorizationService.AuthorizeAsync(user,p, Policies.EditDeletePhoto);
+        return user.Identity.IsAuthenticated && ar.Succeeded;
+    }
+
+    void OnDetails(int photoId)
+    {
+        NavigationManager.NavigateTo($"photos/details/{photoId}");
+    }
+    void OnDelete(int photoId)
+    {
+        NavigationManager.NavigateTo($"photos/delete/{photoId}");
+    }
+    void OnEdit(int photoId)
+    {
+        NavigationManager.NavigateTo($"photos/edit/{photoId}");
+    }
+
+}

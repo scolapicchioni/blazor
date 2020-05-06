@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>PhotoSharingExamples.Shared.Entities</AssemblyName>
+    <RootNamespace>PhotoSharingExamples.Shared.Entities</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ardalis.GuardClauses" Version="1.5.0" />
+  </ItemGroup>
+
+</Project>

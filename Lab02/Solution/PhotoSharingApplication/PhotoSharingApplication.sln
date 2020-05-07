@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30028.174
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.BlazorWebAssembly", "PhotoSharingApplication.Frontend.BlazorWebAssembly\PhotoSharingApplication.Frontend.BlazorWebAssembly.csproj", "{5D050B77-E999-4843-83F3-A19CDE76F746}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhotoSharingApplication.Frontend.Core", "PhotoSharingApplication.Frontend.Core\PhotoSharingApplication.Frontend.Core.csproj", "{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhotoSharingApplication.Frontend.Infrastructure", "PhotoSharingApplication.Frontend.Infrastructure\PhotoSharingApplication.Frontend.Infrastructure.csproj", "{44C9719F-AF92-4E65-8779-210CFA799BA3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5D050B77-E999-4843-83F3-A19CDE76F746}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D050B77-E999-4843-83F3-A19CDE76F746}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D050B77-E999-4843-83F3-A19CDE76F746}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D050B77-E999-4843-83F3-A19CDE76F746}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6E8619DF-9C8D-4E46-B021-2BC87BDF2FC7}
+	EndGlobalSection
+EndGlobal

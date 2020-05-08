@@ -1,0 +1,55 @@
+﻿@page "/photos/delete/{id:int}"
+
+@using PhotoSharingApplication.Frontend.Core.Interfaces
+@using PhotoSharingApplication.Frontend.Core.Entities
+@inject IPhotosService photosService
+@inject NavigationManager navigationManager
+
+<MatH3>Delete</MatH3>
+
+@if (photo == null) {
+    <p>...Loading...</p>
+} else {
+    <div class="mat-layout-grid">
+        <div class="mat-layout-grid-inner">
+            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+                <MatCard>
+                    <div>
+                        <MatHeadline6>
+                            @photo.Id - @photo.Title
+                        </MatHeadline6>
+                        <MatSubtitle2>
+                            @photo.CreatedDate.ToShortDateString()
+                        </MatSubtitle2>
+                    </div>
+                    <MatCardContent>
+                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+                        <MatBody2>
+                            @photo.Description
+                        </MatBody2>
+                    </MatCardContent>
+                    <MatCardActions>
+                        <MatCardActionButtons>
+                            <MatButton OnClick="DeleteConfirm">Confirm Deletion</MatButton>
+                        </MatCardActionButtons>
+                    </MatCardActions>
+                </MatCard>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    Photo photo;
+
+    protected override async Task OnInitializedAsync() {
+        photo = await photosService.FindAsync(Id);
+    }
+    private async Task DeleteConfirm(MouseEventArgs e) {
+        await photosService.RemoveAsync(Id);
+        navigationManager.NavigateTo("/photos/all");
+    }
+}

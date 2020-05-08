@@ -1,0 +1,55 @@
+﻿@page "/photos/upload"
+
+@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Frontend.Core.Interfaces
+
+@inject IPhotosService photosService
+@inject NavigationManager navigationManager
+
+<h3>UploadPhoto</h3>
+
+<EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
+    <p>
+        <label>
+            Title:
+            <InputText @bind-Value="photo.Title" />
+        </label>
+    </p>
+    <p>
+        <label>
+            Description (optional):
+            <InputTextArea @bind-Value="photo.Description" />
+        </label>
+    </p>
+    <p>
+        <label>
+            File:
+            <InputFile OnChange="HandleFileSelected" />
+        </label>
+    </p>
+    <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+    <button type="submit">Submit</button>
+</EditForm>
+
+@code {
+    Photo photo;
+
+    protected override void OnInitialized() {
+        photo = new Core.Entities.Photo();
+    }
+
+    private async Task HandleValidSubmit() {
+        await photosService.UploadAsync(photo);
+        navigationManager.NavigateTo("/photos/all");
+    }
+
+    private async Task HandleFileSelected(IFileListEntry[] files) {
+        IFileListEntry file = files.FirstOrDefault();
+        photo.ImageMimeType = file.Type;
+
+        using (var streamReader = new System.IO.MemoryStream()) {
+            await file.Data.CopyToAsync(streamReader);
+            photo.PhotoFile = streamReader.ToArray();
+        }
+    }
+}

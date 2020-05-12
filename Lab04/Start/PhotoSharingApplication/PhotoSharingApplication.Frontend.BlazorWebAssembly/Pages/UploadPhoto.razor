@@ -1,0 +1,62 @@
+﻿@page "/photos/upload"
+
+@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Frontend.Core.Interfaces
+
+@inject IPhotosService photosService
+@inject NavigationManager navigationManager
+
+<div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <MatCard>
+                <MatH3>Upload Photo</MatH3>
+                <MatCardContent>
+                    <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
+                        <p>
+                            <MatTextField @bind-Value="@photo.Title" Label="Title" FullWidth></MatTextField>
+                        </p>
+                        <p>
+                            <MatTextField @bind-Value="@photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+                        </p>
+                        <p>
+                            <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+                        </p>
+                        <p>
+                            <MatButton Type="submit">Upload</MatButton>
+                        </p>
+                    </EditForm>
+                    <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+                </MatCardContent>
+            </MatCard>
+        </div>
+    </div>
+</div>
+@code {
+    Photo photo;
+
+    protected override void OnInitialized() {
+        photo = new Core.Entities.Photo();
+    }
+
+    private async Task HandleValidSubmit() {
+        await photosService.UploadAsync(photo);
+        navigationManager.NavigateTo("/photos/all");
+    }
+
+    async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+        IMatFileUploadEntry file = files.FirstOrDefault();
+        photo.ImageMimeType = file.Type;
+
+        if (file == null) {
+            return;
+        }
+
+        using (var stream = new System.IO.MemoryStream()) {
+            await file.WriteToStreamAsync(stream);
+            photo.PhotoFile = stream.ToArray();
+        }
+
+    }
+
+}

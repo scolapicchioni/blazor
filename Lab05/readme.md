@@ -705,4 +705,4 @@ If you call the action to get all the photos, you should not see the photo with 
 
 Our service is ready. In the next lab we will setup the client side. 
 
-Go to `Labs/Lab05`, open the `readme.md` and follow the instructions thereby contained.   
+Go to `Labs/Lab06`, open the `readme.md` and follow the instructions thereby contained.   

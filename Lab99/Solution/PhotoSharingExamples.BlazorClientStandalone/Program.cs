@@ -78,6 +78,7 @@ namespace PhotoSharingExamples.Frontend.BlazorClientStandalone
 
             #endregion
 
+            #region gRPCComments
             builder.Services.AddSingleton(services =>
             {
 #if DEBUG
@@ -91,7 +92,7 @@ namespace PhotoSharingExamples.Frontend.BlazorClientStandalone
                 var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
                 return new Commentsthingpackage.CommentsThing.CommentsThingClient(channel);
             });
-
+            #endregion
             builder.Services.AddTransient<ICommentsService, CommentsService>();
             builder.Services.AddTransient<ICommentsRepository, CommentsGrpcClient>();
 

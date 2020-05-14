@@ -13,7 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PhotoSharingApplication.Backend.Infrastructure.Data;
 using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
-using PhotoSharingApplication.Frontend.Core.Services;
+using PhotoSharingApplication.Backend.Core.Services;
 using PhotoSharingApplication.Shared.Core.Interfaces;
 
 namespace PhotoSharingApplication.WebServices.REST.Photos {

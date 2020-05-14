@@ -54,7 +54,7 @@ namespace PhotoSharingApplication.Shared.Core.Entities {
 Also, add a new navigation property to the `Photo` class:
 
 ```cs
-public virtual ICollection<Photo> Photos { get; set; }
+public virtual ICollection<Comment> Comments { get; set; }
 ```
 
 ### The Interfaces

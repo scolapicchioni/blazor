@@ -1,0 +1,30 @@
+﻿@page "/photos/all"
+
+@inject IPhotosService photosService
+
+<MatH3>All Photos</MatH3>
+
+<MatButton Link="photos/upload">Upload new Photo</MatButton>
+
+@if (photos == null) {
+    <p>...Loading</p>
+} else {
+<div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+        @foreach (var photo in photos) {
+            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
+                <PhotoDetailsComponent Photo="photo" Details Edit Delete></PhotoDetailsComponent>
+            </div>
+        }
+    </div>
+</div>
+}
+
+@code {
+    List<Photo> photos;
+
+    protected override async Task OnInitializedAsync() {
+        photos = await photosService.GetPhotosAsync();
+    }
+
+}

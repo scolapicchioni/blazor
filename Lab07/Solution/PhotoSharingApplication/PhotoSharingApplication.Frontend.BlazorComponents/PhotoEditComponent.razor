@@ -1,0 +1,46 @@
+﻿@using PhotoSharingApplication.Shared.Core.Entities
+
+<MatCard>
+    <MatH3>Upload Photo</MatH3>
+    <MatCardContent>
+        <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
+            <p>
+                <MatTextField @bind-Value="@Photo.Title" Label="Title" FullWidth></MatTextField>
+            </p>
+            <p>
+                <MatTextField @bind-Value="@Photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+            </p>
+            <p>
+                <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+            </p>
+            <p>
+                <MatButton Type="submit">Upload</MatButton>
+            </p>
+        </EditForm>
+        <MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
+    </MatCardContent>
+</MatCard>
+
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+    
+    [Parameter]
+    public EventCallback<Photo> OnSave { get; set; }
+
+
+    async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+        IMatFileUploadEntry file = files.FirstOrDefault();
+        Photo.ImageMimeType = file.Type;
+
+        if (file == null) {
+            return;
+        }
+
+        using (var stream = new System.IO.MemoryStream()) {
+            await file.WriteToStreamAsync(stream);
+            Photo.PhotoFile = stream.ToArray();
+        }
+
+    }
+}

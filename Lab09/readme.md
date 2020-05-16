@@ -136,8 +136,9 @@ Now we need to inject the Repository and configure the ServiceClient.
 - In the `PhotoSharingApplication.Frontend.Infrastructure` project, add a reference to the following packages:
     - Grpc.Net.Client
     - Grpc.Net.Client.Web 
-- Open the `Program.cs` file of the same project
-- Add the following code
+    
+- In the `PhotoSharingApplication.Frontend.BlazorWebAssembly`project:
+- Open the `Program.cs` file and add the following code
 
 
 ```cs

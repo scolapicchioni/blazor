@@ -81,7 +81,7 @@ You may want to go to the [getting started](https://docs.microsoft.com/en-gb/asp
 
 # Our workflow
 
-We are going follow simple steps. Each step will focus on one task and will build on top of the previous step. We will start with simple projects that will become more and more complex along the way. For example, we will not focus on authentication and authorization at first. We will add it at a later step.
+We are going to follow some simple steps. Each step will focus on one task and will build on top of the previous step. We will start with simple projects that will become more and more complex along the way. For example, we will not focus on authentication and authorization at first. We will add it at a later step.
 
 # How to follow this tutorial
 

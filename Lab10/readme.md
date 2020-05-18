@@ -31,7 +31,7 @@ cd PhotoSharingApplication.IdentityServer
 - Create an IdentityServer project that uses EntityFramework by typing the following command: 
 
 ```
-dotnet new is4aspef
+dotnet new is4ef
 ```
 
 - When asked `Do you want to run this action (Y|N)?` type `N` and press `Enter`. We will create the DB after we configure everything correctly.

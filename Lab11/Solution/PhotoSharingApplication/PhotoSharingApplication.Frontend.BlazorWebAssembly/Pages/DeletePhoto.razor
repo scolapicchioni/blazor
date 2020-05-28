@@ -27,7 +27,11 @@
         photo = await photosService.FindAsync(Id);
     }
     private async Task Delete(int id) {
-        await photosService.RemoveAsync(id);
-        navigationManager.NavigateTo("/photos/all");
+        try {
+            await photosService.RemoveAsync(id);
+            navigationManager.NavigateTo("/photos/all");
+        } catch (PhotoSharingApplication.Shared.Core.Exceptions.UnauthorizedDeleteAttemptException<Photo>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
     }
 }

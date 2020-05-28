@@ -19,7 +19,7 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFram
             return comment;
         }
 
-        public async Task<Comment> FindAsync(int id) => await context.Comments.SingleOrDefaultAsync(m => m.Id == id);
+        public async Task<Comment> FindAsync(int id) => await context.Comments.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
 
         public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) => await context.Comments.Where(c => c.PhotoId == photoId).ToListAsync();
 

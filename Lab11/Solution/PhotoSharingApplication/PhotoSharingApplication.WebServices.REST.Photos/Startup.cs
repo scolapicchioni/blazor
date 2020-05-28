@@ -1,24 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using IdentityModel;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using PhotoSharingApplication.Backend.Core.Services;
 using PhotoSharingApplication.Backend.Infrastructure.Data;
 using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
-using PhotoSharingApplication.Backend.Core.Services;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using IdentityModel;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using PhotoSharingApplication.Shared.Authorization;
+using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Core.Interfaces;
 
 namespace PhotoSharingApplication.WebServices.REST.Photos {
     public class Startup {
@@ -54,10 +48,15 @@ namespace PhotoSharingApplication.WebServices.REST.Photos {
                     policy.RequireClaim(JwtClaimTypes.Name);
                 });
                 
-                options.AddPolicy(Policies.EditDeletePhoto, Policies.CanEditDeletePhotoPolicy());
+                options.AddPolicy(Policies.EditPhoto, Policies.MayEditPhotoPolicy());
+                options.AddPolicy(Policies.DeletePhoto, Policies.MayDeletePhotoPolicy());
+                options.AddPolicy(Policies.CreatePhoto, Policies.MayCreatePhotoPolicy());
             });
 
-            services.AddSingleton<IAuthorizationHandler, PhotoEditDeleteAuthorizationHandler>();
+            services.AddSingleton<IAuthorizationHandler, PhotoSameAuthorAuthorizationHandler>();
+            services.AddScoped<IAuthorizationService<Photo>, PhotosAuthorizationService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddHttpContextAccessor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

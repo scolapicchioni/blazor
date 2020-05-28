@@ -17,6 +17,7 @@ using IdentityModel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using PhotoSharingApplication.Shared.Authorization;
+using PhotoSharingApplication.Shared.Core.Entities;
 
 namespace PhotoSharingApplication.WebServices.Grpc.Comments {
     public class Startup {
@@ -54,9 +55,14 @@ namespace PhotoSharingApplication.WebServices.Grpc.Comments {
                     policy.RequireClaim(JwtClaimTypes.Name);
                 });
                 //found on https://chrissainty.com/securing-your-blazor-apps-configuring-policy-based-authorization-with-blazor/
-                options.AddPolicy(Policies.EditDeleteComment, Policies.CanEditDeleteCommentPolicy());
+                options.AddPolicy(Policies.CreateComment, Policies.MayCreateCommentPolicy());
+                options.AddPolicy(Policies.EditComment, Policies.MayEditCommentPolicy());
+                options.AddPolicy(Policies.DeleteComment, Policies.MayDeleteCommentPolicy());
             });
-            services.AddSingleton<IAuthorizationHandler, CommentEditDeleteAuthorizationHandler>();
+            services.AddSingleton<IAuthorizationHandler, CommentSameAuthorAuthorizationHandler>();
+            services.AddScoped<IAuthorizationService<Comment>, CommentsAuthorizationService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddHttpContextAccessor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

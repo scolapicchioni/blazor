@@ -12,9 +12,10 @@ In order to achieve this, we have to update both our Backend and our FrontEnd.
 - We will configure the [Resource Based Authorization](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/resourcebased?view=aspnetcore-5.0) by creating
     - A CanEditDeletePhoto[Policy](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-5.0)
     - A SameAuthor[Requirement](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-5.0#requirements)
-    - A PhotoEditDelete[AuthorizationHandler](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-5.0#authorization-handlers). This handler will succeed only if the UserName property of the Photo being updated/deleted matches the value of the user name.
+    - A PhotoEditDelete[AuthorizationHandler](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-5.0#authorization-handlers).  
+    This handler will succeed only if the UserName property of the Photo being updated/deleted matches the value of the user name.
     - A CanEditDeleteComment[Policy](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-5.0)
-    - A CommentEditDelete[AuthorizationHandler](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-5.0#authorization-handlers)
+    - A CommentEditDelete[AuthorizationHandler](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-5.0#authorization-handlers)  
     This handler will succeed only if the UserName property of the Comment being updated/deleted matches the value of the user name.
 - During the Update and Delete of a Photo, we will ask an `AuthorizationService` to check if the `CanEditDeletePhotoPolicy` is fulfilled, eventually denying the possibility to complete the action if the user is not the photo's owner
 - During the Update and Delete of a Comment, we will ask an `AuthorizationService` to check if the `CanEditDeleteCommentPolicy` is fulfilled, eventually denying the possibility to complete the action if the user is not the comments' owner
@@ -371,7 +372,7 @@ The process is almost the same as the one we used in the Rest Service.
 
 What changes is:
 - We need to find the User in the `ServerCallContext`
-- As exaplined in the [Error handling Documentation](https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/error-handling), if the authorization does not succeed, we need to throw an  `Rpcexception` containing the `PermissionDenied` Status Code
+- As explained in the [Error handling Documentation](https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/error-handling), if the authorization does not succeed, we need to throw an  `RpcException` containing the `PermissionDenied` Status Code
 
 ```cs
 [Authorize]
@@ -409,6 +410,17 @@ public override async Task<RemoveReply> Remove(RemoveRequest request, ServerCall
   }
 }
 ```
+
+## Frontend
+
+On the frontend side we need to:
+-  Check if the user is authorized to perform the delete / update  
+If not, block the call  
+Pass the credentials in the request otherwise
+- Show / hide the buttons to update and delete depending on the user rights
+- Show an error nmessage in the update / delete pages if the user is not authorized to be on the page for that photo
+
+### The 
 
 ## Update the Products Component, Details and Delete View
 

@@ -20,7 +20,7 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFram
             return photo;
         }
 
-        public async Task<Photo> FindAsync(int id) => await context.Photos.SingleOrDefaultAsync(m => m.Id == id);
+        public async Task<Photo> FindAsync(int id) => await context.Photos.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
 
         public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await (from p in context.Photos
                                                                                  orderby p.CreatedDate descending

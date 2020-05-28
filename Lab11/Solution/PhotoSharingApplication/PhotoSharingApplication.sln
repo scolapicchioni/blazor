@@ -23,7 +23,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Web
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.IdentityServer", "PhotoSharingApplication.IdentityServer\PhotoSharingApplication.IdentityServer.csproj", "{2FABACFA-7FEC-49F9-B933-88C76202E7DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhotoSharingApplication.Shared.Authorization", "PhotoSharingApplication.Shared.Authorization\PhotoSharingApplication.Shared.Authorization.csproj", "{BF16F935-1D1C-49D4-958D-F27289B063F6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Shared.Authorization", "PhotoSharingApplication.Shared.Authorization\PhotoSharingApplication.Shared.Authorization.csproj", "{BF16F935-1D1C-49D4-958D-F27289B063F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

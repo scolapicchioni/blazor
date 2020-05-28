@@ -14,18 +14,27 @@
         </div>
     </div>
 }
+<p>@message</p>
+
 @code {
     [Parameter]
     public int Id { get; set; }
 
     Photo photo;
 
+    string message;
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);
     }
 
     private async Task Update() {
-        await photosService.UpdateAsync(photo);
-        navigationManager.NavigateTo("/photos/all");
+        try {
+            await photosService.UpdateAsync(photo);
+            navigationManager.NavigateTo("/photos/all");
+        } catch (PhotoSharingApplication.Shared.Core.Exceptions.UnauthorizedEditAttemptException<Photo>) {
+            navigationManager.NavigateTo("/forbidden");
+        } catch (Exception ex){
+            message = ex.Message;
+        }
     }
 }

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using PhotoSharingApplication.Shared.Authorization;
+using PhotoSharingApplication.Shared.Core.Entities;
 
 namespace PhotoSharingApplication.Frontend.BlazorWebAssembly {
     public class Program
@@ -64,8 +65,21 @@ namespace PhotoSharingApplication.Frontend.BlazorWebAssembly {
 
             });
 
-            builder.Services.AddSingleton<IAuthorizationHandler, PhotoEditDeleteAuthorizationHandler>();
-            builder.Services.AddSingleton<IAuthorizationHandler, CommentEditDeleteAuthorizationHandler>();
+            builder.Services.AddAuthorizationCore(options => {
+                options.AddPolicy(Policies.CreatePhoto, Policies.MayCreatePhotoPolicy());
+                options.AddPolicy(Policies.EditPhoto, Policies.MayEditPhotoPolicy());
+                options.AddPolicy(Policies.DeletePhoto, Policies.MayDeletePhotoPolicy());
+                options.AddPolicy(Policies.CreateComment, Policies.MayCreateCommentPolicy());
+                options.AddPolicy(Policies.EditComment, Policies.MayEditCommentPolicy());
+                options.AddPolicy(Policies.DeleteComment, Policies.MayDeleteCommentPolicy());
+            });
+
+            builder.Services.AddSingleton<IAuthorizationHandler, PhotoSameAuthorAuthorizationHandler>();
+            builder.Services.AddSingleton<IAuthorizationHandler, CommentSameAuthorAuthorizationHandler>();
+
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IAuthorizationService<Photo>, PhotosAuthorizationService>();
+            builder.Services.AddScoped<IAuthorizationService<Comment>, CommentsAuthorizationService>();
 
             await builder.Build().RunAsync();
         }

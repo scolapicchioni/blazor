@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using PhotoSharingApplication.Shared.Authorization;
 using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Core.Exceptions;
 using PhotoSharingApplication.Shared.Core.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,11 +12,9 @@ using System.Threading.Tasks;
 namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
     public class CommentsService : CommentsBaseService.CommentsBaseServiceBase {
         private readonly ICommentsService commentsService;
-        private readonly IAuthorizationService authorizationService;
-
-        public CommentsService(ICommentsService commentsService, IAuthorizationService authorizationService) {
+        
+        public CommentsService(ICommentsService commentsService) {
             this.commentsService = commentsService;
-            this.authorizationService = authorizationService;
         }
 
         public override async Task<GetCommentsForPhotosReply> GetCommentsForPhoto(GetCommentsForPhotosRequest request, ServerCallContext context) {
@@ -40,15 +39,12 @@ namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
 
         [Authorize]
         public override async Task<UpdateReply> Update(UpdateRequest request, ServerCallContext context) {
-            Comment co = await commentsService.FindAsync(request.Id);
-            var user = context.GetHttpContext().User;
-            var authorizationResult = await authorizationService.AuthorizeAsync(user, co, Policies.EditDeleteComment);
-
-            if (authorizationResult.Succeeded) {
+            try { 
                 Comment c = await commentsService.UpdateAsync(new Comment { Id = request.Id, Subject = request.Subject, Body = request.Body });
                 return new UpdateReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
-            } else {
+            } catch(UnauthorizedEditAttemptException<Comment>) {
                 //found on https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/error-handling
+                var user = context.GetHttpContext().User;
                 var metadata = new Metadata { { "User", user.Identity.Name } };
                 throw new RpcException(new Status(StatusCode.PermissionDenied, "Permission denied"), metadata);
             }
@@ -56,15 +52,12 @@ namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
 
         [Authorize]
         public override async Task<RemoveReply> Remove(RemoveRequest request, ServerCallContext context) {
-            Comment co = await commentsService.FindAsync(request.Id);
-            var user = context.GetHttpContext().User;
-            var authorizationResult = await authorizationService.AuthorizeAsync(user, co, Policies.EditDeleteComment);
-
-            if (authorizationResult.Succeeded) {
+            try { 
                 Comment c = await commentsService.RemoveAsync(request.Id);
                 return new RemoveReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
-            } else {
+            } catch (UnauthorizedDeleteAttemptException<Comment>) { 
                 //found on https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/error-handling
+                var user = context.GetHttpContext().User;
                 var metadata = new Metadata { { "User", user.Identity.Name } };
                 throw new RpcException(new Status(StatusCode.PermissionDenied, "Permission denied"), metadata);
             }

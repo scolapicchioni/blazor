@@ -9,10 +9,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore" Version="2.28.0" />
-    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.28.0-pre2" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.29.0" />
+    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.29.0" />
     <PackageReference Include="IdentityModel" Version="5.0.0-preview.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.0-preview.3.20215.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.0-preview.4.20257.10" />
   </ItemGroup>
 
   <ItemGroup>

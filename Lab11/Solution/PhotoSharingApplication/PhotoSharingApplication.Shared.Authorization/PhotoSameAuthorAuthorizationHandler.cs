@@ -3,10 +3,10 @@ using PhotoSharingApplication.Shared.Core.Entities;
 using System.Threading.Tasks;
 
 namespace PhotoSharingApplication.Shared.Authorization {
-    public class CommentEditDeleteAuthorizationHandler : AuthorizationHandler<SameAuthorRequirement, Comment> {
+    public class PhotoSameAuthorAuthorizationHandler : AuthorizationHandler<SameAuthorRequirement, Photo> {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
                                                        SameAuthorRequirement requirement,
-                                                       Comment resource) {
+                                                       Photo resource) {
             if (context.User.Identity?.Name == resource.UserName) {
                 context.Succeed(requirement);
             }

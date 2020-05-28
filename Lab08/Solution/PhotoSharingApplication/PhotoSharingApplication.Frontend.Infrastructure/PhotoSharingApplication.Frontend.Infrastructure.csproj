@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Net.Http.Json" Version="5.0.0-preview.3.20214.6" />
+    <PackageReference Include="System.Net.Http.Json" Version="5.0.0-preview.4.20251.6" />
   </ItemGroup>
 
   <ItemGroup>

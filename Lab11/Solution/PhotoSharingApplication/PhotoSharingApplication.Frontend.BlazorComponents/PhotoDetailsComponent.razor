@@ -1,5 +1,10 @@
 ﻿@using PhotoSharingApplication.Shared.Core.Entities
 
+@using PhotoSharingApplication.Shared.Core.Interfaces;
+
+@inject IUserService UserService
+@inject IAuthorizationService<Photo> PhotosAuthorizationService
+
 <MatCard>
     <div>
         <MatHeadline6>
@@ -20,10 +25,10 @@
             @if (Details) {
                 <MatButton Link="@($"/photos/details/{Photo.Id}")">Details</MatButton>
             }
-            @if (Edit) {
+            @if (Edit && mayEdit) {
                 <MatButton Link="@($"/photos/update/{Photo.Id}")">Update</MatButton>
             }
-            @if (Delete) {
+            @if (Delete && mayDelete) {
                 <MatButton Link="@($"/photos/delete/{Photo.Id}")">Delete</MatButton>
             }
             @if (DeleteConfirm) {
@@ -49,5 +54,12 @@
     [Parameter]
     public EventCallback<int> OnDeleteConfirmed { get; set; }
 
+    bool mayEdit = false;
+    bool mayDelete = false;
 
+    protected override async Task OnInitializedAsync() {
+        var User = await UserService.GetUserAsync();
+        mayEdit = await PhotosAuthorizationService.ItemMayBeUpdatedAsync(User, Photo);
+        mayDelete = await PhotosAuthorizationService.ItemMayBeDeletedAsync(User, Photo);
+    }
 }

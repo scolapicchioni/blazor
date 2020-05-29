@@ -26,6 +26,17 @@ namespace PhotoSharingApplication.Shared.Authorization {
                                                    .AddRequirements(new SameAuthorRequirement())
                                                    .Build();
 
+        public static void AddPhotosPolicies(this AuthorizationOptions options) {
+            options.AddPolicy(Policies.EditPhoto, Policies.MayEditPhotoPolicy());
+            options.AddPolicy(Policies.DeletePhoto, Policies.MayDeletePhotoPolicy());
+            options.AddPolicy(Policies.CreatePhoto, Policies.MayCreatePhotoPolicy());
+        }
+
+        public static void AddCommentsPolicies(this AuthorizationOptions options) {
+            options.AddPolicy(Policies.CreateComment, Policies.MayCreateCommentPolicy());
+            options.AddPolicy(Policies.EditComment, Policies.MayEditCommentPolicy());
+            options.AddPolicy(Policies.DeleteComment, Policies.MayDeleteCommentPolicy());
+        }
         //public static AuthorizationPolicy IsUserPolicy()
         //{
         //    return new AuthorizationPolicyBuilder().RequireAuthenticatedUser()

@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PhotoSharingApplication.Backend.Core.Services;
 using PhotoSharingApplication.Backend.Infrastructure.Data;
+using PhotoSharingApplication.Backend.Infrastructure.Identity;
 using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
 using PhotoSharingApplication.Shared.Authorization;
 using PhotoSharingApplication.Shared.Core.Entities;
@@ -47,10 +48,7 @@ namespace PhotoSharingApplication.WebServices.REST.Photos {
                     policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireClaim(JwtClaimTypes.Name);
                 });
-                
-                options.AddPolicy(Policies.EditPhoto, Policies.MayEditPhotoPolicy());
-                options.AddPolicy(Policies.DeletePhoto, Policies.MayDeletePhotoPolicy());
-                options.AddPolicy(Policies.CreatePhoto, Policies.MayCreatePhotoPolicy());
+                options.AddPhotosPolicies();
             });
 
             services.AddSingleton<IAuthorizationHandler, PhotoSameAuthorAuthorizationHandler>();

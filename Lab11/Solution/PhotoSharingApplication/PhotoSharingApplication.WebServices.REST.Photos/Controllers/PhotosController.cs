@@ -23,9 +23,13 @@ namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers {
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
-            photo.UserName = User.Identity.Name;
-            Photo p = await service.UploadAsync(photo);
-            return CreatedAtRoute("Find", p, new { id = p.Id});
+            try {
+                photo.UserName = User.Identity.Name;
+                Photo p = await service.UploadAsync(photo);
+                return CreatedAtRoute("Find", p, new { id = p.Id});
+            } catch (UnauthorizedCreateAttemptException<Photo>) {
+                return Forbid();
+            }
         }
 
         [HttpGet("{id:int}", Name = "Find")]

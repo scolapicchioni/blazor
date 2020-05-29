@@ -1,12 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.WebServices.REST.Photos {
+namespace PhotoSharingApplication.Backend.Infrastructure.Identity {
     public class UserService : IUserService {
         private readonly IHttpContextAccessor accessor;
 

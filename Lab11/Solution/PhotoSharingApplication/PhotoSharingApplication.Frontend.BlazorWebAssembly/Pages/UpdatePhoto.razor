@@ -1,5 +1,5 @@
 ﻿@page "/photos/update/{id:int}"
-
+@using PhotoSharingApplication.Shared.Core.Exceptions
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
@@ -14,7 +14,6 @@
         </div>
     </div>
 }
-<p>@message</p>
 
 @code {
     [Parameter]
@@ -22,7 +21,6 @@
 
     Photo photo;
 
-    string message;
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);
     }
@@ -31,10 +29,8 @@
         try {
             await photosService.UpdateAsync(photo);
             navigationManager.NavigateTo("/photos/all");
-        } catch (PhotoSharingApplication.Shared.Core.Exceptions.UnauthorizedEditAttemptException<Photo>) {
+        } catch (UnauthorizedEditAttemptException<Photo>) {
             navigationManager.NavigateTo("/forbidden");
-        } catch (Exception ex){
-            message = ex.Message;
-        }
+        } 
     }
 }

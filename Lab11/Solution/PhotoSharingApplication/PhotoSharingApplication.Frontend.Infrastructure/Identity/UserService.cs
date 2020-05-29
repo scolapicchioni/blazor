@@ -1,12 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Frontend.BlazorWebAssembly {
+namespace PhotoSharingApplication.Frontend.Infrastructure.Identity {
     public class UserService : IUserService {
         private readonly AuthenticationStateProvider authenticationStateProvider;
 

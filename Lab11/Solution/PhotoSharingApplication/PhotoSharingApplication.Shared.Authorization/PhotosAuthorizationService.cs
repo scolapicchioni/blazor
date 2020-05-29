@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PhotoSharingApplication.Shared.Authorization {

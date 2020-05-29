@@ -33,8 +33,14 @@ namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
         [Authorize]
         public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
             var user = context.GetHttpContext().User;
-            Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user.Identity.Name });
-            return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
+            try {
+                Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user.Identity.Name });
+                return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
+            } catch (UnauthorizedCreateAttemptException<Comment>) {
+                //found on https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/error-handling
+                var metadata = new Metadata { { "User", user.Identity.Name } };
+                throw new RpcException(new Status(StatusCode.PermissionDenied, "Permission denied"), metadata);
+            }
         }
 
         [Authorize]

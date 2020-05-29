@@ -1,5 +1,5 @@
 ﻿@page "/photos/delete/{id:int}"
-
+@using PhotoSharingApplication.Shared.Core.Exceptions
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
@@ -30,7 +30,7 @@
         try {
             await photosService.RemoveAsync(id);
             navigationManager.NavigateTo("/photos/all");
-        } catch (PhotoSharingApplication.Shared.Core.Exceptions.UnauthorizedDeleteAttemptException<Photo>) {
+        } catch (UnauthorizedDeleteAttemptException<Photo>) {
             navigationManager.NavigateTo("/forbidden");
         }
     }

@@ -1,5 +1,6 @@
 ﻿@page "/photos/upload"
-
+@using PhotoSharingApplication.Shared.Core.Exceptions
+ 
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 @attribute [Authorize]
@@ -19,7 +20,11 @@
     }
 
     private async Task Upload() {
-        await photosService.UploadAsync(photo);
-        navigationManager.NavigateTo("/photos/all");
+        try {
+            await photosService.UploadAsync(photo);
+            navigationManager.NavigateTo("/photos/all");
+        } catch (UnauthorizedCreateAttemptException<Photo>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
     }
 }

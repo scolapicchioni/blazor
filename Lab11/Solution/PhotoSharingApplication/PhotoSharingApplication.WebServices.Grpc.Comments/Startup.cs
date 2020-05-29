@@ -55,9 +55,7 @@ namespace PhotoSharingApplication.WebServices.Grpc.Comments {
                     policy.RequireClaim(JwtClaimTypes.Name);
                 });
                 //found on https://chrissainty.com/securing-your-blazor-apps-configuring-policy-based-authorization-with-blazor/
-                options.AddPolicy(Policies.CreateComment, Policies.MayCreateCommentPolicy());
-                options.AddPolicy(Policies.EditComment, Policies.MayEditCommentPolicy());
-                options.AddPolicy(Policies.DeleteComment, Policies.MayDeleteCommentPolicy());
+                options.AddCommentsPolicies();
             });
             services.AddSingleton<IAuthorizationHandler, CommentSameAuthorAuthorizationHandler>();
             services.AddScoped<IAuthorizationService<Comment>, CommentsAuthorizationService>();

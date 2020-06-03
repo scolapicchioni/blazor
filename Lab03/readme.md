@@ -96,7 +96,7 @@ So let's install it following the [documentation](https://github.com/SamProf/Mat
 
 We also need to add `@using MatBlazor` in our `_Imports.razor`.
 
-## Break Everithing
+## Break Everything
 
 Let's remove all the stiles we don't want to use from the `app.css`. I'm going to delete everything, leaving only thise two (I'll explain later what these are for):
 

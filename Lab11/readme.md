@@ -1632,7 +1632,3 @@ The code should look like the following:
 ```
 
 If you run the application, you should see the update and delete button only on photos and comments created by the logged on user.
-
-This concludes the tutorial.
-
-I hope you liked it.

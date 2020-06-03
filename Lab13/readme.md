@@ -1,4 +1,4 @@
-# Lab 13 - Validation
+# Validation
 
 In this lab we're going to talk about validating our data.  
 

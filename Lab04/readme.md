@@ -1,4 +1,4 @@
-## Razor Class Libraries and Components
+# Frontend - Razor Class Libraries and Components
 
 Right now we have three pages (All, Details and Delete) that basically use the same layout: a card with the photo information. The only thing that changes are which buttons to show. This means that every time we make a change, we have to update the UI and the logic of three components (AllPhotos, Details and Delete), writing  the same code three times. This situation is less than ideal, so let's refactor the `card` into its own component and let's make it so that we can configure which buttons to show depending on the view.
 

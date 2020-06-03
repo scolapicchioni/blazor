@@ -146,3 +146,82 @@ Or
 I assume you're a C# programmer interested in building a web application. Depending on how old you are, you may have already used asp, aspx, mvc and / or razor pages and now you want to try blazor. You may be already familiar with HTML and CSS and maybe you even played with some javascript framwork such as Angular, React or Vue.
 
 I am going to link a ton of documentation about web concepts and technologies, so don't worry if you're not a web developer expert, you can learn everything along the way. You *should* at least be fluent in C#, though, or this tutorial will be hard to follow. Most of the code that we're going to write will be, in fact, C#. We are also going to write some HTML, but that's easy to learn so that is not going to be a problem. 
+
+# The Labs
+
+- Lab 01 - The Blazor Frontend  
+   - Exploring the structure of a Blazor Web Assembly project and creating our first page
+- Lab 02 - Frontend: Additional Views  
+   - CLEAN Architecture
+   - Dependency Injection
+   - Using additional Blazor Libraries through NuGet Packages
+   - Routes
+   - Data Binding
+   - Event Handling
+- Lab 03 - Frontend: Styling the UI with MatBlazor
+   - Material Design
+   - MatBlazor
+   - Layout Pages
+- Lab 04 - Frontend - Razor Class Libraries and Components
+   - Creating a Razor Class Library
+   - Using a Razor Class Library from within a project
+   - Razor Components
+   - Parent and Child Components
+   - Properties
+   - EventCallbacks
+- Lab 05 - Backend: Web API with ASP.NET 5 and Visual Studio 2019 Preview
+   - REST Protocol
+   - Asp.NET Core Web Api
+   - Controllers
+   - Actions
+   - Routes
+   - Binding
+   - Entity Framework Core
+   - JSON
+   - POSTMAN
+- Lab 06 - Frontend: Connecting with the Backend
+   - HttpClient
+   - HttpClient Configuration
+   - GetFromJsonAsync
+   - PostAsJsonAsync
+   - PutAsJsonAsync
+   - DeleteAsync
+   - ReadFromJsonAsync
+   - CORS
+- Lab 07 - Frontend: Comments
+   - More CLEAN architecture
+   - More Components
+- Lab 08 - Backend: gRPC with ASP.NET 5 and Visual Studio 2019 Preview
+   - More CLEAN architecture
+   - gRPC
+   - protobuf
+   - gRPC in Asp.Net Core
+- Lab 09 - Frontend: Connecting with the Backend
+   - gRPC Web
+   - gRPC Client Web in .NET Core
+   - Configuration
+   - CORS
+- Lab 10 - Security: Authentication and Authorization
+   - Identity Server 4
+   - Configuring the REST Service for JWT Bearer Authentication
+   - Configuring the gRPC Service for JWT Bearer Authentication
+   - Configuring the Blazor Client for JWT Bearer Authentication
+   - Simple Authorization with the Authorize Attribute
+   - Retrieving and passing JWT Bearer Tokens
+- Lab 11 - Security: Resource Based Authorization
+   - AuthorizationService
+   - Policies
+   - Requirements
+   - Handlers
+- Lab 12 - Performance Optimization
+   - Entity Framework Table Splitting
+   - Download a File from a REST Web Api Service
+   - Browser Caching
+- Lab 13 - Validation
+   - Data Annotations
+   - Fluent Validation in the Core Service 
+   - Fluent Validation in ASP.NET Core REST Service
+   - Fluent Validation in Blazor with Blazored.FluentValidation
+
+
+

@@ -1,4 +1,4 @@
-# Lab 12 - Optimization
+# Performance Optimization
 
 So far things seem to be working, but the performances are not brilliant.  
 The page with all the photos is particularly slow, since we download all the content in one go (both the metadata - such as Title, Description and so on - and the actual array of byte for the picture). Only once *everything* is on the client side we can start encoding each array of byte as a string to display the picture.   

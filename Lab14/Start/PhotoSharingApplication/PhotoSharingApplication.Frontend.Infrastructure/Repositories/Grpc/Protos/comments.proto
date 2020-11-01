@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "PhotoSharingApplication.WebServices.Grpc.Comments";
+
+package comments;
+
+service CommentsBaseService {
+  rpc Create (CreateRequest) returns (CreateReply);
+  rpc Find(FindRequest) returns (FindReply);
+  rpc GetCommentsForPhoto(GetCommentsForPhotosRequest) returns (GetCommentsForPhotosReply);
+  rpc Remove(RemoveRequest) returns (RemoveReply);
+  rpc Update(UpdateRequest) returns (UpdateReply);
+}
+
+message CreateRequest {
+    int32 PhotoId =  1;
+    string Subject = 2;
+    string Body = 3;
+}
+
+message CreateReply {
+    int32 Id = 1;
+    int32 PhotoId =  2;
+    string UserName = 3;
+    string Subject = 4;
+    string Body = 5;
+    google.protobuf.Timestamp SubmittedOn = 6;
+}
+
+message FindRequest{
+   int32 Id = 1; 
+}
+
+message FindReply {
+    int32 Id = 1;
+    int32 PhotoId =  2;
+    string UserName = 3;
+    string Subject = 4;
+    string Body = 5;
+    google.protobuf.Timestamp SubmittedOn = 6;
+}
+
+message GetCommentsForPhotosRequest{
+    int32 photoId = 1;
+}
+message GetCommentsForPhotosReply {
+  repeated GetCommentsForPhotosReplyItem comments = 1;
+}
+
+message GetCommentsForPhotosReplyItem {
+    int32 Id = 1;
+    int32 PhotoId =  2;
+    string UserName = 3;
+    string Subject = 4;
+    string Body = 5;
+    google.protobuf.Timestamp SubmittedOn = 6;
+}
+
+message RemoveRequest{
+    int32 Id = 1;
+}
+
+message RemoveReply {
+    int32 Id = 1;
+    int32 PhotoId =  2;
+    string UserName = 3;
+    string Subject = 4;
+    string Body = 5;
+    google.protobuf.Timestamp SubmittedOn = 6;
+}
+
+message UpdateRequest {
+    int32 Id = 1;
+    string Subject = 2;
+    string Body = 3;
+}
+
+message UpdateReply {
+    int32 Id = 1;
+    int32 PhotoId =  2;
+    string UserName = 3;
+    string Subject = 4;
+    string Body = 5;
+    google.protobuf.Timestamp SubmittedOn = 6;
+}

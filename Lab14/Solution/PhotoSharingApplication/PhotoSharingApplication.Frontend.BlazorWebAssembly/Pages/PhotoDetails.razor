@@ -1,0 +1,31 @@
+﻿@page "/photos/details/{id:int}"
+@using PhotoSharingApplication.Shared.Core.Interfaces;
+
+@inject IPhotosService photosService
+
+<MatH3>Details</MatH3>
+
+@if (photo == null) {
+    <p>...Loading...</p>
+} else {
+    <div class="mat-layout-grid">
+        <div class="mat-layout-grid-inner">
+            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+                <PhotoDetailsComponent Photo="photo" Edit Delete></PhotoDetailsComponent>
+                <CommentsComponent PhotoId="Id"></CommentsComponent>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    Photo photo;
+    
+
+    protected override async Task OnInitializedAsync() {
+        photo = await photosService.FindAsync(Id);
+    }
+}

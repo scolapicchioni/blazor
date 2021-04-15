@@ -63,9 +63,11 @@ This is an approach you can use for all the rest of your site.
 
 What some people in the community have done, is to create Blazor Components that already wrap those css classes for you, so another approach is to use those components instead of (or together with) the base css.
 
-If you check the [Awesome Blazor Repo](https://github.com/AdrienTorris/awesome-blazor#libraries--extensions) (which contains tons of links to Blazor resources), you can see that there are many ongoing projects. At the time of this writing, the first link under the extensions is to [MatBlazor](https://github.com/SamProf/MatBlazor), which implements the implement the [Google Material Design Guidelines](https://material.io/guidelines/) 
+If you check the [Awesome Blazor Repo](https://github.com/AdrienTorris/awesome-blazor#libraries--extensions) (which contains tons of links to Blazor resources), you can see that there are many ongoing projects. When I first wrote this lab, the first link under the extensions was to [MatBlazor](https://github.com/SamProf/MatBlazor), which implements the [Google Material Design Guidelines](https://material.io/guidelines/).  
+The first place one year later has been taken by [Ant Design Blazor](https://github.com/ant-design-blazor/ant-design-blazor) since it has more stars on GitHub.  
+I am going to keep the labs with MatBlazor since it has more downloads than AntBlazor, but feel free to try any framework you like.
 
-So what I'm going to do in my project is to use those components instead of Bootstrap. I'm not saying that it's the best choice, but it is a valid choice (there are [many](https://www.sitepoint.com/free-material-design-css-frameworks-compared/) different css framework around).
+So what I'm going to do in my project is to use the `MatBlazor` components instead of Bootstrap. I'm not saying that it's the best choice, but it is a valid choice (there are [many](https://www.sitepoint.com/free-material-design-css-frameworks-compared/) different css framework around).
 
 According to its own [official git repo](https://github.com/SamProf/MatBlazor)
 
@@ -73,32 +75,23 @@ According to its own [official git repo](https://github.com/SamProf/MatBlazor)
 
 So let's install it following the [documentation](https://github.com/SamProf/MatBlazor#installation)
 
-> ## Installation
->
-> To Install
->
-> ```
-> Install-Package MatBlazor
-> ```
->
-> or
->
-> ```
-> dotnet add package MatBlazor
-> ```
->
-> For client-side add script section to index.html 
->
-> ```html
-> <script src="_content/MatBlazor/dist/matBlazor.js"></script>
-> <link href="_content/MatBlazor/dist/matBlazor.css" rel="stylesheet" />
-> ```
+## Installation
 
-We also need to add `@using MatBlazor` in our `_Imports.razor`.
+- In your BlazorWebAssembly project, in the Solution Explorer, right click the Dependencies and select `Manage NuGet Packages`
+- On the `Browse` Tab, search for `MatBlazor`. **Ensure to check the `Include Prerelease` option**
+- Install the `MatBlazor` package by Vladimir Samoilenko
+- Add the following code in the `head` section of `index.html` 
+
+```html
+<script src="_content/MatBlazor/dist/matBlazor.js"></script>
+<link href="_content/MatBlazor/dist/matBlazor.css" rel="stylesheet" />
+```
+
+- Add `@using MatBlazor` to your `_Imports.razor`
 
 ## Break Everything
 
-Let's remove all the stiles we don't want to use from the `app.css`. I'm going to delete everything, leaving only thise two (I'll explain later what these are for):
+Let's remove all the stiles we don't want to use from the `wwwroot/css/app.css`. I'm going to delete everything, leaving only these two (I'll explain later what these are for):
 
 ```css
 #blazor-error-ui {
@@ -113,12 +106,12 @@ Let's remove all the stiles we don't want to use from the `app.css`. I'm going t
     z-index: 1000;
 }
 
-#blazor-error-ui .dismiss {
-    cursor: pointer;
-    position: absolute;
-    right: 0.75rem;
-    top: 0.5rem;
-}
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
 ```
 
 Then I'm going to remove the link to bootstrap from `index.html`
@@ -127,7 +120,7 @@ Then I'm going to remove the link to bootstrap from `index.html`
 <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
 ```
 
-Right now, if you play your app you'll see a disaster (**if it still looks good, you either did not remove the link to bootstrap or you need to refresh your browser cache by reloading the page on your browser with `CTRL` + `F5`**)
+Right now, if you play your app you'll see a partial disaster (**if it still looks good, you either did not remove the link to bootstrap or you need to refresh your browser cache by reloading the page on your browser with `CTRL` + `F5`**)
 
 ## Let's fix it
 
@@ -204,7 +197,7 @@ In order to find where the navigation is defined, we need to start from the very
 Open `App.razor`.
 
 ```html
-<Router AppAssembly="@typeof(Program).Assembly">
+<Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
     </Found>
@@ -218,7 +211,7 @@ Open `App.razor`.
 
 You may have already noticed that `DefaultLayout="@typeof(MainLayout)"` attribute in the `<RouteView>` component.
 
-That is a reference to our application [Layout](https://docs.microsoft.com/en-us/aspnet/core/blazor/layouts?view=aspnetcore-5.0)
+That is a reference to our application [Layout](https://docs.microsoft.com/en-us/aspnet/core/blazor/layouts?view=aspnetcore-6.0)
 
 The basic idea is that our `Page` focuses on the content, while the `Layout` takes care of all the fluff that you want to have on every page but you don't want to have to rewrite over and over and over.
 
@@ -227,24 +220,29 @@ Since the navigation is indedd something that we want to have on each page, that
 ```html
 @inherits LayoutComponentBase
 
-<div class="sidebar">
-    <NavMenu />
-</div>
-
-<div class="main">
-    <div class="top-row px-4">
-        <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
     </div>
 
-    <div class="content px-4">
-        @Body
+    <div class="main">
+        <div class="top-row px-4">
+            <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+        </div>
+
+        <div class="content px-4">
+            @Body
+        </div>
     </div>
 </div>
 ```
 
-As you can see, it contains some html that make use of the Bootstrap classes (which of course don't work anymore because we removed the link to `bootstrap.css` from our `index.html`).
+As you can see, it contains some html that make use of the Bootstrap classes (which of course don't work anymore because we removed the link to `bootstrap.css` from our `index.html`).  
+What you may have not noticed is that in the Solution explorer, you can see a small arrow on the left of the MainLayout.razor filename and that if you click on it you can see an additional `MainLayout.razor.css`.
+That file is using [CSS Isolation](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/css-isolation?view=aspnetcore-6.0), a technique to define component-specific styles by creating a `.razor.css` file matching the name of the `.razor` file for the component in the same folder. The `.razor.css` file is a `scoped CSS file`.  
+We can remove the `MainLayout.razor.css` file, since all the styles we need are already in MatBlazor.
 
-Let's replace those classes with the classes and components found on `MatBlazor`.
+Now we can replace the html of `MainLayout.razor` with some `MatBlazor` components.
 
 I Like the idea of having a sidebar that opens or closes at the click of a button, so I'm going to use a [Drawer](https://www.matblazor.com/Drawer).
 
@@ -256,9 +254,9 @@ The `MatDrawer` will contain our `<NavMenu>`, while the `MatDrawerContent` will 
 
 The AppBar also has a container (`<MatAppBarContainer>`) with the bar ( `<MatAppBar>`) and the content (`<MatAppBarContent>`).
 
-The `MatDrawer` can appear or disappear depending on the value of an `Opened` property, which we can [bind](https://docs.microsoft.com/en-us/aspnet/core/blazor/data-binding?view=aspnetcore-5.0#parent-to-child-binding-with-component-parameters) to a boolean variable.
+The `MatDrawer` can appear or disappear depending on the value of an `Opened` property, which we can [bind](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/data-binding?view=aspnetcore-6.0) to a boolean variable.
 
-We're going to change the value of our variable [at the click of a button](https://docs.microsoft.com/en-us/aspnet/core/blazor/event-handling?view=aspnetcore-5.0)
+We're going to change the value of our variable [at the click of a button](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/event-handling?view=aspnetcore-6.0)
 
 ```html
 @inherits LayoutComponentBase
@@ -297,7 +295,7 @@ We're going to change the value of our variable [at the click of a button](https
 }
 ```
 
-Running the application now look already more pleasing to the eye, although not completely yet. At least you should see the drawer opening and closing when you click on the menu icon.
+Running the application now, you'll see that the UI looks different, although it's not complete yet. At least you should see the drawer opening and closing when you click on the menu icon.
 
 ## The Navigation Bar
 
@@ -310,7 +308,6 @@ What is `<NavMenu>`? It's yet another component of ours, also to be found in the
         <span class="navbar-toggler-icon"></span>
     </button>
 </div>
-
 
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <ul class="nav flex-column">
@@ -354,6 +351,8 @@ Which means that all what's left is simply
   <MatNavItem Href="/photos/upload">Upload Photo <MatIcon Icon="@MatIconNames.Add"></MatIcon></MatNavItem>
 </MatNavMenu>
 ```
+
+You can also delete the corresponding `NavMenu.razor.css` file from the Solution Explorer.  
 
 If you navigate to your home page, you should already see a better layout than before. Clicking on the links of the navigation bar should take you to the correct pages and style the menu items accordingly.
 
@@ -406,13 +405,12 @@ Our `MainLayout.razor` becomes:
     Secondary = MatThemeColors.BlueGrey._500.Value
   };
 }
-
 ```
 
 Save and verify that your color scheme is changed.
 
 ## The Details Page
-The html section of the `Details` component will look pretty much like the `AllPhotos` page.
+The html section of the `PhotoDetails.razor` page will look pretty much like the `AllPhotos.razor` page.
 
 
 ```html
@@ -454,10 +452,11 @@ The html section of the `Details` component will look pretty much like the `AllP
 
 ## The Upload Page
 
-Let's tackle the `Upload` Page.
+Let's tackle the `UploadPhoto` Page.
 
-We still need our [EditForm](https://docs.microsoft.com/en-us/aspnet/core/blazor/forms-validation?view=aspnetcore-5.0). 
-Inside the form we will need [TextFields](https://www.matblazor.com/TextField) and [FileUpload](https://www.matblazor.com/FileUpload) (yes, MatBlazor has a working FileUpload so we can get rid of the one we added at the beginning!)
+We still need our [EditForm](https://docs.microsoft.com/en-us/aspnet/core/blazor/forms-validation?view=aspnetcore-6.0). 
+Inside the form we will need [TextFields](https://www.matblazor.com/TextField) and [FileUpload](https://www.matblazor.com/FileUpload).  
+We also need to change the code to handle the selection of the file, because MatBlazor passes different parameters than the ones we had with the native Blazor `FileUpload` component.
 
 ```html
 @page "/photos/upload"
@@ -508,11 +507,10 @@ Inside the form we will need [TextFields](https://www.matblazor.com/TextField) a
 
   async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
     IMatFileUploadEntry file = files.FirstOrDefault();
-    photo.ImageMimeType = file.Type;
-
     if (file == null) {
       return;
     }
+    photo.ImageMimeType = file.Type;
 
     using (var stream = new System.IO.MemoryStream()) {
       await file.WriteToStreamAsync(stream);
@@ -524,7 +522,7 @@ Inside the form we will need [TextFields](https://www.matblazor.com/TextField) a
 
 ## The Update Page
 
-The `Update` will look more or less the same, we just need to modify the button into update instead of add.
+The `UpdatePhoto.razor` will look more or less the same, we just need to modify the button into update instead of add.
 
 ```html
 @page "/photos/update/{id:int}"
@@ -583,11 +581,12 @@ The `Update` will look more or less the same, we just need to modify the button 
 
   async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
     IMatFileUploadEntry file = files.FirstOrDefault();
-    photo.ImageMimeType = file.Type;
-
+    
     if (file == null) {
       return;
     }
+    
+    photo.ImageMimeType = file.Type;
 
     using (var stream = new System.IO.MemoryStream()) {
       await file.WriteToStreamAsync(stream);
@@ -597,14 +596,9 @@ The `Update` will look more or less the same, we just need to modify the button 
 }
 ```
 
-This means we can get rid of the BlazorInputFile by:
-- Removing the `BlazorInputFile` NuGet Package
-- Removing the `link` to the script in the `index.html`
-- Removing the `@using` from the `_Imports.razor`
-
 ## The Delete Page
 
-The last template we have to change is the one of the `Delete` Page, which will look similar to the `Details` view.
+The last template we have to change is the one of the `DeletePhoto.razor` Page, which will look similar to the `PhotoDetails` page.
 
 ```html
 @page "/photos/delete/{id:int}"
@@ -668,4 +662,4 @@ Our styling is complete.  Our next lab will focus on some refactoring: we will c
 - A `PhotoDisplayComponent` that we will use from the `AllPhotos`, `Details` and `Delete` pages
 - A `PhotoEditComponent` that we will use from `Upload` and `Update` pages
 
-Go to `Labs/Lab04`, open the `readme.md` and follow the instructions thereby contained.   
+Go to `Labs/Lab04`, open the `readme.md` and follow those instructions to continue.   

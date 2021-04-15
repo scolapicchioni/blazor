@@ -46,17 +46,15 @@
 
     async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
         IMatFileUploadEntry file = files.FirstOrDefault();
-        photo.ImageMimeType = file.Type;
-
         if (file == null) {
             return;
         }
+
+        photo.ImageMimeType = file.Type;
 
         using (var stream = new System.IO.MemoryStream()) {
             await file.WriteToStreamAsync(stream);
             photo.PhotoFile = stream.ToArray();
         }
-
     }
-
 }

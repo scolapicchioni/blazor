@@ -1,11 +1,8 @@
-﻿@page "/photos/all"
-
-@using PhotoSharingApplication.Frontend.Core.Interfaces
+﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 
-
-<h3>AllPhotos</h3>
+@page "/photos/all"
 
 <NavLink href="photos/upload">Upload new Photo</NavLink>
 
@@ -17,7 +14,6 @@
     <p>@photo.Id</p>
     <p>@photo.Title</p>
     <p>@photo.Description</p>
-    <p>@photo.CreatedDate.ToShortDateString()</p>
     <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
     <div>
         <NavLink href="@($"photos/details/{photo.Id}")">Details</NavLink>
@@ -25,7 +21,6 @@
         <NavLink href="@($"photos/delete/{photo.Id}")">Delete</NavLink>
     </div>
 </article>
-
     }
 }
 
@@ -35,5 +30,4 @@
     protected override async Task OnInitializedAsync() {
         photos = await photosService.GetPhotosAsync();
     }
-
 }

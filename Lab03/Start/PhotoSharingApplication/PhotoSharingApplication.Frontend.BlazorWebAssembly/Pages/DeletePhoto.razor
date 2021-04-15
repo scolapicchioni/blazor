@@ -1,11 +1,9 @@
-﻿@page "/photos/delete/{id:int}"
-
-@using PhotoSharingApplication.Frontend.Core.Interfaces
+﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-<h3>Delete</h3>
+@page "/photos/delete/{id:int}"
 
 @if (photo == null) {
     <p>...Loading...</p>

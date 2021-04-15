@@ -1,11 +1,8 @@
-﻿@page "/photos/details/{id:int}"
-
-@using PhotoSharingApplication.Frontend.Core.Interfaces
+﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 
-
-<h3>Details</h3>
+@page "/photos/details/{id:int}"
 
 @if (photo == null) {
     <p>...Loading...</p>

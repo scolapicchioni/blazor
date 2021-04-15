@@ -5,33 +5,31 @@
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-<h3>Update</h3>
-
 @if (photo == null) {
     <p>...Loading...</p>
 } else {
-<EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
-    <p>
-        <label>
-            Title:
-            <InputText @bind-Value="photo.Title" />
-        </label>
-    </p>
-    <p>
-        <label>
-            Description (optional):
-            <InputTextArea @bind-Value="photo.Description" />
-        </label>
-    </p>
-    <p>
-        <label>
-            File:
-            <InputFile OnChange="HandleFileSelected" />
-        </label>
-    </p>
-    <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
-    <button type="submit">Submit</button>
-</EditForm>
+    <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
+        <p>
+            <label>
+                Title:
+                <InputText @bind-Value="photo.Title" />
+            </label>
+        </p>
+        <p>
+            <label>
+                Description (optional):
+                <InputTextArea @bind-Value="photo.Description" />
+            </label>
+        </p>
+        <p>
+            <label>
+                File:
+                <InputFile OnChange="HandleFileSelected" />
+            </label>
+        </p>
+        <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+        <button type="submit">Submit</button>
+    </EditForm>
 }
 
 @code {
@@ -49,12 +47,11 @@
         navigationManager.NavigateTo("/photos/all");
     }
 
-    private async Task HandleFileSelected(IFileListEntry[] files) {
-        IFileListEntry file = files.FirstOrDefault();
-        photo.ImageMimeType = file.Type;
+    private async Task HandleFileSelected(InputFileChangeEventArgs args) {
+        photo.ImageMimeType = args.File.ContentType;
 
         using (var streamReader = new System.IO.MemoryStream()) {
-            await file.Data.CopyToAsync(streamReader);
+            await args.File.OpenReadStream().CopyToAsync(streamReader);
             photo.PhotoFile = streamReader.ToArray();
         }
     }

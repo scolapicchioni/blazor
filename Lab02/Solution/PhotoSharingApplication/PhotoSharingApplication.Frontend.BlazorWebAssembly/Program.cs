@@ -7,14 +7,12 @@ using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PhotoSharingApplication.Frontend.BlazorWebAssembly {
-    public class Program
-    {
-        public static async Task Main(string[] args)
-        {
+    public class Program {
+        public static async Task Main(string[] args) {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("app");
+            builder.RootComponents.Add<App>("#app");
 
-            builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
             builder.Services.AddScoped<IPhotosService, PhotosService>();
             builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory.PhotosRepository>();

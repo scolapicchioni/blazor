@@ -1,12 +1,8 @@
-﻿@page "/photos/upload"
-
+﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
-
-<h3>UploadPhoto</h3>
+@page "/photos/upload"
 
 <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
     <p>
@@ -42,13 +38,11 @@
         await photosService.UploadAsync(photo);
         navigationManager.NavigateTo("/photos/all");
     }
-
-    private async Task HandleFileSelected(IFileListEntry[] files) {
-        IFileListEntry file = files.FirstOrDefault();
-        photo.ImageMimeType = file.Type;
+    private async Task HandleFileSelected(InputFileChangeEventArgs args) {
+        photo.ImageMimeType = args.File.ContentType;
 
         using (var streamReader = new System.IO.MemoryStream()) {
-            await file.Data.CopyToAsync(streamReader);
+            await args.File.OpenReadStream().CopyToAsync(streamReader);
             photo.PhotoFile = streamReader.ToArray();
         }
     }

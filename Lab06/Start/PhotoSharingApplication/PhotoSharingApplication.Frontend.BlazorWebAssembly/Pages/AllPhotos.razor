@@ -1,13 +1,13 @@
-﻿@page "/photos/all"
+﻿@inject IPhotosService photosService
 
-@inject IPhotosService photosService
+@page "/photos/all"
 
-<MatH3>All Photos</MatH3>
+<MatH3>AllPhotos</MatH3>
 
 <MatButton Link="photos/upload">Upload new Photo</MatButton>
 
 @if (photos == null) {
-    <p>...Loading</p>
+    <p class="mat">...Loading...</p>
 } else {
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
@@ -26,5 +26,4 @@
     protected override async Task OnInitializedAsync() {
         photos = await photosService.GetPhotosAsync();
     }
-
 }

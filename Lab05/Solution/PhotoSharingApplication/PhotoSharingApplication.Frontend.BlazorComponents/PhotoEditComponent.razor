@@ -1,6 +1,4 @@
-﻿@using PhotoSharingApplication.Shared.Core.Entities
-
-<MatCard>
+﻿<MatCard>
     <MatH3>Upload Photo</MatH3>
     <MatCardContent>
         <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
@@ -17,17 +15,16 @@
                 <MatButton Type="submit">Upload</MatButton>
             </p>
         </EditForm>
-        <MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
+        <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
     </MatCardContent>
 </MatCard>
 
 @code {
     [Parameter]
     public Photo Photo { get; set; }
-    
+
     [Parameter]
     public EventCallback<Photo> OnSave { get; set; }
-
 
     async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
         IMatFileUploadEntry file = files.FirstOrDefault();
@@ -41,6 +38,5 @@
             await file.WriteToStreamAsync(stream);
             Photo.PhotoFile = stream.ToArray();
         }
-
     }
 }

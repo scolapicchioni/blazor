@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace PhotoSharingApplication.Shared.Core.Entities {
     public class Photo {

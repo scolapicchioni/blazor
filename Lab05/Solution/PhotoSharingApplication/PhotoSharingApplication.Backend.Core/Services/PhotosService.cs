@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Frontend.Core.Services {
+namespace PhotoSharingApplication.Backend.Core.Services {
     public class PhotosService : IPhotosService {
         private readonly IPhotosRepository repository;
         public PhotosService(IPhotosRepository repository) => this.repository = repository;

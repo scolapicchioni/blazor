@@ -1,20 +1,21 @@
-# Backend: Web API with ASP.NET 5 and Visual Studio 2019 Preview
+# Backend: Web API with ASP.NET 6.0 and Visual Studio 2019 Preview
 
 In this lab we're going to take care of our Backend.
 
 We're going to use the same [CLEAN architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) that we have on the frontend:
 
 - A *Core* project where we define the business logic. There's going to be a Service that knows what to do (for example it validates the data before passing it to the infrastructure) 
-- An *Infrastructure* project where we define how to actually read and save the data. We're going to use [Entity Framework](https://docs.microsoft.com/en-gb/ef/core/)  to talk to a SQL Server DataBase.
-- An *Application* project, which in this case consists of a [REST](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET 5 Web API](https://docs.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-5.0&tabs=visual-studio).
+- An *Infrastructure* project where we define how to actually read and save the data. We're going to use [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/)  to talk to a SQL Server DataBase.
+- An *Application* project, which in this case consists of a [REST](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET Core 6.0 Web API](https://docs.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-6.0&tabs=visual-studio).
 
 Both the `Service` and the `Repository` will implement the interfaces and make use of the `Photo` entity that we have already defined on the fontend, so before we start, let's factor those out, into a new `Shared` project.
 
 ## The Shared Core
 
 - On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
-- Select `Class Library (.NET Standard)`. Click `Next`
+- Select `Class Library`. Click `Next`
 - In the  `Project Name` field, type `PhotoSharingApplication.Shared.Core`
+- Make sure to select the latest .NET Core Version (6.0 Preview) and click Create
 - Open the `PhotoSharingApplication.Frontend.Core`
 - Cut the following folders with their content:
     - `Interfaces`
@@ -25,7 +26,7 @@ Both the `Service` and the `Repository` will implement the interfaces and make u
     - Change the namespace of `IPhotosRepository` and `IPhotosService` to `PhotoSharingApplication.Shared.Core.Interfaces`
 - In the `PhotoSharingApplication.Frontend.Core`, 
     - Add a Project Reference to the `PhotoSharingApplication.Shared.Core`
-    - Open the `Service` and change the `using` to match the new namespaces
+    - Open the `Services\PhotosService.cs` file and change the `using` to match the new namespaces
 - In the `PhotoSharingApplication.Frontend.Infrastructure`
     - Open the `Repository` and change the `using` to match the new namespaces
 - In the `PhotoSharingApplication.Frontend.BlazorWebAssembly`
@@ -39,11 +40,14 @@ Run the application and verify that everything works as before
 ## The Backend Core
 
 - On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
-- Select `Class Library (.NET Standard)`. Click `Next`
+- Select `Class Library`. Click `Next`
 - In the  `Project Name` field, type `PhotoSharingApplication.Backend.Core`
+- Make sure to select the latest .NET Core version (6.0 Preview) and click `Create`
 - Add a project reference to `PhotoSharingApplication.Shared.Core`
 
 Now we can implement our service, which for now will just pass the data to the repository and return the results, with little or no additional logic (we will replace it later). We are going to use the [Dependency Injection pattern](https://martinfowler.com/articles/injection.html?) to request for a repository.
+
+Create a new folder `Services` and add a `PhotosService.cs` class
 
 ```cs
 public class PhotosService : IPhotosService {
@@ -67,35 +71,20 @@ using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
 ```
 
-Now, it's true that this class looks like the one we have for the frontend, so we may be tempted to share this as well, but we could also argue that the logic server side may very well be more convoluted than the one on the frontend (you may not want to share your *secrets* with the client), sp we're going to keep them separated even if in our case they do the same thing.
+Now, it's true that this class looks like the one we have for the frontend, so we may be tempted to share this as well, but we could also argue that the logic server side may very well be more convoluted than the one on the frontend (you may not want to share your *secrets* with the client), so we're going to keep them separated even if in our case they do the same thing.
 
 ## The Backend Infrastructure
 
 - On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
-- Select `Class Library (.NET Standard)`. Click `Next`
+- Select `Class Library`. Click `Next`
 - In the  `Project Name` field, type `PhotoSharingApplication.Backend.Infrastructure`
-- On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
+- Make sure to select the latest .NET Core version (6.0 Preview) and click `Create`
+- On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Backend.Infrastructure` project
 - Select `Add Project Reference`
 - Check the checkbox next to `PhotoSharingApplication.Shared.Core`
 - Click `Ok`
 
-In order to use EntityFrameworkCore 5, you need to update the target framework of your library to 2.1:
-
-- Double click on the project name on the Solution Explorer and replace
-
-```xml
-<PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-</PropertyGroup> 
-```  
-  with 
-```xml
-<PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-</PropertyGroup>
-```
-
-- Add the following NuGet packages:
+- Add the following NuGet packages (make sure to install the latest prerelease version):
     - `Microsoft.EntityFrameworkCore`
     - `Microsoft.EntityFrameworkCore.SqlServer`
     - `Microsoft.EntityFrameworkCore.Tools`
@@ -137,11 +126,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder) {
 private void ConfigurePhoto(EntityTypeBuilder<Photo> builder) {
     builder.ToTable("Photos");
 
-    builder.Property(ci => ci.Id)
-        .UseHiLo("photos_hilo")
-        .IsRequired();
-
-    builder.Property(ci => ci.Title)
+    builder.Property(photo => photo.Title)
         .IsRequired(true)
         .HasMaxLength(255);
 }
@@ -211,7 +196,7 @@ public PhotosRepository(PhotoSharingApplicationContext context) {
     this.context = context;
 }
 ```
-Now we're going to use [Asynchronous saving](https://docs.microsoft.com/en-gb/ef/core/saving/async) to Add, Update and Delete data.
+Now we're going to use [Asynchronous operations](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/async) to Create, Reade, Update and Delete data.
 
 
 - The code to [Add](https://docs.microsoft.com/en-gb/ef/core/saving/basic#adding-data) the Photo to the DataBase becomes:
@@ -293,7 +278,7 @@ Here is the API that you'll create:
 
 The client submits a request and receives a response from the application. Within the application we find the controller, which makes use of the Service we implemented in the *Backend.Core* project. The request comes into the application's controller, and read/write operations occur between the controller and the service. The model is serialized and returned to the client in the response.
 
-The **client** is whatever consumes the web API (browser, mobile app, and so forth). We aren't writing a client in this tutorial. We'll use [Postman](https://www.getpostman.com/apps) to test the app. We will write the client in the following lab.
+The **client** is whatever consumes the web API (browser, mobile app, and so forth). We aren't writing a client in this tutorial. We'll use [Swagger / OpenApi](https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-help-pages-using-swagger?view=aspnetcore-6.0) to try the app. We will write the client in the following lab.
 
 A **model** is an object that represents the data in your application. In this case, the only model is a Photo item. Models are represented as simple C# classes (POCOs).
 
@@ -302,16 +287,13 @@ A **controller** is an object that handles HTTP requests and creates the HTTP re
 ### Create the project
 
 - On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
-- Select the `ASP.NET Core Web Application` project template. 
+- Select the `ASP.NET Core Web Api` project template. 
     - Name the Project `PhotoSharingApplication.WebServices.REST.Photos`
-    - Select `Add`
-- In the `Create a new ASP.NET Core Web Application` window:
-    - Select `.NET Core`
-    - Select `ASP .NET 5`
-    - Select the `API` template
-    - Leave `No Authentication`. 
+    - Select `.NET 6.0 Preview`
+    - Leave the `Authentication Type` to `None`. 
     - Ensure that the `Configure for Https` checkbox is selected
     - Do not check `Enable Docker Support`.
+    - Ensure that `Enable OpenAPI Support` is selected
     - Click `Create`
 
 ### Add the Controller
@@ -320,26 +302,24 @@ A **controller** is an object that handles HTTP requests and creates the HTTP re
 - Select `API Empty`
 - Name the controller `PhotosController`
 
-The wizard took care of the [Controller](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0) by generating a class that derives from [ControllerBase](https://docs.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase), which provides many properties and methods that are useful for handling HTTP requests.
+The wizard took care of the [Controller](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0) by generating a class that derives from [ControllerBase](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase?view=aspnetcore-5.0&viewFallbackFrom=aspnetcore-6.0), which provides many properties and methods that are useful for handling HTTP requests.
 
 The `Microsoft.AspNetCore.Mvc` namespace provides attributes that can be used to configure the behavior of web API controllers and action methods.
 
-The [ApiController](https://docs.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.apicontrollerattribute) attribute was applied to the controller class to enable the following API-specific behaviors:
-- [Attribute routing requirement](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#attribute-routing-requirement)
-- [Automatic HTTP 400 responses](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#automatic-http-400-responses)
-- [Binding source parameter inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#binding-source-parameter-inference)
-- [Multipart/form-data request inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#multipartform-data-request-inference)
-- [Problem details for error status codes](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#problem-details-for-error-status-codes) 
-
-
+The [ApiController](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.apicontrollerattribute?view=aspnetcore-5.0&viewFallbackFrom=aspnetcore-6.0) attribute was applied to the controller class to enable the following API-specific behaviors:
+- [Attribute routing requirement](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#attribute-routing-requirement)
+- [Automatic HTTP 400 responses](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#automatic-http-400-responses)
+- [Binding source parameter inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#binding-source-parameter-inference)
+- [Multipart/form-data request inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#multipartform-data-request-inference)
+- [Problem details for error status codes](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#problem-details-for-error-status-codes) 
 
 ```cs
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers {
     [Route("api/[controller]")]
@@ -361,10 +341,15 @@ public PhotosController(IPhotosService service) {
     this.service = service;
 }
 ```
+Which requires
+
+```cs
+using PhotoSharingApplication.Shared.Core.Interfaces;
+```
 
 Now we can start implementing our CRUD methods.
 
-The controller and every action should be mapped to a route through the use of [routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-3.0) system, in particular [attribute routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-3.0#attribute-routing) and [attribute routing using http verbs attributes](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-3.0#attribute-routing-with-httpverb-attributes).
+The controller and every action should be mapped to a route through the use of [routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0) system, in particular [attribute routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0#attribute-routing-for-rest-apis) and [attribute routing using http verbs attributes](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0#http-verb-templates).
 
 We want all the routes to start with `photos` and not with `api/photos`, so, let's change the `[Route]` attribute at the beginning of out controller:
 
@@ -382,7 +367,13 @@ We need two methods to get the photos.
 public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service.GetPhotosAsync();
 ```
 
-It returns an `Task<ActionResult<IEnumerable<Photo>>>`. MVC automatically serializes the list of `Photo` to JSON and writes the JSON into the body of the response message. The response code for this method is 200, assuming there are no unhandled exceptions. (Unhandled exceptions are translated into 5xx errors.)
+Which requires
+
+```cs
+using PhotoSharingApplication.Shared.Core.Entities;
+```
+
+It returns a `Task<ActionResult<IEnumerable<Photo>>>`. MVC automatically serializes the list of `Photo` to JSON and writes the JSON into the body of the response message. The response code for this method is 200, assuming there are no unhandled exceptions. (Unhandled exceptions are translated into 5xx errors.)
 
 Here is an example HTTP response for the first `GetPhotos()` method:
 
@@ -487,17 +478,20 @@ It returns
 
 ## Registering the services and configuring the DbContext
 
-The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-5.0) features of `ASP.NET Core`.
+The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
 
 - Add a Project reference to your `PhotoSharingApplication.Backend.Infrastructure` 
 
-Open the [`Startup.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-5.0) file, find the `ConfigureServices` method and add the configuration for the DbContext:
+Open the [`Startup.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, find the `ConfigureServices` method and add the configuration for the DbContext:
 
 ```cs
 public void ConfigureServices(IServiceCollection services) {
     services.AddControllers();
     services.AddDbContext<PhotoSharingApplicationContext>(options =>
         options.UseSqlServer(Configuration.GetConnectionString("PhotoSharingApplicationContext")));
+    services.AddSwaggerGen(c => {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "PhotoSharingApplication.WebServices.REST.Photos", Version = "v1" });
+    });
 }
 ```
 
@@ -508,7 +502,7 @@ using Microsoft.EntityFrameworkCore;
 using PhotoSharingApplication.Backend.Infrastructure.Data;
 ```
 
-Add `PhotoSharingApplicationContext` the connection string to [configure](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-5.0) it in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-5.0#default-configuration):
+Add `PhotoSharingApplicationContext` the connection string to [configure](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0) it in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-configuration):
 
 ```json
 "ConnectionStrings": {
@@ -518,19 +512,20 @@ Add `PhotoSharingApplicationContext` the connection string to [configure](https:
 
 Now, the two interfaces and implementations.
 
-To use our service in the `PhotosController` controller, we need to perform a couple of steps, also described in the [Dependency Injection documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-5.0)
+To use our service in the `PhotosController` controller, we need to perform a couple of steps, also described in the [Dependency Injection documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0)
 
-
-[In the docs](https://docs.microsoft.com/en-gb/aspnet/core/blazor/dependency-injection?view=aspnetcore-5.0#add-services-to-an-app) they tell us what to do: 
-
-- Open the `Startup.cs` file of the `PhotoSharingApplication.Backend.REST.PhotosServices`project
-- Replace the current `COnfigureServices` method with the following
+- Open the `Startup.cs` file of the `PhotoSharingApplication.Backend.REST.Photos`project
+- Replace the current `ConfigureServices` method with the following
 
 ```cs
 public void ConfigureServices(IServiceCollection services) {
     services.AddControllers();
     services.AddDbContext<PhotoSharingApplicationContext>(options =>
         options.UseSqlServer(Configuration.GetConnectionString("PhotoSharingApplicationContext")));
+
+    services.AddSwaggerGen(c => {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "PhotoSharingApplication.WebServices.REST.Photos", Version = "v1" });
+    });
     services.AddScoped<IPhotosService, PhotosService>();
     services.AddScoped<IPhotosRepository, PhotosRepository>();
 }
@@ -545,18 +540,17 @@ using PhotoSharingApplication.Frontend.Core.Services;
 using PhotoSharingApplication.Shared.Core.Interfaces;
 ```
 
-
 ### Generate migrations and database
 
-The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/powershell).
+The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
 
-First, we need to add the tools by adding the following NuGet Packages to our `PhotoSharingApplication.WebServices.REST.Photos` project:
+First, we need to add the tools by adding the following NuGet Packages to our `PhotoSharingApplication.WebServices.REST.Photos` project (make sure to select the latest prerelease):
 
 - `Microsoft.EntityFrameworkCore`
 - `Microsoft.EntityFrameworkCore.SqlServer`
 - `Microsoft.EntityFrameworkCore.Tools`
 
-Then, as per the documentation:
+Then, as per the [documentation](https://docs.microsoft.com/en-us/ef/core/cli/powershell):
 
 > Before using the tools:
 > 
@@ -593,116 +587,81 @@ Update-Database -Project PhotoSharingApplication.Backend.Infrastructure -Startup
 
 You should now have a new SQL Server database called `PhotoSharingApplicationContextBlazorLabs` with one empty `Photos` table.
 
-### Try the Get Actions of the controller
+### Try the Actions of the controller
 
-In Visual Studio, set the `PhotoSharingApplication.WebServices.REST.Photos` project as startup project, then press `CTRL+F5` to launch the app. Visual Studio launches a browser and navigates to http://localhost:port/weatherforecast, where port is a randomly chosen port number. Navigate to the Photos controller at `http://localhost:port/products`.
+In Visual Studio, set the `PhotoSharingApplication.WebServices.REST.Photos` project as startup project, then press `F5` to launch the app. Visual Studio launches a browser and navigates to `http://localhost:port/swagger`, where port is a randomly chosen port number. 
 
-You should see an empty JSON array. 
-
-### Install Postman
-
-This tutorial uses Postman to test the web API.
-
-- Install [Postman](https://www.getpostman.com/downloads/)
-- Start the web app.
-- Start Postman.
-- Disable SSL certificate verification
-- From File > Settings (*General tab), disable SSL certificate verification.
-
-### Use Postman to send a Create request
-
-- Set the HTTP method to POST
-- Select the Body radio button
-- Select the raw radio button
-- Set the type to JSON
-- In the key-value editor, enter a photo item such as
+- Try the Get action of the Photos controller using the provided UI.
+    - You should see an empty JSON array in the Response Body. 
+- Try the POST action of the Photos controller passing the following Request Body
 
 ```json
 {
-	"id" : 0,
-	"title" : "A New Photo",
-	"description" : "The Description of the new Photo",
-	"userName" : "alice"
+  "id": 0,
+  "title": "One Photo",
+  "photoFile": "",
+  "imageMimeType": "jpg",
+  "description": "One Nice Photo",
+  "createdDate": "2021-04-15T19:45:53.780Z",
+  "userName": "alice"
 }
 ```
+You should see the 201 and the response body. Also notice the `Location` between the Response Headers.
 
-Select `Send`
+If you add multiple photos and try GET action again, you should see an array with all the photos you added.
 
-Select the `Headers` tab in the lower pane and copy the `Location` header.
+Try the Get for `Photos/{id}` and pass `1` as an `ID`
 
-You can use the `Location` header URI to access the resource you just created.
-
-If you add multiple photos and try to navigate to the photos again, you should see an array with all the photos you added.
-
-
-Navigate to `http://localhost:port/photos/1`
-
-You should see this response:
+You should see this in the Response Body:
 
 ```
-HTTP/1.1 200 OK
-Transfer-Encoding: chunked
-Content-Type: application/json; charset=utf-8
-
 {
-    "id": 1,
-    "title": "A New Photo",
-    "photoFile": null,
-    "imageMimeType": null,
-    "description": "The Description of the new Photo",
-    "createdDate": "2020-05-13T11:52:55.7818333",
-    "userName": "alice"
+  "id": 1,
+  "title": "One Photo",
+  "photoFile": "",
+  "imageMimeType": "jpg",
+  "description": "One Nice Photo",
+  "createdDate": "2021-04-15T21:46:57.5387909",
+  "userName": "alice"
 }
 ```
 
-Navigate to `http://localhost:port/photos/99`
+Try the action again passing `99` as an `ID`
 
-You should see this response header:
-
-```
-HTTP/1.1 404 Not Found
-Content-Length: 0
-```
-
-### Try the Update Action
-
-You can use POSTMAN to test the Update action.
-
-- Set the HTTP method to PUT
-- Set the address to `http://localhost:port/photos/1`
-- Select the Body radio button
-- Select the raw radio button
-- Set the type to JSON
-- In the key-value editor, enter a photo item such as
+You should see a 404 with a response body similar to this one:
 
 ```json
 {
-    "id": 1,
-    "title": "Updated Photo Title",
-    "photoFile": null,
-    "imageMimeType": null,
-    "description": "The Updated Description of the updated Photo",
-    "createdDate": "2020-05-13T11:52:55.7818333",
-    "userName": "bob"
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+  "title": "Not Found",
+  "status": 404,
+  "traceId": "00-5547642c46e21ce1f9f84f172bea9924-126e589ed8633505-00"
 }
 ```
 
-Select `Send`
+Try the `PUT` method, passing `1` as an `ID` and the following request body:
 
-Verify that the respons is a 200 and that its body contains the updated photo object.
+```json
+{
+  "id": 0,
+  "title": "string",
+  "photoFile": "string",
+  "imageMimeType": "string",
+  "description": "string",
+  "createdDate": "2021-04-15T19:54:12.913Z",
+  "userName": "string"
+}
+```
 
-### Try the Delete Action
 
-You can use POSTMAN to test the Delete action.
+Verify that the response is a 200 and that its body contains the updated photo object.
 
-- Set the HTTP method to DELETE
-- Set the address to `http://localhost:port/photos/1`
+Try the `DELETE` action passing `1` as an `ID`.
 
-Select `Send`
-
-Check that the response contains the first photo.
-If you call the action to get all the photos, you should not see the photo with id 1 anymore.
+Check that the Response Status Code is 200 and that its Response Body contains the first photo.
+I
+f you call the action to get all the photos, you should not see the photo with id 1 anymore.
 
 Our service is ready. In the next lab we will setup the client side. 
 
-Go to `Labs/Lab06`, open the `readme.md` and follow the instructions thereby contained.   
+Go to `Labs/Lab06`, open the `readme.md` and follow the instructions to continue.   

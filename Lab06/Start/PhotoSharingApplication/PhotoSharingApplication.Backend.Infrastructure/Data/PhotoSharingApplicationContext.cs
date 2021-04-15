@@ -4,10 +4,7 @@ using PhotoSharingApplication.Shared.Core.Entities;
 
 namespace PhotoSharingApplication.Backend.Infrastructure.Data {
     public class PhotoSharingApplicationContext : DbContext {
-        public PhotoSharingApplicationContext(DbContextOptions<PhotoSharingApplicationContext> options)
-            : base(options) {
-        }
-
+        public PhotoSharingApplicationContext(DbContextOptions<PhotoSharingApplicationContext> options) : base(options) { }
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             modelBuilder.Entity<Photo>(ConfigurePhoto);
         }
@@ -15,11 +12,7 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Data {
         private void ConfigurePhoto(EntityTypeBuilder<Photo> builder) {
             builder.ToTable("Photos");
 
-            builder.Property(ci => ci.Id)
-                .UseHiLo("photos_hilo")
-                .IsRequired();
-
-            builder.Property(ci => ci.Title)
+            builder.Property(photo => photo.Title)
                 .IsRequired(true)
                 .HasMaxLength(255);
         }

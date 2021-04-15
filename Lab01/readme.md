@@ -6,7 +6,7 @@ Since we don't have a working backend, our data won't come from a real database 
 
 Let's start by building the client side application using **Blazor**.
 
-From the [official Blazor documentation:](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-5.0)
+From the [official Blazor documentation:](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0)
 
 ## What is Blazor?
 
@@ -16,7 +16,7 @@ From the [official Blazor documentation:](https://docs.microsoft.com/en-us/aspne
 > - Render the UI as HTML and CSS for wide browser support, including mobile browsers.
 > - Integrate with modern hosting platforms, such as Docker.
 
-Take some time to read [the whole document](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-5.0) to get a hang of what it is and how it works. Especially because, in order to begin, we need to make a choice between [Blazor Server](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-5.0#blazor-server) and [Blazor Web Assembly](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-5.0#blazor-webassembly).
+Take some time to read [the whole document](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0) to get a hang of what it is and how it works. Especially because, in order to begin, we need to make a choice between [Blazor Server](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0#blazor-server) and [Blazor Web Assembly](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0#blazor-webassembly).
 
 Personally, I'm not a big fan of Blazor Server. Sure,
 
@@ -46,32 +46,26 @@ So I guess we're left with Blazor Web Assembly (AKA Blazor Client), which means:
 So, now that we know what we're going to use, let's see how.
 
 In short, you need:
-- Visual Studio
-- .NET 5
-- Blazor WebAssembly templates
+- The latest **preview** of Visual Studio 2019
+- .NET 6 Preview 
 
-In the future (November 2020) it's all going to be included in a big Visual Studio 2019 Update, but for now you need to install those three things separately. 
+In the future (November 2021) we'll get the official release of .NET 6 and it's going to be supported in Visual Studio 2019, but for now you need to install the Preview version. 
 
 - [Install the latest **preview** of Visual Studio 2019](https://visualstudio.microsoft.com/vs/preview/) *with the ASP.NET and web development workload*.
-- [Install .NET 5](https://dotnet.microsoft.com/download/dotnet/5.0)
-- Install the Blazor WebAssembly Preview template by running the following command:
+- [Install .NET 6 Preview](https://dotnet.microsoft.com/download/dotnet/6.0)
 
-```
-dotnet new -i Microsoft.AspNetCore.Components.WebAssembly.Templates::3.2.0-rc1.20223.4
-```
+If my instructions don't work it's probably because the version changed, so take a look at the [Get Started](https://dotnet.microsoft.com/learn/aspnet/blazor-tutorial/install) page and follow those instructions on what to install (the versions change *pretty* often).
 
-If my instructions don't work it's probably because the version changed, so take a look at the [Get Started](https://docs.microsoft.com/en-us/aspnet/core/blazor/get-started?view=aspnetcore-5.0&tabs=visual-studio) page and follow those instructions on what to install (the versions change *pretty* often).
-
-Anyway, when you're done installing all of this stuff, we can start creating our first project.
+Anyway, when you're done installing, we can start creating our first project.
 
 - Open Visual Studio.
 - Create a new project.
-- Select `Blazor App`. Select `Next`.
+- Select `Blazor WebAssembly App`. Select `Next`.
 - In the `Solution Name` field, type `PhotoSharingApplication`
 - In the `Project name` field, type `PhotoSharingApplication.Frontend.BlazorWebAssembly` 
 - Provide a `Location` for the project, such as `Lab01\Start`. 
-- Select `Create`.
-- Choose the `Blazor WebAssembly App` template.
+- Be sure to select the latest .net version (.Net 6.0 Preview)
+- Leave the rest as default: No authentication Type, Enable Https, Not hosted, no Progressive Web Application 
 - Select `Create`.
 
 Ok, so now we have a working application (you can run it with `F5` if you want to see how it looks).
@@ -120,7 +114,7 @@ From now on, your server is free to shut itself down if it pleases, because your
   - builds and runs the `WebAssemblyHost`
 - The `WebAssemblyHost` now looks for the `app` tag (which we saw on the `index.html`) and replaces it with the `App` component
 - The `App` component (which you can find in the root of your project, it's called `App.razor`) contains the `Router`  component (that `<Router>` tag that you see in `App.razor`)
-- The [`Router` component](https://docs.microsoft.com/en-gb/aspnet/core/blazor/routing?view=aspnetcore-5.0) (which is a Microsoft component,  not part of our project source code)
+- The [`Router` component](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-6.0) (which is a Microsoft component,  not part of our project source code)
   - Checks the address in the browser
   - Checks if there's any component that registered itself on that address
   - If it finds it, it renders its content
@@ -159,11 +153,11 @@ We did it! We created our first *Razor component*!
 
 ## Ok, but what is, actually, a *Razor component*?
 
-Let's read some more [documentation](https://docs.microsoft.com/en-us/aspnet/core/blazor/components?view=aspnetcore-5.0):
+Let's read some more [documentation](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0):
 
 > A component is a self-contained chunk of user interface (UI), such as a page, dialog, or form. A component includes HTML markup and the processing logic required to inject data or respond to UI events. Components are flexible and lightweight. They can be nested, reused, and shared among projects.
 
-Read the [Component Classes](https://docs.microsoft.com/en-us/aspnet/core/blazor/components?view=aspnetcore-5.0#component-classes) chapter on the docs to understand how a component works.
+Read the [Component Classes](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0#component-classes) chapter on the docs to understand how a component works.
 
 As a recap: each component contains
 - UI
@@ -185,7 +179,7 @@ For the time being we will display a simple list retrieved from memory.
 
 Let's add some data and use it to dynamically render the UI.
 
-According to the [docs](https://docs.microsoft.com/en-us/aspnet/core/blazor/components?view=aspnetcore-5.0#component-classes): 
+According to the [docs](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0#component-classes): 
 
 > Component members can be used as part of the component's rendering logic using C# expressions that start with @. For example, a C# field is rendered by prefixing @ to the field name. 
 
@@ -234,7 +228,7 @@ Now of course we want to show something more than just a  title, so let's create
 ```
 
 Right now, running the application would result in an exception because our photo is null. 
-Let's correct the UI to handle this problem, by testing if the photo is null and conditionally render a loading message if it is. For this we will use an [if Razor control structure](https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-5.0#control-structures):
+Let's correct the UI to handle this problem, by testing if the photo is null and conditionally render a loading message if it is. For this we will use an [if Razor control structure](https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-6.0#control-structures):
 
 ```cs
 @page "/photos/all"
@@ -253,7 +247,7 @@ else
 }
 ```
 
-We need to create a new Photo instance and we can do it in one of the [lifecycle](https://docs.microsoft.com/en-us/aspnet/core/blazor/lifecycle?view=aspnetcore-5.0#lifecycle-methods) methods of our component:  
+We need to create a new Photo instance and we can do it in one of the [lifecycle](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/lifecycle?view=aspnetcore-6.0) methods of our component:  
 
 ```cs
 protected override void OnInitialized()
@@ -264,7 +258,7 @@ protected override void OnInitialized()
 
 Running the application now should show the data we have.
 
-We are expecting more than one picture, so let's change the code to have a List and let's loop through the list to build multiple UI elements by using a [foreach Razor control structure](https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-5.0#control-structures).
+We are expecting more than one picture, so let's change the code to have a List and let's loop through the list to build multiple UI elements by using a [foreach Razor control structure](https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-6.0#control-structures).
 
 The final code will look like this:
 

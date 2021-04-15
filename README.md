@@ -8,7 +8,7 @@ We're going to build a simple web site where people can post pictures and commen
 
 We are going to build 3 parts. 
 - The *FrontEnd*, a **Blazor Client** Web Application
-- The *Backend*, built with .NET 5, will consist of 
+- The *Backend*, built with .NET 6.0, will consist of 
     - A **REST** service for the managing of the pictures
     - A **gRPC** service for the comments
 - The *Identity Provider* will be our own **Identity Server 4**.
@@ -23,13 +23,13 @@ This project will interact with the user through a browser by dinamically constr
 
 2.1  - Photos REST Service 
    - .NET 5 Web API Controller
-   - Entity Framework 5
+   - Entity Framework Core 6.0
    - Sql Server Database
    - Identity Server Client Authentication
 
 2.2  - Comments gRPC Service 
    - .NET 5 gRPC Service
-   - Entity Framework 5
+   - Entity Framework Core 6.0
    - Sql Server Database
    - Identity Server Client Authentication
 
@@ -50,10 +50,10 @@ This project will take care of the authentication part. It will issue JWT tokens
 - REST
 - gRPC
 - Blazor
-- ASP.NET 5 Web API Controller
-- ASP.NET 5 gRPC Service
-- Entity Framework
-- PostMan
+- ASP.NET Core 6.0 Web API Controller
+- ASP.NET Core 6.0 gRPC Service
+- Entity Framework Core 6.0
+- Swagger / OpenAPI
 - CORS
 - Authentication and Authorization
 - OAuth 2 and Open Id Connect
@@ -64,15 +64,14 @@ This project will take care of the authentication part. It will issue JWT tokens
 
 ## Before you begin
 
-At the time of the writing of this tutorial, .NET 5 is in preview. It is recommended that you install the latest **preview** version of Visual Studio 2019 in order to work with .NET 5.
+At the time of the writing of this tutorial, .NET Core 6.0 is in preview. It is recommended that you install the latest **preview** version of Visual Studio 2019 in order to work with .NET Core 6.0.
 
-If you're following this tutorial in the future (after November 2020), you may just need a normal version of Visual Studio which may come with .NET 5 on board, so your installations may vary. 
+If you're following this tutorial in the future (after November 2021), you may just need a normal version of Visual Studio which may come with .NET Core 6.0 on board, so your installations may vary. 
  
 - Install the latest **preview** of [Visual Studio 2019](https://visualstudio.microsoft.com/vs/preview/) with the **ASP.NET and web development** workload  
-- Install .NET 5 by downloading the [.NET 5 SDK](https://dotnet.microsoft.com/download/dotnet/5.0)
-- The Blazor WebAssembly templates are available in .NET 3.1. If it doens't come together with Visual Studio 2019 preview, install it separately by downloading from [here](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+- Install .NET Core 6.0 by downloading the [.NET Core 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
 
-You may want to go to the [getting started](https://docs.microsoft.com/en-gb/aspnet/core/blazor/get-started?view=aspnetcore-5.0&tabs=visual-studio) documentation for an updated set of instructions.
+You may want to go to the [getting started](https://dotnet.microsoft.com/learn/aspnet/blazor-tutorial/install) documentation for an updated set of instructions.
 
 ---
 
@@ -169,7 +168,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - Parent and Child Components
    - Properties
    - EventCallbacks
-- Lab 05 - Backend: Web API with ASP.NET 5 and Visual Studio 2019 Preview
+- Lab 05 - Backend: Web API with ASP.NET Core 6.0 and Visual Studio 2019 Preview
    - REST Protocol
    - Asp.NET Core Web Api
    - Controllers
@@ -178,7 +177,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - Binding
    - Entity Framework Core
    - JSON
-   - POSTMAN
+   - Swagger / OpenAPI
 - Lab 06 - Frontend: Connecting with the Backend
    - HttpClient
    - HttpClient Configuration
@@ -191,7 +190,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
 - Lab 07 - Frontend: Comments
    - More CLEAN architecture
    - More Components
-- Lab 08 - Backend: gRPC with ASP.NET 5 and Visual Studio 2019 Preview
+- Lab 08 - Backend: gRPC with ASP.NET Core 6.0 and Visual Studio 2019 Preview
    - More CLEAN architecture
    - gRPC
    - protobuf

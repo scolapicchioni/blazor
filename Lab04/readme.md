@@ -1,12 +1,12 @@
 # Frontend - Razor Class Libraries and Components
 
-Right now we have three pages (All, Details and Delete) that basically use the same layout: a card with the photo information. The only thing that changes are which buttons to show. This means that every time we make a change, we have to update the UI and the logic of three components (AllPhotos, Details and Delete), writing  the same code three times. This situation is less than ideal, so let's refactor the `card` into its own component and let's make it so that we can configure which buttons to show depending on the view.
+Right now we have three pages (All, Details and Delete) that basically use the same layout: a card with the photo information. The only thing that changes are which buttons to show. This means that every time we make a change, we have to update the UI and the logic of three components (AllPhotos, Details and Delete), writing  the same code three times. This situation is less than ideal, so let's refactor the `card` into its own component and let's make it so that we can configure which buttons to show depending on the scenario.
 
 ## The PhotoDetailsComponent
 
 First of all, let's create a `Components` folder under our `PhotoSharingApplication.Frontend.BlazorWebAssembly` project.
 
-In the `Components` folder, create a new `Razor Component` called  `PhotoDetailsComponent.vue`.
+In the `Components` folder, create a new `Razor Component` called  `PhotoDetailsComponent.razor`.
 
 Now cut the `MatCard` of the `AllPhotos` component and paste it in the `PhotoDetailsComponent` component.
 
@@ -23,7 +23,7 @@ Now cut the `MatCard` of the `AllPhotos` component and paste it in the `PhotoDet
   <MatCardContent>
     <MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
     <MatBody2>
-      @photo.Description
+      @Photo.Description
     </MatBody2>
   </MatCardContent>
   <MatCardActions>
@@ -36,7 +36,7 @@ Now cut the `MatCard` of the `AllPhotos` component and paste it in the `PhotoDet
 </MatCard>
 ```
 
-This time, instead of loading the product by asking it to the service, we will accept it as a [Parameter](https://docs.microsoft.com/en-us/aspnet/core/blazor/components?view=aspnetcore-5.0#parameters). So the `code` becomes
+This time, instead of loading the product by asking it to the service, we will accept it as a [Parameter](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0#parameters). So the `code` becomes
 
 ```cs
 @code {
@@ -51,7 +51,7 @@ Also, at the top of the component, add the `using`:
 @using PhotoSharingApplication.Frontend.Core.Entities
 ```
 
-Now let's [import the component](https://docs.microsoft.com/en-us/aspnet/core/blazor/components?view=aspnetcore-5.0#import-components)  from within the `AllPhotos` page.
+Now let's [use the component](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-5.0#use-components)  from within the `AllPhotos` page.
 
 We could already do it like this:
 
@@ -67,7 +67,7 @@ We could already do it like this:
 </div>
 ```
 
-It's a bit annoying that we have to write the whole namespace.
+It's a bit annoying that we have to write the whole [namespace](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-5.0#namespaces).
 To avoid this (here and in the other pages where we will use this components), let's add the `using` on our `_Imports.razor`:
 
 ```cs
@@ -96,12 +96,12 @@ Save and verify that the AllPhotos page still works as before.
 
 Because we want to use the card from within the `Details` and `Delete` pages as well, we need to be able to configure which buttons to show.
 - The `AllPhotos` page will configure the `PhotoDetailsComponent` to show: 
-  - A button to navigate to the `Details` View
-  - A button to navigate to the `Update` View
-  - A button to navigate to the `Delete` View
+  - A button to navigate to the `Details` Page
+  - A button to navigate to the `Update` Page
+  - A button to navigate to the `Delete` Page
 - The `Details` Page  will configure the `PhotoDetailsComponent` to show:
-  - A button to navigate to the `Update` View
-  - A button to navigate to the `Delete` View
+  - A button to navigate to the `Update` Page
+  - A button to navigate to the `Delete` Page
 - The `Delete` Page  will configure the `PhotoDetailsComponent` to show:
   - A button to actually delete the product
 
@@ -146,7 +146,7 @@ Now let's have the `AllPhotos` component it needs to show. We don't need to pass
 <PhotoDetailsComponent Photo="photo" Details Edit Delete></PhotoDetailsComponent>
 ```
 
-Let's repeat for the `Details` and `Delete` Pages.
+Let's repeat for the `PhotoDetails.razor` and `DeletePhoto.razor` Pages.
 
 ## Details page
 
@@ -174,15 +174,15 @@ Let's repeat for the `Details` and `Delete` Pages.
 
 The UI should work, but what shall we do with the button logic?
 
-From a design perspective, we want our component to be totally ignorant of its surroundings. Not only does it not know where the data comes from, it also knows nothing about what the logic. All it does is 
+From a design perspective, we want our component to be totally ignorant of its surroundings. Not only does it not know where the data comes from, it also knows nothing about what the logic should do. All it does is 
 - It renders html data received from a parent 
 - It alerts the parent whenever it's time to perform an action
 
 The action can be handled by the parent (the page in our case).
 
-It's time to introduce [Event Handling](https://docs.microsoft.com/en-us/aspnet/core/blazor/event-handling?view=aspnetcore-5.0).
+It's time to introduce [Event Handling](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/event-handling?view=aspnetcore-6.0).
 
-We need to do is to define and handle an [EventCallback](https://docs.microsoft.com/en-us/aspnet/core/blazor/event-handling?view=aspnetcore-5.0#eventcallback) for each event we want to define.
+We need to do is to define and handle an [EventCallback](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/event-handling?view=aspnetcore-6.0#eventcallback) for each event we want to define.
 
 ## DeleteConfirmed
 
@@ -217,14 +217,13 @@ Then, let's change the old Delete method to match the signature of EventCallback
   }
 ```
 
-
-We're done refactoring The Details. Let's repeat the same process for the Create / Update.
+We're done refactoring the Details. Let's repeat the same process for the Create / Update.
 
 ## The PhotoEditComponent
 
 Both the `Upload` and the `Update` page have more or less the same UI, so let's refactor it into a new `PhotoEditComponent` component.
 
-In the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, add a new `PhodoEditComponent.razor` Razor Component.
+In the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, add a new `PhotoEditComponent.razor` Razor Component.
 
 Cut the `<MatCard>` from the `Upload` page and paste it into the new component. For consistency, change the `photo` property into a `Photo` property.
 
@@ -353,12 +352,58 @@ The `Update` page also looks more or less the same:
 }
 ```
 
-Run the application and ensure that everything works just like before the refactoring.
+Run the application and ensure that everything works just like before refactoring.
 
-We're done, but we can go one step further by moving our two new components into their own [Razor Class Library](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/ui-class?view=aspnetcore-5.0&tabs=visual-studio)
+## Further refactor
 
-We would see the added value whenever we would start building a new project type, for example a [cross platform desktop application using WebView]( 
-https://www.thomasclaudiushuber.com/2020/02/18/hosting-blazor-app-in-winui-3-with-webview-2-and-call-blazor-component-method-from-winui/) or a [mobile application using the Mobile Bindings](https://docs.microsoft.com/en-us/mobile-blazor-bindings/), because we could reuse our components without having to rewrite the same code.
+Both the `PhotoEditComponent.razor` and the `PhotoDetailsComponent.razor` share this bit:
+
+```html
+<MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
+```
+
+so we can move that into a `PhotoPictureComponent.razor`, then reference that from both the parents.
+
+In the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, add a new `PhotoPictureComponent.razor` Razor Component.
+
+Cut the `<MatCardMedia>` from the `PhotoEditComponent` and paste it into the new component. 
+
+```html
+<MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
+```
+
+
+Add a `Photo` property.
+
+```cs
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+}
+```
+
+Add the `using` statement
+
+```cs
+@using PhotoSharingApplication.Frontend.Core.Entities
+```
+
+In both the `` and the ``, replace this code
+
+```html
+<MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
+```
+
+with this code
+
+```html
+<PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
+```
+
+
+We're done, but we can go one step further by moving our three new components into their own [Razor Class Library](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/ui-class?view=aspnetcore-6.0&tabs=visual-studio)
+
+We would see the added value whenever we would start building a new project type, for example a [Hosted Blazor WebAssembly App](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-6.0) or a [.NET MAUI Desktop Application](https://visualstudiomagazine.com/articles/2021/04/12/maui-desktop.aspx), because we could reuse our components without having to rewrite the same code.
 
 ## Razor Class Library
 
@@ -366,7 +411,11 @@ Let's add a `new project` to our solution.
 - In the `SolutionExplorer`, right click on the solution then select `Add` -> `New Project`
 - As `Template`, select `Razor Class Library`. Click `Next`
 - In the `Project Name` field, type `PhotoSharingApplication.Frontend.BlazorComponents`
-- Add the `MatBlazor`NuGet Package
+- Make Sure you select the latest version (.NET 6.0 Preview)
+- Do not check the option to support Pages and Views
+- Click Create
+- Add the `MatBlazor`NuGet Package (make sure to install the latest prerelease)
+- Add a reference to the `PhotoSharingApplication.Frontend.Core` project
 - Open `_Imports.razor` and add
 
 ```cs
@@ -374,7 +423,7 @@ Let's add a `new project` to our solution.
 @using MatBlazor
 ```
 
-- Move `PhotoDetailsComponent.razor` and `PhotoEditComponent.razor` components from the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project to the root folder of the  `PhotoSharingApplication.Frontend.BlazorComponents` project
+- Move `PhotoDetailsComponent.razor`, the `PhotoEditComponent.razor` and the `PhotoPictureComponent.razor` components from the `Components` folder  (which you can then delete) of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project to the root folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project
 - Open the `_Imports.razor` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
 - Change `@using PhotoSharingApplication.Frontend.BlazorWebAssembly.Components` in
 
@@ -383,12 +432,6 @@ Let's add a `new project` to our solution.
 ```
 
 Run the application and verify that everything still works as before.
-
-**NOTE: If it doesn't compile, open `PhotoSharingApplication.Frontend.BlazorComponents.csproj` and change the `<TargetFramework>` to `2.1`**
-
-```xml
-<TargetFramework>netstandard2.1</TargetFramework>
-```
 
 Ok, we're done for this lab, we can now move on to the next step, where we build an actual Backend.
 

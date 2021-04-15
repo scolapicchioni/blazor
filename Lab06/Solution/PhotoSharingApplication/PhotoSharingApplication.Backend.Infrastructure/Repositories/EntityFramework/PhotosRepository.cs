@@ -3,8 +3,8 @@ using PhotoSharingApplication.Backend.Infrastructure.Data;
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework {
     public class PhotosRepository : IPhotosRepository {
@@ -13,7 +13,6 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFram
         public PhotosRepository(PhotoSharingApplicationContext context) {
             this.context = context;
         }
-
         public async Task<Photo> CreateAsync(Photo photo) {
             context.Add(photo);
             await context.SaveChangesAsync();
@@ -22,11 +21,10 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFram
 
         public async Task<Photo> FindAsync(int id) => await context.Photos.SingleOrDefaultAsync(m => m.Id == id);
 
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await (from p in context.Photos
-                                                                                 orderby p.CreatedDate descending
-                                                                                 select p).Take(amount).ToListAsync();
-
-    
+        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) =>
+            await (from p in context.Photos
+           orderby p.CreatedDate descending
+           select p).Take(amount).ToListAsync();
 
         public async Task<Photo> RemoveAsync(int id) {
             var photo = await context.Photos.SingleOrDefaultAsync(m => m.Id == id);
@@ -36,7 +34,6 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFram
         }
 
         public async Task<Photo> UpdateAsync(Photo photo) {
-            //context.Entry(photo).State = EntityState.Modified;
             context.Update(photo);
             await context.SaveChangesAsync();
             return photo;

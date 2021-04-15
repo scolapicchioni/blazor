@@ -6,11 +6,11 @@ Our client will issue http requests to our server and it will handle the results
 
 Let's start by our `frontend` project.
 
-We're going to replace our old Memory Repository with a new one that uses `HttpClient` (which in turn uses the [fetch API](https://developers.google.com/web/updates/2015/03/introduction-to-fetch)).
+We're going to replace our old Memory Repository with a new one that uses [`HttpClient`](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-web-api?view=aspnetcore-6.0).
 
 ## Create a new Repository with HttpClient
 
-- Reference the `System.Net.Http.Json` NuGet package in the `PhotoSharingApplication.Frontend.Infrastructure` project file
+- Reference the `System.Net.Http.Json` NuGet package in the `PhotoSharingApplication.Frontend.Infrastructure` project file (make sure to select the latest prerelease)
 - In the `Solution Explorer` under `Repositories` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project, add a new folder `Rest`
 - In the `Rest` folder, add a `PhotosRepository` class
 - Let the `PhotosRepository` class implement the `IPhotosRepository` interface
@@ -49,7 +49,7 @@ public PhotosRepository(HttpClient http) {
 }
 ```
 
-which requires a
+which requires
 
 ```cs
 using System.Net.Http;
@@ -63,6 +63,12 @@ Now let's implement the different actions
 
 ```cs
 public async Task<Photo> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+```
+
+which requires
+
+```cs
+using System.Net.Http.Json;
 ```
 
 - The GetPhotosAsync becomes
@@ -108,18 +114,18 @@ Now we need to inject the Repository and configure the HttpClient.
 
 ## Configuration
 
-- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.Infrastructure` project
+- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
 
 - Replace
 
 ```cs
-builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 ```
 
 with
 
 ```cs
-builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri("https://localhost:44386/") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:44379/") });
 ```
 
 **NOTE: Your port may be different, make sure the number after localhost matches the one of your rest endpoint**
@@ -153,9 +159,9 @@ You will notice an error in the browser console:
 Failed to fetch
 ```
 
-This happens because our server does not allow [Cross Origin Requests (CORS)](https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-5.0). Let's proceed to modify our server project.
+This happens because our server does not allow [Cross Origin Requests (CORS)](https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0). Let's proceed to modify our server project.
 
-- Open `Startup.cs`
+- Open `Startup.cs` of the `PhotoSharingApplication.WebServices.REST.Photos` project
 - In the `ConfigureServices` method, add the following code:
 
 ```cs
@@ -165,10 +171,9 @@ services.AddCors(o => o.AddPolicy("AllowAll", builder =>
               .AllowAnyMethod()
               .AllowAnyHeader();
   }));
-);
 ```
 
-- In the `Configure` method, **Between UseRouting and UseEndpoints**  
+- In the `Configure` method, **Between UseRouting and UseAuthorization**  
 
 add the following code:
 
@@ -191,4 +196,4 @@ The server will expose its functionalities through a gRpc Service
 - Lab09 will connect the frontend to the backend
 
 
-Go to `Labs/Lab07`, open the `readme.md` and follow the instructions thereby contained.   
+Go to `Labs/Lab07`, open the `readme.md` and follow the instructions to continue.   

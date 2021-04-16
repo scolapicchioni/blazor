@@ -2,6 +2,7 @@
   "profiles": {
     "PhotoSharingApplication.WebServices.Grpc.Comments": {
       "commandName": "Project",
+      "dotnetRunMessages": "true",
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5000;https://localhost:5001",
       "environmentVariables": {

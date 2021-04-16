@@ -1,36 +1,34 @@
-﻿@using PhotoSharingApplication.Shared.Core.Entities
-
-<MatCard>
-    <div>
-        <MatHeadline6>
-            @Photo.Id - @Photo.Title
-        </MatHeadline6>
-        <MatSubtitle2>
-            @Photo.CreatedDate.ToShortDateString()
-        </MatSubtitle2>
-    </div>
-    <MatCardContent>
-        <MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
-        <MatBody2>
-            @Photo.Description
-        </MatBody2>
-    </MatCardContent>
-    <MatCardActions>
-        <MatCardActionButtons>
-            @if (Details) {
-                <MatButton Link="@($"/photos/details/{Photo.Id}")">Details</MatButton>
-            }
-            @if (Edit) {
-                <MatButton Link="@($"/photos/update/{Photo.Id}")">Update</MatButton>
-            }
-            @if (Delete) {
-                <MatButton Link="@($"/photos/delete/{Photo.Id}")">Delete</MatButton>
-            }
-            @if (DeleteConfirm) {
-                <MatButton OnClick="@(async()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))">Confirm Deletion</MatButton>
-            }
-        </MatCardActionButtons>
-    </MatCardActions>
+﻿<MatCard>
+<div>
+    <MatHeadline6>
+        @Photo.Id - @Photo.Title
+    </MatHeadline6>
+    <MatSubtitle2>
+        @Photo.CreatedDate.ToShortDateString()
+    </MatSubtitle2>
+</div>
+<MatCardContent>
+    <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
+    <MatBody2>
+        @Photo.Description
+    </MatBody2>
+</MatCardContent>
+<MatCardActions>
+    <MatCardActionButtons>
+        @if (Details) {
+            <MatButton Link="@($"photos/details/{Photo.Id}")">Details</MatButton>
+        }
+        @if (Edit) {
+            <MatButton Link="@($"photos/update/{Photo.Id}")">Update</MatButton>
+        }
+        @if (Delete) {
+            <MatButton Link="@($"photos/delete/{Photo.Id}")">Delete</MatButton>
+        }
+        @if (DeleteConfirm) {
+            <MatButton OnClick="@(async()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))">Confirm Deletion</MatButton>
+        }
+    </MatCardActionButtons>
+</MatCardActions>
 </MatCard>
 
 @code {
@@ -39,15 +37,16 @@
 
     [Parameter]
     public bool Details { get; set; }
+
     [Parameter]
     public bool Edit { get; set; }
+
     [Parameter]
     public bool Delete { get; set; }
+
     [Parameter]
     public bool DeleteConfirm { get; set; }
 
     [Parameter]
     public EventCallback<int> OnDeleteConfirmed { get; set; }
-
-
 }

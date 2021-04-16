@@ -7,15 +7,12 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateSequence(
-                name: "comments_hilo",
-                incrementBy: 10);
-
             migrationBuilder.CreateTable(
                 name: "Comments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     PhotoId = table.Column<int>(type: "int", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Subject = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
@@ -43,9 +40,6 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Comments");
-
-            migrationBuilder.DropSequence(
-                name: "comments_hilo");
         }
     }
 }

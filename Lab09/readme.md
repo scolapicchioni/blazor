@@ -6,7 +6,7 @@ Our client will issue requests to our server using [gRPC Web](https://github.com
 
 Let's start by our `frontend` project.
 
-We're going to replace our old Memory Repository with a new one that uses `gRPC Client` as described in [the Microsoft Documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-5.0#configure-grpc-web-with-the-net-grpc-client).
+We're going to replace our old Memory Repository with a new one that uses `gRPC Client` as described in [the Microsoft Documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-6.0#configure-grpc-web-with-the-net-grpc-client).
 
 ## Create a new Repository with HttpClient
 
@@ -57,13 +57,13 @@ namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Grpc {
 }
 ```
 
-Let's require a dependency on a `CommentsBaseServiceClient` object
+Let's require a dependency on a `Commenter.CommenterClient` object
 
 ```cs
-private readonly CommentsBaseService.CommentsBaseServiceClient serviceClient;
+private readonly Commenter.CommenterClient gRpcClient;
 
-public CommentsRepository(CommentsBaseService.CommentsBaseServiceClient serviceClient) {
-    this.serviceClient = serviceClient;
+public CommentsRepository(Commenter.CommenterClient gRpcClient) {
+    this.gRpcClient = gRpcClient;
 }
 ```
 
@@ -81,7 +81,7 @@ Now let's implement the different actions. Each action will need to translate th
 
 ```cs
 public async Task<Comment> FindAsync(int id) {
-    FindReply c = await serviceClient.FindAsync(new FindRequest() { Id = id });
+    FindReply c = await gRpcClient.FindAsync(new FindRequest() { Id = id });
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
 }
 ```
@@ -90,10 +90,12 @@ public async Task<Comment> FindAsync(int id) {
 
 ```cs
 public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) {
-    GetCommentsForPhotosReply resp = await serviceClient.GetCommentsForPhotoAsync(new GetCommentsForPhotosRequest() { PhotoId = photoId });
+    GetCommentsForPhotosReply resp = await gRpcClient.GetCommentsForPhotoAsync(new GetCommentsForPhotosRequest() { PhotoId = photoId });
     return resp.Comments.Select(c => new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() }).ToList();
 }
 ```
+
+which requires a `using System.Linq;`
 
 ## The Create
 
@@ -102,7 +104,7 @@ public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) {
 ```cs
 public async Task<Comment> CreateAsync(Comment comment) {
     CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
-    CreateReply c = await serviceClient.CreateAsync(createRequest);
+    CreateReply c = await gRpcClient.CreateAsync(createRequest);
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
 }
 ```
@@ -113,7 +115,7 @@ public async Task<Comment> CreateAsync(Comment comment) {
 
 ```cs
 public async Task<Comment> UpdateAsync(Comment comment) {
-    UpdateReply c = await serviceClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body });
+    UpdateReply c = await gRpcClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body });
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
 }
 ```
@@ -124,30 +126,33 @@ public async Task<Comment> UpdateAsync(Comment comment) {
 
 ```cs
 public async Task<Comment> RemoveAsync(int id) {
-    RemoveReply c = await serviceClient.RemoveAsync(new RemoveRequest() { Id = id });
+    RemoveReply c = await gRpcClient.RemoveAsync(new RemoveRequest() { Id = id });
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
 }
 ```
 
-Now we need to inject the Repository and configure the ServiceClient.
+Now we need to inject the Repository and configure the gRpcClient.
 
 ## Configuration
 
-- In the `PhotoSharingApplication.Frontend.Infrastructure` project, add a reference to the following packages:
-    - Grpc.Net.Client
-    - Grpc.Net.Client.Web 
-    
 - In the `PhotoSharingApplication.Frontend.BlazorWebAssembly`project:
 - Open the `Program.cs` file and add the following code
-
 
 ```cs
 builder.Services.AddSingleton(services => {
     var backendUrl = "https://localhost:5001"; // Local debug URL
     var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
     var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
-    return new CommentsBaseService.CommentsBaseServiceClient(channel);
+    return new Commenter.CommenterClient(channel);
 });
+```
+
+which require
+
+```cs
+using Grpc.Net.Client.Web;
+using Grpc.Net.Client;
+using PhotoSharingApplication.WebServices.Grpc.Comments;
 ```
 
 **NOTE: Your port may be different, make sure the number after localhost matches the one of your gRPC endpoint**
@@ -186,12 +191,12 @@ You will notice an error in the browser console:
 Failed to fetch
 ```
 
-This happens because our server does not allow gRPC Web nor [Cross Origin Requests (CORS)](https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-5.0). Let's proceed to modify our server project, as explaind in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-5.0#configure-grpc-web-in-aspnet-core).
+This happens because our server does not allow gRPC Web and [Cross Origin Requests (CORS)](https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0). Let's proceed to modify our server project, as explained in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-5.0#configure-grpc-web-in-aspnet-core).
 
 ### Configure gRPC Web
 In the ``PhotoSharingApplication.WebServices.Grpc.Comments`` project:
 
-- Add a reference to `Grpc.AspNetCore.Web`
+- Add the `Grpc.AspNetCore.Web` NuGet Package
 - Open `Startup.cs`
 - In the `Configure` method, between UseRouting and UseEndPoint, add
 
@@ -202,12 +207,12 @@ app.UseGrpcWeb();
 - Inside the `UseEndPoint` add the following code:
 
 ```cs
-endpoints.MapGrpcService<Services.CommentsService>().EnableGrpcWeb();
+endpoints.MapGrpcService<CommentsGrpcService>().EnableGrpcWeb();
 ```         
 
 ### Configure CORS
 
-As explained in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-5.0#grpc-web-and-cors)
+As explained in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-6.0#grpc-web-and-cors)
 
 - In the `ConfigureServices` method, add the following code:
 
@@ -240,11 +245,61 @@ endpoints.MapGrpcService<Services.CommentsService>().EnableGrpcWeb().RequireCors
 
 Save and verify that the client can send data to the server.
 
+## Optional
+
+If you want, you can configure your projects so that they use Kestrel instead of IIS Express. This way you can see the logs on the consoles.  
+You may, for example, configure 
+- The `BlazorWebAssembly` project to use `http://localhost:5000` and `https://localhost:5001`
+- The `Rest` project to use `http://localhost:5002` and `https://localhost:5003`
+- The `gRpc` project to use `http://localhost:5004` and `https://localhost:5005`
+
+**Warning**
+This would mean that you have to reconfigure the `HttpClient`s in the `Program` class of the `BlazorWebAssembly` project to send the requests using the new ports, like so:
+
+```cs
+using MatBlazor;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Frontend.Core.Services;
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Grpc.Net.Client.Web;
+using Grpc.Net.Client;
+using PhotoSharingApplication.WebServices.Grpc.Comments;
+
+namespace PhotoSharingApplication.Frontend.BlazorWebAssembly {
+    public class Program {
+        public static async Task Main(string[] args) {
+            var builder = WebAssemblyHostBuilder.CreateDefault(args);
+            builder.RootComponents.Add<App>("#app");
+
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003/") });
+
+            builder.Services.AddScoped<IPhotosService, PhotosService>();
+            builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Infrastructure.Repositories.Rest.PhotosRepository>();
+            builder.Services.AddScoped<ICommentsService, CommentsService>();
+            builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Infrastructure.Repositories.Grpc.CommentsRepository>();
+
+            builder.Services.AddSingleton(services => {
+                var backendUrl = "https://localhost:5005"; // Local debug URL
+                var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
+                var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
+                return new Commenter.CommenterClient(channel);
+            });
+
+            builder.Services.AddMatBlazor();
+
+            await builder.Build().RunAsync();
+        }
+    }
+}
+```
+
 The lab is complete, we successfully connected our frontend with the backend.
 
-You will see that the server can save a comment in the db, but it complains that  the `UserName` cannot be null whenever we try to get the comments for a photo.
-
-For now we don't have a UserName, so we need to introduce the concept of Identity, which is what we're going to cover in the next labs. 
+Our Photos and Comments have an empty UserName, so we need to introduce the concept of Identity, which is what we're going to cover in the next labs. 
 
 ---
 

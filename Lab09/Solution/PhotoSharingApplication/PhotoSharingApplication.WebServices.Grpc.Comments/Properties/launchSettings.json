@@ -1,12 +1,12 @@
-﻿{
+{
   "profiles": {
     "PhotoSharingApplication.WebServices.Grpc.Comments": {
       "commandName": "Project",
-      "launchBrowser": false,
-      "applicationUrl": "http://localhost:5000;https://localhost:5001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "dotnetRunMessages": "true",
+      "applicationUrl": "http://localhost:5004;https://localhost:5005"
     }
   }
 }

@@ -1,0 +1,6 @@
+﻿<MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
+
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+}

@@ -7,15 +7,12 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateSequence(
-                name: "photos_hilo",
-                incrementBy: 10);
-
             migrationBuilder.CreateTable(
                 name: "Photos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     PhotoFile = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
                     ImageMimeType = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -33,9 +30,6 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Photos");
-
-            migrationBuilder.DropSequence(
-                name: "photos_hilo");
         }
     }
 }

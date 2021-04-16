@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace PhotoSharingApplication.Shared.Core.Entities {
     public class Photo {
@@ -11,6 +10,6 @@ namespace PhotoSharingApplication.Shared.Core.Entities {
         public string Description { get; set; }
         public DateTime CreatedDate { get; set; }
         public string UserName { get; set; }
-        public virtual ICollection<Photo> Photos { get; set; }
+        public virtual ICollection<Comment> Comments { get; set; }
     }
 }

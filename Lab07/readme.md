@@ -57,6 +57,8 @@ Also, add a new navigation property to the `Photo` class:
 public virtual ICollection<Comment> Comments { get; set; }
 ```
 
+eventually adding the `using System.Collections.Generic;` if it's not in the `Photo` file yet.
+
 ### The Interfaces
 
 - Under the `Interfaces` folder, add the following `ICommentsService` interface:
@@ -101,6 +103,8 @@ namespace PhotoSharingApplication.Shared.Core.Interfaces {
 
 Now we can implement our service, which for now will just pass the data to the repository and return the results, without any additional logic (we will replace it later). We are going to use the [Dependency Injection pattern](https://martinfowler.com/articles/injection.html?) to request for a repository.
 
+In the `PhotoSharingApplication.Frontend.Core`, under the `Services` folder, add a new `CommentsServiceRepository` class.
+
 ```cs
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
@@ -130,18 +134,17 @@ namespace PhotoSharingApplication.Frontend.Core.Services {
     }
   }
 }
-
 ```
 
 Of course nothing is actually *working*, but we can already start plugging our service to our UI.
 
 - On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
 
-To use our service in the `Details` page, we need to perform a couple of steps, also described in the [Blazor Dependency Injection documentation](https://docs.microsoft.com/en-gb/aspnet/core/blazor/dependency-injection?view=aspnetcore-5.0)
+To use our service in the `Details` page, we need to perform a couple of steps, also described in the [Blazor Dependency Injection documentation](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-5.0&pivots=webassembly)
 
 ### Add the service to the app
 
-[In the docs](https://docs.microsoft.com/en-gb/aspnet/core/blazor/dependency-injection?view=aspnetcore-5.0#add-services-to-an-app) they tell us what to do: 
+[In the docs](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-5.0&pivots=webassembly#add-services-to-an-app) they tell us what to do: 
 
 - Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly`project
 - Add the following code, before the `await builder.Build().RunAsync();`
@@ -226,25 +229,26 @@ We shouldn't give too many responsibilities to the `PhotoDetails` page.
 
 We can split the functionalities by creating a `CommentsComponent` and referring to it from within the `PhotoDetails` page.
 
-The `CommentsComponent` will receive the Id of the Photo and take care of the rest. The only thing we need to add to the `Detals` page is
+The `CommentsComponent` will receive the Id of the Photo and take care of the rest. The only thing we need to add to the `PhotoDetals.razor` page of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project is the `CommentsComponent` tag, passing the `PhotoId` as a property, which we will use to retrieve the comments.
 
 ```html
-<div class="col-sm-12">
-  @if (photo == null)
-  {
-    <p><em>Loading...</em></p>
-  }
-  else
-  {
-    <Photo PhotoItem="photo" Edit="mayEditDeletePhoto" Delete="mayEditDeletePhoto" OnDelete="OnDeletePhoto" OnEdit="OnEditPhoto"></Photo>
-    <CommentsComponent PhotoId="Id"></CommentsComponent>
-  }
+@if (photo == null) {
+    <p>...Loading...</p>
+} else {
+<div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <PhotoDetailsComponent Photo="photo" Edit Delete></PhotoDetailsComponent>
+            <CommentsComponent PhotoId="Id"></CommentsComponent>
+        </div>
+    </div>
 </div>
+}
 ```
 
 ## The CommentsComponent
 
-Let's put the `CommentsComponent` in the `Shared` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project.
+Let's put the new `CommentsComponent.razor` in the `Shared` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project.
 
 Here, we will provide a `[Parameter]` to get the `PhotoId`.
 
@@ -431,8 +435,9 @@ That's all for this component, so let's create the four sub components.
 
 ## The CommentReadComponent
 
-This component shows a `Card` with the details of the comment and two buttons to switch to Edit and Delete mode.
-Its logic only notifies its parent component.
+In the `PhotoSharingApplication.Frontend.BlazorComponents` project, create a new `CommentReadComponent.razor` Razor  Component.  
+This component shows a `Card` with the details of the comment and two buttons to switch to Edit and Delete mode.  
+Its logic only notifies its parent component.  
 
 ```cs
 @using PhotoSharingApplication.Shared.Core.Entities 
@@ -460,13 +465,13 @@ Its logic only notifies its parent component.
   async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
   async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
   }
-
 ```
 
 ## The CommentEditComponent
 
-This component will have an `EditForm` with two TextFields (for `Subject` and `Body`) and two buttons (for `Update` and `Cancel`).
-The logic will notify the parent component through the use of event callbacks.
+In the `PhotoSharingApplication.Frontend.BlazorComponents` project, create a `CommentEditComponent.razor` Razor Component.  
+This component will have an `EditForm` with two TextFields (for `Subject` and `Body`) and two buttons (for `Update` and `Cancel`).  
+The logic will notify the parent component through the use of event callbacks.  
 
 ```cs
 @using PhotoSharingApplication.Shared.Core.Entities 
@@ -503,7 +508,9 @@ The logic will notify the parent component through the use of event callbacks.
 ```
 ## The CommentDeleteComponent
 
-The `CommentDeleteComponent` will show the details of the comment and it will provide two buttons to confirm deletion and to cancel. Its logic will notify the parent component through `EventCallback`s.
+In the `PhotoSharingApplication.Frontend.BlazorComponents` project, create a `CommentDeleteComponent.razor` Razor Component.  
+The `CommentDeleteComponent` will show the details of the comment and it will provide two buttons to confirm deletion and to cancel.  
+Its logic will notify the parent component through `EventCallback`s.  
 
 ```cs
 @using PhotoSharingApplication.Shared.Core.Entities
@@ -532,8 +539,9 @@ The `CommentDeleteComponent` will show the details of the comment and it will pr
 ```
 ## The CommentCreateComponent
 
-The `CommentCreateComponent` will have an `EditForm` with two TextFields (for `Subject` and `Body`) and one button for `Save`.
-The logic will notify the parent component through the use of an `EventCallback`.
+In the `PhotoSharingApplication.Frontend.BlazorComponents` project, create a `CommentCreateComponent.razor` Razor Component.  
+The `CommentCreateComponent` will have an `EditForm` with two TextFields (for `Subject` and `Body`) and one button for `Save`.  
+The logic will notify the parent component through the use of an `EventCallback`.  
 
 ```cs
 @using PhotoSharingApplication.Shared.Core.Entities

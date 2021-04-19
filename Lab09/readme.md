@@ -245,57 +245,92 @@ endpoints.MapGrpcService<Services.CommentsService>().EnableGrpcWeb().RequireCors
 
 Save and verify that the client can send data to the server.
 
-## Optional
+## Reconfiguring ports ans startup projects
 
-If you want, you can configure your projects so that they use Kestrel instead of IIS Express. This way you can see the logs on the consoles.  
-You may, for example, configure 
-- The `BlazorWebAssembly` project to use `http://localhost:5000` and `https://localhost:5001`
-- The `Rest` project to use `http://localhost:5002` and `https://localhost:5003`
-- The `gRpc` project to use `http://localhost:5004` and `https://localhost:5005`
+Let's reconfigure our projects to listen on ports that have no conflict with the other projects
+- The `BlazorWebAssembly` project will use `http://localhost:5000` and `https://localhost:5001`
+- The `Rest` project will use `http://localhost:5002` and `https://localhost:44303`
+- The `gRpc` project will use `http://localhost:5004` and `https://localhost:5005`
+- The Blazor project will invoke the REST and gRpc services on the new ports
 
-**Warning**
-This would mean that you have to reconfigure the `HttpClient`s in the `Program` class of the `BlazorWebAssembly` project to send the requests using the new ports, like so:
+### Blazor Web Assembly
+
+- In the `Solution Explorer`, right click the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, select `Properties`
+- In the `Properties` window of your project, click on `Debug`
+- In the `Profile`, select `PhotoSharingApplication.Frontend.BlazorWebAssembly`
+- In the `App Url`, ensure that the value is `https://localhost:5001;http://localhost:5000`
+- Save
+- Right click the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, select `Set as Startup Project`
+- On the Visual Studio Toolbar on top, next to the green arrow, instead of `IISExpress` select `PhotoSharingApplication.Frontend.BlazorWebAssembly`
+- Click on the green arrow (or press F5) and verify that the project starts from port 5001
+- Stop the application
+
+### Photos REST API
+
+- In the `Solution Explorer`, right click the `PhotoSharingApplication.WebServices.REST.Photos` project, select `Properties`
+- In the `Properties` window of your project, click on `Debug`
+- In the `Profile`, select `IIS Express`
+- Save
+- Open the `launchSettings.json` file located under the `Properties` folder
+- Locate the `sslPort` property and set it to `44303`
+- Save
+- Click on the green arrow (or press F5) and verify that the project starts from port 44303
+- Stop the application
+
+### Comments gRPC API
+
+- In the `Solution Explorer`, right click the `PhotoSharingApplication.WebServices.Grpc.Comments` project, select `Properties`
+- In the `Properties` window of your project, click on `Debug`
+- In the `Profile`, select `PhotoSharingApplication.WebServices.Grpc.Comments`
+- In the `App Url`, ensure that the value is `https://localhost:5005;http://localhost:5004`
+- Save
+- Right click the `PhotoSharingApplication.WebServices.Grpc.Comments` project, select `Set as Startup Project`
+- On the Visual Studio Toolbar on top, next to the green arrow, instead of `IISExpress` select `PhotoSharingApplication.WebServices.Grpc.Comments`
+- Click on the green arrow (or press F5) and verify that the project starts from port 5005
+- Stop the application
+
+### Multiple Startup Projects
+- In the `Solution Explorer`, right click the solution, select `Set Startup Projects`
+- On the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, select `Start`
+- On the `PhotoSharingApplication.WebServices.REST.Photos` project, select `Start`
+- On the `PhotoSharingApplication.WebServices.Grpc.Comments` project, select `Start`
+
+### Connect Blazor to the new REST and gRPC ports
+
+We need to reconfigure the `HttpClient` and the `gRPC Client` with the new ports.
+
+- Open `Program.cs` of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
+- Change this code
 
 ```cs
-using MatBlazor;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using PhotoSharingApplication.Frontend.Core.Services;
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Grpc.Net.Client.Web;
-using Grpc.Net.Client;
-using PhotoSharingApplication.WebServices.Grpc.Comments;
-
-namespace PhotoSharingApplication.Frontend.BlazorWebAssembly {
-    public class Program {
-        public static async Task Main(string[] args) {
-            var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("#app");
-
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003/") });
-
-            builder.Services.AddScoped<IPhotosService, PhotosService>();
-            builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Infrastructure.Repositories.Rest.PhotosRepository>();
-            builder.Services.AddScoped<ICommentsService, CommentsService>();
-            builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Infrastructure.Repositories.Grpc.CommentsRepository>();
-
-            builder.Services.AddSingleton(services => {
-                var backendUrl = "https://localhost:5005"; // Local debug URL
-                var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
-                var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
-                return new Commenter.CommenterClient(channel);
-            });
-
-            builder.Services.AddMatBlazor();
-
-            await builder.Build().RunAsync();
-        }
-    }
-}
+builder.Services.AddSingleton(services => {
+  var backendUrl = "https://localhost:5001"; // Local debug URL
+  var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
+  var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
+  return new CommentsBaseService.CommentsBaseServiceClient(channel);
+});
 ```
+
+into this code
+
+```cs
+builder.Services.AddSingleton(services => {
+  var backendUrl = "https://localhost:5005";
+  var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
+  var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
+  return new CommentsBaseService.CommentsBaseServiceClient(channel);
+});
+```
+
+Also update the connection to the REST service as follows:
+
+```cs
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:44303/") });
+```
+
+### Try the application
+
+Run all the projects by pressing F5 and verify that they all start and that they can communicate with each other
 
 The lab is complete, we successfully connected our frontend with the backend.
 

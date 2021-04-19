@@ -1,7 +1,7 @@
 # Security: Authentication and Authorization
 
 We have not implemented any security yet. In this lab we are going to setup and configure a new project that will act as an *Authentication Server*. We will then protect the **Create** operation and we will use the Authentication Server to authenticate the user and issue a *token*, then have the client gain access to the protected operation by using such token.
-The Authentication Server that we're going to use implements [OAuth 2.0 and IDConnect](https://www.oauth.com/).
+The Authentication Server that we're going to use implements [OAuth 2.0 and OpenIdConnect](https://www.oauth.com/).
 
 ## The Authentication Server
 
@@ -9,7 +9,7 @@ We are going to use [Identity Server 4](https://identityserver4.readthedocs.io/e
 
 We are going to use the [Templates](https://github.com/IdentityServer/IdentityServer4.Templates)
 
-**NOTE: At the time of the writing the templates have not yet been updated to .NET core 5, so we're going to use .NET Core 3.1 instead. For more information, check the [GitHub repo](https://github.com/IdentityServer/IdentityServer4.Templates/tree/master/src/IdentityServer4AspNetIdentity)**
+**NOTE: At the time of the writing the templates have not yet been updated to .NET core 6, so we're going to use .NET Core 3.1 instead. For more information, check the [GitHub repo](https://github.com/IdentityServer/IdentityServer4.Templates/tree/master/src/IdentityServer4AspNetIdentity)**
 
 - Open a command prompt and navigate to your solution folder (or `Labs\Lab10\Start\PhotoSharingApplication` if did not follow the previous labs)
 - If you haven't installed the IdentityServer templates yet, do it by typing the following command:
@@ -41,41 +41,17 @@ dotnet new is4ef
 
 ## Configuration of the http ports
 
-Right now, both the `IdentityServer` and the `gRPC` projects try to run from port 5001, so let's configure each web project to run on a specific port of our choice. This way even the configuration will be easier.
-
-### Blazor Web Assembly
-
-- In the `Solution Explorer`, right click the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, select `Properties`
-- In the `Properties` window of your project, click on `Debug`
-- In the `Profile`, select `PhotoSharingApplication.Frontend.BlazorWebAssembly`
-- In the `App Url`, ensure that the value is `https://localhost:5001;http://localhost:5000`
-- Save
-- Right click the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, select `Set as Startup Project`
-- On the Visual Studio Toolbar on top, next to the green arrow, instead of `IISExpress` select `PhotoSharingApplication.Frontend.BlazorWebAssembly`
-- Click on the green arrow (or press F5) and verify that the project starts from port 5001
-- Stop the application
-
-### Comments gRPC API
-
-- In the `Solution Explorer`, right click the `PhotoSharingApplication.WebServices.Grpc.Comments` project, select `Properties`
-- In the `Properties` window of your project, click on `Debug`
-- In the `Profile`, select `PhotoSharingApplication.WebServices.Grpc.Comments`
-- In the `App Url`, ensure that the value is `http://localhost:5020;https://localhost:5021`
-- Save
-- Right click the `PhotoSharingApplication.WebServices.Grpc.Comments` project, select `Set as Startup Project`
-- On the Visual Studio Toolbar on top, next to the green arrow, instead of `IISExpress` select `PhotoSharingApplication.WebServices.Grpc.Comments`
-- Click on the green arrow (or press F5) and verify that the project starts from port 5021
-- Stop the application
+Right now, both the `IdentityServer` and the `BlazorWebAssembly` projects try to run from port 5001, so let's configure the IdentityServer project to run on a specific port of our choice.
 
 ### Identity Server
 
 - In the `Solution Explorer`, right click the `PhotoSharingApplication.IdentityServer` project, select `Properties`
 - In the `Properties` window of your project, click on `Debug`
 - In the `Profile`, select `SelfHost`
-- In the `App Url`, ensure that the value is `https://localhost:5031`
+- In the `App Url`, ensure that the value is `https://localhost:5007`
 - Save
 - Right click the `PhotoSharingApplication.IdentityServer` project, select `Set as Startup Project`
-- Click on the green arrow (or press F5) and verify that the project starts from port 5031
+- Click on the green arrow (or press F5) and verify that the project starts from port 5007
 - Stop the application
 
 ### Multiple Startup Projects
@@ -85,60 +61,34 @@ Right now, both the `IdentityServer` and the `gRPC` projects try to run from por
 - On the `PhotoSharingApplication.WebServices.Grpc.Comments` project, select `Start`
 - On the `PhotoSharingApplication.IdentityServer` project, select `Start`
 
-### Connect Blazor to the new REST and gRPC ports
-
-We need to reconfigure the `HttpClient` and the `gRPC Client` with the new ports.
-
-- Open `Program.cs` of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
-- Change this code
-
-```cs
-builder.Services.AddSingleton(services => {
-  var backendUrl = "https://localhost:5001"; // Local debug URL
-  var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
-  var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
-  return new CommentsBaseService.CommentsBaseServiceClient(channel);
-});
-```
-
-into this code
-
-```cs
-builder.Services.AddSingleton(services => {
-  var backendUrl = "https://localhost:5021";
-  var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
-  var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
-  return new CommentsBaseService.CommentsBaseServiceClient(channel);
-});
-```
-
 ## Identity Provider Configuration
 
 Now that we have an `IdentityServer` project, we need to cofigure it for our own purposes. 
 - We already have two users: *alice* with password *alice* and *bob* with password *bob* (you can find them in the the `QuickStart\TestUsers.cs` file).
 - Our [IdentityResource](https://identityserver4.readthedocs.io/en/latest/topics/resources.html) has already been configured, so we don't need to change that in the `Config.cs` file.
-- We need to configure two [API Resource](https://identityserver4.readthedocs.io/en/latest/reference/api_resource.html) (the REST Service for the Photos and the gRPC Service for the Comments)
+- We need to configure two [API Scopes](https://identityserver4.readthedocs.io/en/latest/topics/resources.html#scopes) (the access to the REST Service for the Photos and the gRPC Service for the Comments)
 - We need to configure one [client](https://identityserver4.readthedocs.io/en/latest/reference/client.html) (our Blazor application)
 
-### ApiResource
+### ApiScopes
 
 Open the `Config.cs` file located in the root of your `PhotoSharingApplication.IdentityServer` project.
 
-- Configure the `Photos` ApiResource. 
+- Configure the `Photos` ApiScope. 
   - Name it `photosrest`
   - Describe it as `Photos REST Service`
   - Include the `Name` of the user in the access token. We will use the name in a future lab to allow photos update and deletion only to the photo owner.
-- Configure the `Comments` ApiResource. 
+- Configure the `Comments` ApiScope. 
   - Name it `commentsgrpc`
   - Describe it as `Comments gRPC Service`
   - Include the `Name` of the user in the access token. We will use the name in a future lab to allow comments update and deletion only to the comment owner.
 
 ```cs
-public static IEnumerable<ApiResource> Apis =>
-  new ApiResource[] {
-      new ApiResource("commentsgrpc", "Comments gRpc Service") {UserClaims = new string[] { JwtClaimTypes.Name } }, 
-      new ApiResource("photosrest", "Photos REST Service") {UserClaims = new string[] { JwtClaimTypes.Name } }
-  };
+public static IEnumerable<ApiScope> ApiScopes =>
+new ApiScope[]
+{
+    new ApiScope("commentsgrpc", "Comments gRpc Service") {UserClaims = new string[] { JwtClaimTypes.Name } },
+    new ApiScope("photosrest", "Photos REST Service") {UserClaims = new string[] { JwtClaimTypes.Name } },
+};
 ```
 
 which requires 
@@ -147,15 +97,43 @@ which requires
 using IdentityModel;
 ```
 
+### ApiResources
+
+We are also going to need two [ApiResources](https://identityserver4.readthedocs.io/en/latest/topics/resources.html#api-resources).  
+ - Configure the `Photos` ApiResource. 
+  - Name it `photosrest`
+  - Describe it as `Photos REST Service`
+  - Include the `Name` of the user in the access token. We will use the name in a future lab to allow photos update and deletion only to the photo owner.
+  - Add the `photosrest` scope in the `Scopes` property
+- Configure the `Comments` ApiResource. 
+  - Name it `commentsgrpc`
+  - Describe it as `Comments gRPC Service`
+  - Include the `Name` of the user in the access token. We will use the name in a future lab to allow comments update and deletion only to the comment owner.
+  - Add the `commentsgrpc` scope in the `Scopes` property
+
+```cs
+public static IEnumerable<ApiResource> ApiResources =>
+new ApiResource[]
+{
+    new ApiResource("commentsgrpc", "Comments gRpc Service") {UserClaims = new string[] { JwtClaimTypes.Name },Scopes = {"commentsgrpc" } },
+    new ApiResource("photosrest", "Photos REST Service") {UserClaims = new string[] { JwtClaimTypes.Name }, Scopes = { "photosrest"} }
+};
+```
+
 ### Client
 
-The second thing we need to configure is the [Blazor Client](https://identityserver4.readthedocs.io/en/latest/topics/clients.html)
+The third thing we need to configure is the [Blazor Client](https://identityserver4.readthedocs.io/en/latest/topics/clients.html)
 - Locate the `Clients` static property.
-- Remove every client except for the last one (`spa`)
-- Change the `ClientId` to `blazorclient`
-- Change the `ClientName` will be `Blazor Client`
-- Change the `ClientUri` to `http://localhost:5001` 
-- Change the `RedirectUris` to the [custom app routes used in Blazor](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/additional-scenarios?view=aspnetcore-5.0#customize-app-routes)
+- Remove every client
+- Add a new `Client`
+- Set the `ClientId` to `blazorclient`
+- Set the `ClientName` will be `Blazor Client`
+- Set the `ClientUri` to `http://localhost:5001` 
+- Set the `AllowedGrantTypes` to `GrantTypes.Code`
+- Set the `RequirePkce` to `true`
+- Set the `RequireClientSecret` to `false`
+- Set the `RedirectUris` to the [custom app routes used in Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/additional-scenarios?view=aspnetcore-6.0#customize-app-routes)
+
 ```cs
 {
     "https://localhost:5001/",
@@ -165,9 +143,9 @@ The second thing we need to configure is the [Blazor Client](https://identityser
 },
 ```
 
-- Change the `PostLogoutRedirectUris` to `https://localhost:5001`
-- Change the `AllowedCorsOrigins` to `https://localhost:5001`
-- Change the `AllowedScopes` to `{ "openid", "profile", "photosrest", "commentsgrpc" }`
+- Set the `PostLogoutRedirectUris` to `https://localhost:5001`
+- Set the `AllowedCorsOrigins` to `https://localhost:5001`
+- Set the `AllowedScopes` to `{ "openid", "profile", "photosrest", "commentsgrpc" }`
 
 The `Clients` property should look like the following:
 
@@ -202,7 +180,54 @@ public static IEnumerable<Client> Clients =>
   };
 ```
 
-The template we chose to generate our `PhotoSharingApplication.IdentityServer` project uses the `Config.cs` just to seed a database. Such db is further used to read the configuration when the server is running. 
+### SeedData
+
+The template we chose to generate our `PhotoSharingApplication.IdentityServer` project uses the `Config.cs` just to seed a database. Such db is further used to read the configuration when the server is running.   
+Before we can create the db, we need to change the `SeedData.cs` file to include the `ApiResources` and not just the `ApiScopes`.  
+
+Open the `SeedData.cs` file in the root of the IdentityServer project.  
+Modify the following code
+
+```cs
+if (!context.ApiResources.Any())
+{
+    Log.Debug("ApiScopes being populated");
+    foreach (var resource in Config.ApiScopes.ToList())
+    {
+        context.ApiScopes.Add(resource.ToEntity());
+    }
+    context.SaveChanges();
+}
+else
+{
+    Log.Debug("ApiScopes already populated");
+}
+```
+
+as follows:
+
+```cs
+if (!context.ApiResources.Any())
+{
+    Log.Debug("ApiScopes being populated");
+    foreach (var resource in Config.ApiScopes.ToList())
+    {
+        context.ApiScopes.Add(resource.ToEntity());
+    }
+    context.SaveChanges();
+    Log.Debug("ApiResources being populated");
+    foreach (var resource in Config.ApiResources.ToList()) {
+        context.ApiResources.Add(resource.ToEntity());
+    }
+    context.SaveChanges();
+}
+else
+{
+    Log.Debug("ApiScopes already populated");
+}
+```
+
+## Create the DataBase
 
 **It is important that you understand that if you ever change the `Config.cs`, you need to delete the DB and recreate it again.**
 
@@ -254,7 +279,7 @@ simply becomes
 services.AddAuthentication();
 ```
 
-In Visual Studio, run the application and test a user login, by navigating to `https://localhost:5031/account/login` and using `alice` / `alice` or `bob` / `bob` as username / password. You should see the user correctly logged on.
+In Visual Studio, run the application and test a user login, by navigating to `https://localhost:5007/account/login` and using `alice` / `alice` or `bob` / `bob` as username / password. You should see the user correctly logged on.
 
 ## Configuring the REST Service
 
@@ -281,7 +306,7 @@ Open your `Startup` class, locate the `ConfigureServices` method and add the fol
 ```cs
  services.AddAuthentication("Bearer")
   .AddJwtBearer("Bearer", options => {
-      options.Authority = "https://localhost:5031";
+      options.Authority = "https://localhost:5007";
       options.RequireHttpsMetadata = false;
       options.TokenValidationParameters.NameClaimType = JwtClaimTypes.Name;
       options.Audience = "photosrest";
@@ -294,15 +319,15 @@ which requires a
 using IdentityModel
 ```
 
-We also need to add the authentication middleware to the pipeline so authentication will be performed automatically on every call into the host, by invoking the `UseAuthorization` extension method **BEFORE** the `UseEndPoints` in the `Configure` method of our `Startup` class.
-
-Locate the `Configure` method and add the following code right before the `app.UseEndPoints()` line:
+Locate the `Configure` method in the `Startup` class and add the following code right **BEFORE** the `app.UseEndPoints` line:
 
 ```cs
+app.UseAuthentication();
 app.UseAuthorization();
 ```
 
-The last step is to protect the `Create` action of our `PhotosController` by using the [Authorize](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-5.0) attribute.
+
+The last step is to protect the `Create` action of our `PhotosController` by using the [Authorize](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-6.0) attribute.
 
 Open your `PhotosController` class, locate the `CreateAsync` method and add the `[Authorize]` attribute right before the definition of the method:
 
@@ -321,7 +346,7 @@ which requires a
 using Microsoft.AspNetCore.Authorization;
 ```
 
-If you use the POSTMAN to invoke the Create action you should get a 401 status code in return. This means your API requires a credential.
+If you use the Swagger to invoke the Create action you should get a 401 status code in return. This means your API requires a credential.
 
 The API is now protected by IdentityServer.
 
@@ -342,7 +367,7 @@ Open your `Startup` class, locate the `ConfigureServices` method and add the fol
 ```cs
 services.AddAuthentication("Bearer")
   .AddJwtBearer("Bearer", options => {
-      options.Authority = "https://localhost:5031";
+      options.Authority = "https://localhost:5007";
       options.RequireHttpsMetadata = false;
       options.TokenValidationParameters.NameClaimType = JwtClaimTypes.Name;
       options.Audience = "commentsgrpc";
@@ -368,15 +393,19 @@ app.UseAuthentication();
 app.UseAuthorization();
 ```
 
-The last step is to protect the `Create` action of our `CommentsService` by using the [Authorize](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-5.0) attribute.
+The last step is to protect the `Create` action of our `CommentsService` by using the [Authorize](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-6.0) attribute.
 
 Open your `CommentsService` class, locate the `Create` method and add the `[Authorize]` attribute right before the definition of the method:
 
 ```cs
 [Authorize]
 public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
-  Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body });
-  return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
+    try {
+        Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body });
+        return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
+    } catch (Exception ex){
+        throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+    }
 }
 ```
 
@@ -392,27 +421,21 @@ The API is now protected by IdentityServer.
 
 The last part requires the configuration of our client project.
 
-When we started, we used a Blazor templates with no authentication. This means that we have to add some parts that would already been there if we had chosen the [Standalone with Authentication Library](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0) template.
+When we started, we used a Blazor templates with no authentication. This means that we have to add some parts that would already been there if we had chosen the [Standalone with Authentication Library](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio) template.
 
 My Advice is to create a new project in a completely different folder and grab the code from there, because the template that I'm using at the time of this writing could be different from the one that you would get. Otherwise you could grab the code from my tutorial here. I will assume that you create a new project. We will throw away this new project as soon as we're done transfering the code we need.
 
 ### Create a new temporary project
 
-- Open a command propmpt
-- Create a temporary folder with the same name as your BlazorWebAssembly project somewhere on your hard disk (for example `C:\temp\PhotoSharingApplication.Frontend.BlazorWebAssembly` or something like that)
-- Navigate to that folder by typing `cd C:\temp\PhotoSharingApplication.Frontend.BlazorWebAssembly`
-- Create a new Blazor Client project with Authentication by typing the following command
-
-```cs
-dotnet new blazorwasm -au Individual
-```
-- Open the project in a new Instance of Visual Studio
+To create a new Blazor WebAssembly project with an authentication mechanism:  
+- After choosing the Blazor WebAssembly App template in the Create a new ASP.NET Core Web Application dialog, select Change under Authentication.
+- Select *Individual User Accounts* to use ASP.NET Core's Identity system. This selection adds authentication support and doesn't result in storing users in a database. 
 
 Let's start by copying all the differences and tweeking some of the files.
 
 ### Index.html
 
-Our starting point is the [Index Page](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#index-page). You will notice that the new project has an additional JavaScript file, which we need to add to our `index.html`
+Our starting point is the [Index Page](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#index-page). You will notice that the new project has an additional JavaScript file, which we need to add to our `index.html`
 
 ```html
 <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
@@ -424,7 +447,7 @@ This file is included in an [Authentication Package](https://docs.microsoft.com/
 
 ### Program.cs
 
-We can now proceed to open `Program.cs`. Notice the folowing code for the [Authentication Support](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#authentication-service-support) that we're missing:
+We can now proceed to open `Program.cs`. Notice the folowing code for the [Authentication Support](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#authentication-service-support) that we're missing:
 
 ```cs
 builder.Services.AddOidcAuthentication(options =>
@@ -435,7 +458,7 @@ builder.Services.AddOidcAuthentication(options =>
 });
 ```
 
-We will also add the [Access Token Scopes](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#access-token-scopes) that we need
+We will also add the [Access Token Scopes](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#access-token-scopes) that we need
 
 ```cs
 builder.Services.AddOidcAuthentication(options => {
@@ -472,7 +495,7 @@ but we're going to configure our application to talk to our own Identity Server:
 ```json
 {
   "Local": {
-    "Authority": "https:localhost:5031/",
+    "Authority": "https://localhost:5007/",
     "ClientId": "blazorclient",
     "ResponseType": "code",
   }
@@ -483,7 +506,7 @@ but we're going to configure our application to talk to our own Identity Server:
 
 ### Imports file
 
-We need to add a new namespace to the [Imports file](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#imports-file)
+We need to add a new namespace to the [Imports file](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#imports-file)
 
 - Open `_Imports.razor` and add
 
@@ -493,7 +516,7 @@ We need to add a new namespace to the [Imports file](https://docs.microsoft.com/
 
 ### App Component
 
-Now open `App.razor` and notice the [App Component](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#app-component) contains new components.
+Now open `App.razor` and notice the [App Component](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#app-component) contains new components.
 
 > - The `CascadingAuthenticationState` component manages exposing the `AuthenticationState` to the rest of the app.
 > - The `AuthorizeRouteView` component makes sure that the current user is authorized to access a given page or otherwise renders the `RedirectToLogin` component.
@@ -503,13 +526,16 @@ Our `App.razor` becomes
 
 ```html
 <CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(Program).Assembly">
+    <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <NotAuthorized>
-                    @if (!context.User.Identity.IsAuthenticated) {
+                    @if (!context.User.Identity.IsAuthenticated)
+                    {
                         <RedirectToLogin />
-                    } else {
+                    }
+                    else
+                    {
                         <p>You are not authorized to access this resource.</p>
                     }
                 </NotAuthorized>
@@ -526,7 +552,7 @@ Our `App.razor` becomes
 
 ### RedirectToLogin Component
 
-The new project has a [RedirectToLogin Component](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#redirecttologin-component) which we don't have, so let's go tou our `Shared` folder and add a `RedirectToLogin.razor` file with the following code:
+The new project has a [RedirectToLogin Component](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#redirecttologin-component) which we don't have, so let's go tou our `Shared` folder and add a `RedirectToLogin.razor` file with the following code:
 
 ```cs
 @inject NavigationManager Navigation
@@ -541,7 +567,7 @@ The new project has a [RedirectToLogin Component](https://docs.microsoft.com/en-
 
 ### LoginDisplay Component
 
-The new project also has a [LoginDisplay component](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#logindisplay-component) which we also need to add to our `Shared` folder. This is the code in the new project, which uses `bootstrap` to style the html:
+The new project also has a [LoginDisplay component](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#logindisplay-component) which we also need to add to our `Shared` folder. This is the code in the new project, which uses `bootstrap` to style the html:
 
 ```html
 @using Microsoft.AspNetCore.Components.Authorization
@@ -561,7 +587,8 @@ The new project also has a [LoginDisplay component](https://docs.microsoft.com/e
 </AuthorizeView>
 
 @code{
-    private async Task BeginSignOut(MouseEventArgs args) {
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
         await SignOutManager.SetSignOutState();
         Navigation.NavigateTo("authentication/logout");
     }
@@ -571,6 +598,12 @@ The new project also has a [LoginDisplay component](https://docs.microsoft.com/e
 But we're going to use `MatBlazor`, so our component becomes
 
 ```html
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject NavigationManager Navigation
+@inject SignOutSessionStateManager SignOutManager
+
 <AuthorizeView>
     <Authorized>
         <span class="mat"> Hello, @context.User.Identity.Name!</span>
@@ -639,7 +672,7 @@ The `LoginDisplay` component is rendered in the `MainLayout` component of the ne
 
 ### Authentication Page
 
-The new project also has an [Authentication Page](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/standalone-with-authentication-library?view=aspnetcore-5.0#authentication-component) which we need to add to our project. Under the `Pages` folder, add a new `Authentication.razor` with the following code:
+The new project also has an [Authentication Page](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio#authentication-component) which we need to add to our project. Under the `Pages` folder, add a new `Authentication.razor` with the following code:
 
 ```html
 @page "/authentication/{action}"
@@ -647,7 +680,7 @@ The new project also has an [Authentication Page](https://docs.microsoft.com/en-
 <RemoteAuthenticatorView Action="@Action" />
 
 @code{
-  [Parameter] public string Action { get; set; }
+    [Parameter] public string Action { get; set; }
 }
 ```
 
@@ -660,7 +693,7 @@ This happens because we need to retrieve the access token from IdentityServer an
 
 ## Deny access to the Create Page for Unauthorized users
 
-We can use the [Authorize attribute](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/?view=aspnetcore-5.0#authorize-attribute)
+We can use the [Authorize attribute](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-6.0#authorize-attribute)
 
 - Add to `_Imports.razor`
 
@@ -668,7 +701,7 @@ We can use the [Authorize attribute](https://docs.microsoft.com/en-us/aspnet/cor
 @using Microsoft.AspNetCore.Authorization
 ```
 
-Adding the [Authorize Attribute](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/?view=aspnetcore-5.0#authorize-attribute) to our `UploadPhoto`page will take care of redirecting the user to the login page of our Identity Server if the user is not logged on yet.
+Adding the [Authorize Attribute](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-6.0#authorize-attribute) to our `UploadPhoto`page will take care of redirecting the user to the login page of our Identity Server if the user is not logged on yet.
 
 - Open the `UploadPhoto.razor` component in the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
 - Add the `Authorize` attribute by typing the following code:
@@ -681,76 +714,330 @@ If you run the application now, you should already see the login page whenever y
 
 ## Retrieving the Access Token
 
-We first need to configure our `HttpClient` to [attach the token to the outgoing request](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/additional-scenarios?view=aspnetcore-5.0#attach-tokens-to-outgoing-requests).
+For the Rest client we're going to use the following strategy.  
+First of all, we're going to configure two different [Typed HttpClient](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/additional-scenarios?view=aspnetcore-6.0#typed-httpclient)s.  
+One, to be used for the read actions, will not attach the token to the requests, since we don't need authorization for those.  
+Another one, to be used for the create, update and delete, will attach the token to the request after we will have [configured](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/additional-scenarios?view=aspnetcore-6.0#configure-the-httpclient-handler) it accordingly.    
+The `Repository` will in turn use these two typed httpclients.
 
-## Passing the Token to the Service
-
-We're going to follow the instructions described in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/security/blazor/webassembly/additional-scenarios?view=aspnetcore-5.0#httpclient-and-httprequestmessage-with-fetch-api-request-options) and manually add the Authentication header with the Bearer Token retrieved by asking it to the TokenProvider.
-
-### Changing the Infrastructure
-
-We can get the `TokenProvider` using dependency injection.
-
-- Open the `PhotosRepository` in the `Repositories` -> `Rest` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
-- Change the constructor to require an `IAccessTokenProvider` and save the parameter in a readonly field:
+We first need to add the package `Microsoft.Extensions.Http` to the BlazorWebAssembly project.  
+Now we can change the `Program.cs` class.  
+You can remove the following code:
 
 ```cs
-private readonly HttpClient http;
-private readonly IAccessTokenProvider tokenProvider;
+builder.Services.AddScoped(sp => new HttpClient() { BaseAddress = new Uri("https://localhost:44303/") });
+```
 
-public PhotosRepository(HttpClient http, IAccessTokenProvider tokenProvider) {
-  this.http = http;
-  this.tokenProvider = tokenProvider;
+and replace it with this:
+
+```cs
+builder.Services.AddHttpClient<PublicPhotosClient>(client => client.BaseAddress = new Uri("https://localhost:44303/"));
+
+builder.Services.AddHttpClient<ProtectedPhotosClient>(client => client.BaseAddress = new Uri("https://localhost:44303/"))
+    .AddHttpMessageHandler(sp => sp.GetRequiredService<AuthorizationMessageHandler>()
+    .ConfigureHandler(authorizedUrls: new[] { "https://localhost:44303/" }, scopes: new[] { "photosrest" }));
+```
+
+Both `PublicPhotosClient` and `ProtectedPhotosClient` are custom classes that we need to create.  We will do this in the `Infrastructure` project.
+
+### Typed HttpClients
+
+- In the `PhotoSharingApplication.Frontend.Infrastructure` project, add a reference to the `Microsoft.Extensions.Http` NuGet Package.
+- Add a new `TypedHttpClients` folder.  
+- In the `TypedHttpClients` folder, add a new `PublicPhotosClient` class  
+- In the constructor, add a dependency on the `HttpClient` and save the dependency in a private field
+- Copy the code from the `Repository` class necessary to invoke the read actions:
+
+```cs
+using PhotoSharingApplication.Shared.Core.Entities;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients {
+    public class PublicPhotosClient {
+        private readonly HttpClient http;
+        public PublicPhotosClient(HttpClient http) {
+            this.http = http;
+        }
+
+        public async Task<Photo> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+
+        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
+    }
 }
 ```
 
-### Rewrite the CreateAsync
-
-The `PostAsJsonAsync` of the `httpClient` object doesn't give us the possibility to add the [authorization header](https://tools.ietf.org/html/rfc6750) that our REST API is expecting. That's why we're going to use the `SendAsync` method instead, where we can pass a `RequestMessage` that we have to buid ourself. We can configure the `RequestMessage` by adding the `Authorization` header with the necessary `Bearer` token.
-
-To get the token, we're going to make use of the `tokenProvider`.
-
-1. Invoke the `RequestAccessToken` method of the `tokenProvider` for the `photosrest` scope
-2. Get the token by invoking the `TryGetToken`
-3. Create a new `HttpRequestMessage` passing
-  - the method (POST)
-  - the `URI`
-  - the content (our photo, serialized as a JSON object)
-4. Set the `Authorization` header of the `requestMessage` to `Bearer`, followed by the value of our token
-5. Send the `requestMessage`
-6. Return the response deserialized from JSON
+- In the `TypedHttpClients` folder, add a new `ProtectedPhotosClient` class  
+- In the constructor, add a dependency on the `HttpClient` and save the dependency in a private field
+- Copy the code from the `Repository` class necessary to invoke the create, update and delete actions:
 
 ```cs
-public async Task<Photo> CreateAsync(Photo photo) { 
-  var tokenResult = await tokenProvider.RequestAccessToken(new AccessTokenRequestOptions() { Scopes = new string[] { "photosrest" } });
-  if (tokenResult.TryGetToken(out var token)) {
-    var requestMessage = new HttpRequestMessage() {
-      Method = new HttpMethod("POST"),
-      RequestUri = new Uri(http.BaseAddress, "/photos"),
-      Content = JsonContent.Create(photo)
-    };
+using PhotoSharingApplication.Shared.Core.Entities;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 
-    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+namespace PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients {
+    public class ProtectedPhotosClient {
+        private readonly HttpClient http;
+        public ProtectedPhotosClient(HttpClient http) {
+            this.http = http;
+        }
+        public async Task<Photo> CreateAsync(Photo photo) {
+            HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
+            return await response.Content.ReadFromJsonAsync<Photo>();
+        }
+        public async Task<Photo> RemoveAsync(int id) {
+            HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
+            return await response.Content.ReadFromJsonAsync<Photo>();
+        }
 
-    var response = await http.SendAsync(requestMessage);
-    return await response.Content.ReadFromJsonAsync<Photo>();
+        public async Task<Photo> UpdateAsync(Photo photo) {
+            HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
+            return await response.Content.ReadFromJsonAsync<Photo>();
+        }
+    }
+}
+```
+
+Now we can use these two classes in the `PhotosRepository` class.  
+- Open the `PhotosRepository` located under the `Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
+- Modify the constructor to accept a `PublicPhotosClient` and a `ProtectedPhotosClient` instead of `HttpClient`
+- Use the `PublicPhotosClient` in the methods to read the photos
+- Use the `ProtectedPhotosClient` in the methods to create, update and delete photos.
+
+```cs
+using PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients;
+using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Core.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Rest {
+  public class PhotosRepository : IPhotosRepository {
+    private readonly PublicPhotosClient publicPhotosClient;
+    private readonly ProtectedPhotosClient protectedPhotosClient;
+
+    public PhotosRepository(PublicPhotosClient publicPhotosClient, ProtectedPhotosClient protectedPhotosClient) {
+      this.publicPhotosClient = publicPhotosClient;
+      this.protectedPhotosClient = protectedPhotosClient;
+    }
+    public async Task<Photo> CreateAsync(Photo photo) => await protectedPhotosClient.CreateAsync(photo);
+
+    public async Task<Photo> FindAsync(int id) => await publicPhotosClient.FindAsync(id);
+
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await publicPhotosClient.GetPhotosAsync(amount);
+
+    public async Task<Photo> RemoveAsync(int id) => await protectedPhotosClient.RemoveAsync(id);
+
+    public async Task<Photo> UpdateAsync(Photo photo) => await protectedPhotosClient.UpdateAsync(photo);
   }
-  return null;
 }
 ```
 
-Run the application and try to upload a picture. You should be redirected to the login page of `Identity Server`.
-Type `alice` as a User name and `alice` as password.
+### Try it
 
-You should get the `consent` screen, where you're asked to allow access to both the `REST Api` and the `gRPC Server` and to give away your `profile` and `User Identifier` information. Click on `Yes, Allow`.
+If you run the application now, you should be able to get the photos and upload a new photo (after you log in using `alice` `alice` as user name and password).
 
-You should be back to the `Upload` page. Proceed with uploading a picture and verify that the picture shows up in the `AllPhotos` page.
+## Configuring the gRpc client
 
-We did it! Our REST service is protected and the Blazor client can get access to it if the user logs in and gives consent. All thanks to Identity Server.
+For the gRpc client, we're going to use more or less the same strategy.  
+The `Repository` is going to use two different classes, just like we did for the Rest client. The difference will be in how we configure those classes. We will follow the [documentation](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/additional-scenarios?view=aspnetcore-6.0#configure-and-use-grpc-in-components).
 
-That's great, isn't it?
+Find the configuration of the `Commenter.CommenterClient` in the `Program.cs` of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
 
-Now one last thing we may want to do is to show the `Upload Photo` buttons only if the user is allowed to. We could hide the button or hint that the user needs to logon otherwise.
+```cs
+builder.Services.AddSingleton(services => {
+   var backendUrl = "https://localhost:5005"; // Local debug URL
+   var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
+   var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
+   return new Commenter.CommenterClient(channel);
+});
+```
+
+and modify it to return an instance of a `PublicCommenterClient`, which we will create in a later step:
+
+```cs
+builder.Services.AddSingleton(services => {
+    var backendUrl = "https://localhost:5005"; // Local debug URL
+    var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
+    var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
+    return new PublicCommentsClient(new Commenter.CommenterClient(channel));
+});
+```
+Then also add a new `ProtectedCommenterClient` class, configured as follows.
+
+```cs
+builder.Services.AddScoped(sp => {
+    var backendUrl = "https://localhost:5005"; // Local debug URL
+
+    var commentsAuthorizationMessageHandler = sp.GetRequiredService<CommentsAuthorizationMessageHandler>();
+    commentsAuthorizationMessageHandler.InnerHandler = new HttpClientHandler();
+    var grpcWebHandler = new GrpcWebHandler(GrpcWebMode.GrpcWeb, commentsAuthorizationMessageHandler);
+
+    var httpClient = new HttpClient(grpcWebHandler);
+
+    var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions { HttpClient = httpClient });
+
+    return new ProtectedCommentsClient(new Commenter.CommenterClient(channel));
+});
+```
+
+What is the `CommentsAuthorizationMessageHandler` that we're passing to this new configuration? It's a [Custom AuthorizationHandler](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/additional-scenarios?view=aspnetcore-6.0#custom-authorizationmessagehandler-class) that we're going to build.
+
+### Custom Authorization Handler
+
+Create a custom class that extends `AuthorizationMessageHandler` for use as the DelegatingHandler for our HttpClient. In the constructor, invoke the `ConfigureHandler` to configure it to authorize outbound HTTP requests using an access token. The access token will  be only attached if at least one of the authorized URLs is a base of the request URI (`HttpRequestMessage.RequestUri`).
+
+- In the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, add a new folder `AuthorizationMessageHandlers`
+- In the new folder, add a new `CommentsAuthorizationMessageHandler` class
+- Extend `AuthorizationMessageHandler`
+- In the constructor, invoke the `ConfigureHandler` to configure it to authorize outbound HTTP requests using an access token.
+
+```cs
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+
+namespace PhotoSharingApplication.Frontend.BlazorWebAssembly.AuthorizationMessageHandlers {
+    public class CommentsAuthorizationMessageHandler : AuthorizationMessageHandler {
+        public CommentsAuthorizationMessageHandler(IAccessTokenProvider provider,
+            NavigationManager navigationManager)
+            : base(provider, navigationManager) {
+            ConfigureHandler(
+                authorizedUrls: new[] { "https://localhost:5005/photos" },
+                scopes: new[] { "commentsgrpc" });
+        }
+    }
+}
+```
+- Register the handler in the `Program.cs` file
+
+```cs
+builder.Services.AddScoped<CommentsAuthorizationMessageHandler>();
+```
+
+### PublicCommentsClient
+
+- In the `PhotoSharingApplication.Frontend.Infrastructure` project, under the `TypedHttpClients` folder, add a new `PublicCommentsClient` class
+- In the constructor, accept an instance of `HttpClient` and save it in a private field
+- Copy the methods of the `CommentsRepository` necessary to read the comments
+
+```cs
+using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.WebServices.Grpc.Comments;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients {
+    public class PublicCommentsClient {
+        private readonly Commenter.CommenterClient gRpcClient;
+
+        public PublicCommentsClient(Commenter.CommenterClient gRpcClient) {
+            this.gRpcClient = gRpcClient;
+        }
+
+        public async Task<Comment> FindAsync(int id) {
+            FindReply c = await gRpcClient.FindAsync(new FindRequest() { Id = id });
+            return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+        }
+
+        public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) {
+            GetCommentsForPhotosReply resp = await gRpcClient.GetCommentsForPhotoAsync(new GetCommentsForPhotosRequest() { PhotoId = photoId });
+            return resp.Comments.Select(c => new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() }).ToList();
+        }
+    }
+}
+```
+
+### ProtectedCommentsClient
+
+- In the `PhotoSharingApplication.Frontend.Infrastructure` project, under the `TypedHttpClients` folder, add a new `ProtectedCommentsClient` class
+- In the constructor, accept an instance of `HttpClient` and save it in a private field
+- Copy the methods of the `CommentsRepository` necessary to create, update and delete the comments
+
+```cs
+using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.WebServices.Grpc.Comments;
+using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients {
+    public class ProtectedCommentsClient {
+        private readonly Commenter.CommenterClient gRpcClient;
+
+        public ProtectedCommentsClient(Commenter.CommenterClient gRpcClient) {
+            this.gRpcClient = gRpcClient;
+        }
+
+        public async Task<Comment> CreateAsync(Comment comment) {
+            CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
+            CreateReply c = await gRpcClient.CreateAsync(createRequest);
+            return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+        }
+        public async Task<Comment> RemoveAsync(int id) {
+            RemoveReply c = await gRpcClient.RemoveAsync(new RemoveRequest() { Id = id });
+            return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+        }
+
+        public async Task<Comment> UpdateAsync(Comment comment) {
+            UpdateReply c = await gRpcClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body });
+            return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+        }
+    }
+}
+```
+
+### The Repository
+
+Now we can modify the Repository to let it use the new classes we just created.
+- Open the `CommentsRepository` class located in the `Repositories/Grpc` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
+- Modify the constructor to accept an instance of `PublicCommentsClient` and one of `ProtectedCommentsClient`, saving both in two private fields
+- Modify the methods to make use of those two fields instead of the `HttpClient`
+
+```cs
+using PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients;
+using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Core.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Grpc {
+    public class CommentsRepository : ICommentsRepository {
+        private readonly PublicCommentsClient publicCommentsClient;
+        private readonly ProtectedCommentsClient protectedCommentsClient;
+
+        public CommentsRepository(PublicCommentsClient publicCommentsClient, ProtectedCommentsClient protectedCommentsClient) {
+            this.publicCommentsClient = publicCommentsClient;
+            this.protectedCommentsClient = protectedCommentsClient;
+        }
+        public async Task<Comment> CreateAsync(Comment comment) => await protectedCommentsClient.CreateAsync(comment);
+
+        public async Task<Comment> FindAsync(int id) => await publicCommentsClient.FindAsync(id);
+
+        public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) => await publicCommentsClient.GetCommentsForPhotoAsync(photoId);
+
+        public async Task<Comment> RemoveAsync(int id) => await protectedCommentsClient.RemoveAsync(id);
+
+        public async Task<Comment> UpdateAsync(Comment comment) => await protectedCommentsClient.UpdateAsync(comment);
+    }
+}
+```
+
+## Try it
+
+- Start your 4 projects
+- Login to IdentityServer
+- Go to the Details of a Photo
+- Add a new Comment
+
+You should see that the new comment appears under the details of the Photo.
+If you don't log on first, you should see an error.
+
+## UI
+
+Let's show the `Upload Photo` buttons only if the user is allowed to. We could hide the button or hint that the user needs to logon otherwise.
 
 Of course this is not really a security measure, but it gives the user a better experience by clarifying the requirements.
 
@@ -799,70 +1086,9 @@ We have successfully managed to protect the `Upload` of a `Photo`.
 
 ## gRPC
 
-Our `gRPC` client is still not sending the token to the service, which means that no new comments can be posted, no matter the login status. 
+We also want to conditionally display the html to add a comment, just like we did for the `Upload` of the Photo.
 
-These are our next steps:
-
-- Change the repository to get the token and add it to the headers of the request
-- Change the UI to show the Post button only for authorized users
-
-### The CommentsRepository
-
-The `CreateAsync` of the `serviceClient` object give us the possibility to add the [authorization header](https://tools.ietf.org/html/rfc6750) that our gRPC API is expecting. 
-
-To get the token, we're going to make use of the `tokenProvider`.
-
-We can get the `TokenProvider` using dependency injection.
-
-- Open the `CommentsRepository` in the `Repositories` -> `Grpc` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
-- Change the constructor to require an `IAccessTokenProvider` and save the parameter in a readonly field:
-
-```cs
-private readonly CommentsBaseService.CommentsBaseServiceClient serviceClient;
-private readonly IAccessTokenProvider tokenProvider;
-
-public CommentsRepository(CommentsBaseService.CommentsBaseServiceClient serviceClient, IAccessTokenProvider tokenProvider) {
-  this.serviceClient = serviceClient;
-  this.tokenProvider = tokenProvider;
-}
-```
-which requires a 
-```cs
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-```
-
-Now change the `CreateAsync` method:
-
-1. Invoke the `RequestAccessToken` method of the `tokenProvider` for the `photosrest` scope
-2. Get the token by invoking the `TryGetToken`
-3. Create a `MetaData` header
-4. Set the `Authorization` header of the `requestMessage` to `Bearer`, followed by the value of our token
-5. Send the `createRequest` with the header
-6. Return the  Comment with the values contained in the response 
-
-```cs
- public async Task<Comment> CreateAsync(Comment comment) {
-  var tokenResult = await tokenProvider.RequestAccessToken(new AccessTokenRequestOptions() { Scopes = new string[] { "photosrest" } });
-  if (tokenResult.TryGetToken(out var token)) {
-    GrpCore.Metadata headers = new GrpCore.Metadata();
-    headers.Add("Authorization", $"Bearer {token.Value}");
-
-    CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
-    CreateReply c = await serviceClient.CreateAsync(createRequest, headers);
-    return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
-  }
-  return null;
-}
-```
-which requires
-
-```cs
-using GrpCore = Grpc.Core;
-```
-
-Now we want to display the html conditionally, just like we did for the `Upload` of the Photo.
-
-Just like we did on the `AllPhotos`, we're going to use an `<AuthorizedView>` component.
+Once again,  we're going to use an `<AuthorizedView>` component.
 
 - Open the `CommentsComponent.razor`
 - Change the `html` to look like this (leave the `code` section as it is)
@@ -889,33 +1115,13 @@ Just like we did on the `AllPhotos`, we're going to use an `<AuthorizedView>` co
 
 Now if you run the application you'll see the form to post a comment only if you're authenticated.
 
-If you do post a comment, you'll see the exact same error we had at the end of the prevoius lab. That's because the service on the backend is not writing the user name on the comment, which causes an exception when the service tries to serialize the comments back to the client. So now we need to get the user name on the server.
+## Adding the User.Name to Photos and Comments
 
-### gRPC Backend Service
-
-The `Create` method that we override on our `CommentsService` has a `ServerCallContext` parameter. That's where we can find our UserName.
-
-- Open the `CommentsService.cs` under the `Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
-- Replace the `Create` method with the following code.
-
-```cs
-[Authorize]
-public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
-  var user = context.GetHttpContext().User;
-  Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user.Identity.Name });
-  return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
-}
-```
-
-**NOTE: THIS ONLY WORKS BECAUSE:**
-1. On the Identity Server Project Config we added the `JwtClaimTypes.Name` in the `UserClaims` of the `commentsgrpc ApiResource`, which made sure that the User Name is carried in the Access Token emitted by Identity Server
-2. In the `startup` we added `options.TokenValidationParameters.NameClaimType = JwtClaimTypes.Name;` in the `AddJwtBearer("Bearer", options =>{ ... })`, which ensures that the `User.Identity.Name` is extracted from the `JwtClaimTypes.Name` instead of the default `ClaimTypes.Name` (the Microsoft type)
-
-If you want to try this, I suggest you delete all the comments you have on your database, then run the applciation and post a comment after logging in. You should finally see the comment in the list of comments of the photo details.
+So now we need to get the user name on the server, on both the Rest API, so that we can add it to a new Photo, and the gRpc service, so that we can add it to a new comment.
 
 ### The REST API
 
-Since we're adding the User Name to the Comments, let's do this also for the Photo. A Web Api Controller can find the User Name in the `User.Identity.Name` property of the Controller itself, so let's use it to complete the information of the uploaded Photo:
+A Web Api Controller can find the User Name in the `User.Identity.Name` property of the Controller itself, so let's use it to complete the information of the uploaded Photo:
 
 - Open the `PhotosController` on the `Controllers` folder of the `PhotoSharingApplication.WebServices.REST.Photos` project
 - Modify the `CreateAsync` action as follows:
@@ -940,7 +1146,7 @@ In order to display the name of the user on the `PhotoDetails` component, let's 
     </MatHeadline6>
   </div>
   <MatCardContent>
-    <MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")"></MatCardMedia>
+    <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
     <MatBody2>
       @Photo.Description
     </MatBody2>
@@ -967,6 +1173,28 @@ In order to display the name of the user on the `PhotoDetails` component, let's 
 </MatCard>
 ```
 Upload a Photo and verify that the user name is correctly added to the Photo information and shown on the UI.
+
+### gRPC Backend Service
+
+The `Create` method that we override on our `CommentsService` has a `ServerCallContext` parameter. That's where we can find our UserName.
+
+- Open the `CommentsService.cs` under the `Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
+- Replace the `Create` method with the following code.
+
+```cs
+[Authorize]
+public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
+  var user = context.GetHttpContext().User;
+  Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user.Identity.Name });
+  return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
+}
+```
+
+**NOTE: THIS ONLY WORKS BECAUSE:**
+1. On the Identity Server Project Config we added the `JwtClaimTypes.Name` in the `UserClaims` of the `commentsgrpc ApiResource`, which made sure that the User Name is carried in the Access Token emitted by Identity Server
+2. In the `startup` we added `options.TokenValidationParameters.NameClaimType = JwtClaimTypes.Name;` in the `AddJwtBearer("Bearer", options =>{ ... })`, which ensures that the `User.Identity.Name` is extracted from the `JwtClaimTypes.Name` instead of the default `ClaimTypes.Name` (the Microsoft type)
+
+Run the application and post a comment after logging in. You should see that the new comment includes the user name that posted it.
 
 --- 
 

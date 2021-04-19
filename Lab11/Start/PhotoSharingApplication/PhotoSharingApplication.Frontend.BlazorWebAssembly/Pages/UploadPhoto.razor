@@ -1,8 +1,7 @@
 ﻿@page "/photos/upload"
-
+@attribute [Authorize]
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
-@attribute [Authorize]
 
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">

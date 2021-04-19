@@ -1,64 +1,64 @@
 ﻿@using PhotoSharingApplication.Shared.Core.Entities
-<MatCard Class="mat-elevation-z5">
-@if (ViewMode == ViewModes.Read) {
-    <CommentReadComponent CommentItem="CommentItem" OnEdit="SwitchToEditMode" OnDelete="SwitchToDeleteMode"></CommentReadComponent>
-} else if (ViewMode == ViewModes.Edit) {
-    <CommentEditComponent CommentItem="CommentItem" OnSave="ConfirmUpdate" OnCancel="CancelUpdate"></CommentEditComponent>
-} else if (ViewMode == ViewModes.Delete) {
-    <CommentDeleteComponent CommentItem="CommentItem" OnDelete="ConfirmDelete" OnCancel="SwitchToReadMode"></CommentDeleteComponent>
-} else if (ViewMode == ViewModes.Create) {
-    <CommentCreateComponent CommentItem="CommentItem" OnSave="ConfirmCreate"></CommentCreateComponent>
-}
+<MatCard>
+    @if (ViewMode == ViewModes.Read) {
+        <CommentReadComponent CommentItem="CommentItem" OnEdit="SwitchToEditMode" OnDelete="SwitchToDeleteMode"></CommentReadComponent>
+    } else if (ViewMode == ViewModes.Edit) {
+        <CommentEditComponent CommentItem="CommentItem" OnSave="ConfirmUpdate" OnCancel="CancelUpdate"></CommentEditComponent>
+    } else if (ViewMode == ViewModes.Delete) {
+        <CommentDeleteComponent CommentItem="CommentItem" OnDelete="ConfirmDelete" OnCancel="SwitchToReadMode"></CommentDeleteComponent>
+    } else if (ViewMode == ViewModes.Create) {
+        <CommentCreateComponent CommentItem="CommentItem" OnSave="ConfirmCreate"></CommentCreateComponent>
+    }
 </MatCard>
-        @code {
-            [Parameter]
-            public Comment CommentItem { get; set; }
 
-            [Parameter]
-            public ViewModes ViewMode { get; set; }
+@code {
+    [Parameter]
+    public Comment CommentItem { get; set; }
 
-            void SwitchToReadMode() => ViewMode = ViewModes.Read;
-            void SwitchToEditMode() => ViewMode = ViewModes.Edit;
-            void SwitchToDeleteMode() => ViewMode = ViewModes.Delete;
+    [Parameter]
+    public ViewModes ViewMode { get; set; }
 
-            [Parameter]
-            public EventCallback<Comment> OnUpdate { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnUpdate { get; set; }
 
-            async Task ConfirmUpdate() {
-                await OnUpdate.InvokeAsync(CommentItem);
-                SwitchToReadMode();
-            }
+    [Parameter]
+    public EventCallback<Comment> OnDelete { get; set; }
 
-            private Comment originalComment;
+    [Parameter]
+    public EventCallback<Comment> OnCreate { get; set; }
 
-            protected override void OnInitialized() {
-                originalComment = new Comment { Subject = CommentItem.Subject, Body = CommentItem.Body };
-            }
+    private Comment originalComment;
 
-            public void CancelUpdate() {
-                CommentItem.Subject = originalComment.Subject;
-                CommentItem.Body = originalComment.Body;
+    protected override void OnInitialized() {
+        originalComment = new Comment { Subject = CommentItem.Subject, Body = CommentItem.Body };
+    }
 
-                SwitchToReadMode();
-            }
+    void SwitchToReadMode() => ViewMode = ViewModes.Read;
+    void SwitchToEditMode() => ViewMode = ViewModes.Edit;
+    void SwitchToDeleteMode() => ViewMode = ViewModes.Delete;
 
-            [Parameter]
-            public EventCallback<Comment> OnDelete { get; set; }
+    async Task ConfirmUpdate() {
+        await OnUpdate.InvokeAsync(CommentItem);
+        SwitchToReadMode();
+    }
 
-            async Task ConfirmDelete() {
-                await OnDelete.InvokeAsync(CommentItem);
-                SwitchToReadMode();
-            }
+    public void CancelUpdate() {
+        CommentItem.Subject = originalComment.Subject;
+        CommentItem.Body = originalComment.Body;
 
-            [Parameter]
-            public EventCallback<Comment> OnCreate { get; set; }
+        SwitchToReadMode();
+    }
 
-            async Task ConfirmCreate() {
-                await OnCreate.InvokeAsync(CommentItem);
-                CommentItem = new Comment() { PhotoId = CommentItem.PhotoId, UserName = CommentItem.UserName };
-            }
+    async Task ConfirmDelete() {
+        await OnDelete.InvokeAsync(CommentItem);
+        SwitchToReadMode();
+    }
 
-            public enum ViewModes {
-                Read, Edit, Delete, Create
-            }
-        }
+    async Task ConfirmCreate() {
+        await OnCreate.InvokeAsync(CommentItem);
+        CommentItem = new Comment() { PhotoId = CommentItem.PhotoId, UserName = CommentItem.UserName };
+    }
+    public enum ViewModes {
+        Read, Edit, Delete, Create
+    }
+}

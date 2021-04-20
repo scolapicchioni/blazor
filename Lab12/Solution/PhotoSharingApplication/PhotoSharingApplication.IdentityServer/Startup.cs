@@ -3,13 +3,13 @@
 
 
 using IdentityServer4;
-using IdentityServer4.Quickstart.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using IdentityServerHost.Quickstart.UI;
 
 namespace PhotoSharingApplication.IdentityServer
 {
@@ -28,29 +28,18 @@ namespace PhotoSharingApplication.IdentityServer
         {
             services.AddControllersWithViews();
 
-            // configures IIS out-of-proc settings (see https://github.com/aspnet/AspNetCore/issues/14882)
-            services.Configure<IISOptions>(iis =>
-            {
-                iis.AuthenticationDisplayName = "Windows";
-                iis.AutomaticAuthentication = false;
-            });
-
-            // configures IIS in-proc settings
-            services.Configure<IISServerOptions>(iis =>
-            {
-                iis.AuthenticationDisplayName = "Windows";
-                iis.AutomaticAuthentication = false;
-            });
-
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
 
             var builder = services.AddIdentityServer(options =>
-                {
-                    options.Events.RaiseErrorEvents = true;
-                    options.Events.RaiseInformationEvents = true;
-                    options.Events.RaiseFailureEvents = true;
-                    options.Events.RaiseSuccessEvents = true;
-                })
+            {
+                options.Events.RaiseErrorEvents = true;
+                options.Events.RaiseInformationEvents = true;
+                options.Events.RaiseFailureEvents = true;
+                options.Events.RaiseSuccessEvents = true;
+
+                // see https://identityserver4.readthedocs.io/en/latest/topics/resources.html
+                options.EmitStaticAudienceClaim = true;
+            })
                 .AddTestUsers(TestUsers.Users)
                 // this adds the config data from DB (clients, resources, CORS)
                 .AddConfigurationStore(options =>
@@ -70,6 +59,16 @@ namespace PhotoSharingApplication.IdentityServer
             builder.AddDeveloperSigningCredential();
 
             services.AddAuthentication();
+                //.AddGoogle(options =>
+                //{
+                //    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+
+                //    // register your IdentityServer with Google at https://console.developers.google.com
+                //    // enable the Google+ API
+                //    // set the redirect URI to https://localhost:5001/signin-google
+                //    options.ClientId = "copy client ID from Google here";
+                //    options.ClientSecret = "copy client secret from Google here";
+                //});
         }
 
         public void Configure(IApplicationBuilder app)

@@ -1,12 +1,12 @@
 ﻿using PhotoSharingApplication.Shared.Core.Entities;
-using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PhotoSharingApplication.Shared.Core.Interfaces {
     public interface IPhotosRepository {
-        Task<List<Photo>> GetPhotosAsync(int amount = 10);
+        Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, CancellationToken cancellationToken);
+        Task<int> GetPhotosCountAsync();
         Task<Photo> FindAsync(int id);
         Task<Photo> FindWithImageAsync(int id);
         Task<PhotoImage> GetImageAsync(int id);

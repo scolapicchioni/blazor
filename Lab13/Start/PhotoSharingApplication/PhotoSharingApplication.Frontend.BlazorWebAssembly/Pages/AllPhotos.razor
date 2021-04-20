@@ -1,8 +1,6 @@
-﻿@page "/photos/all"
+﻿@inject IPhotosService photosService
 
-@inject IPhotosService photosService
-
-<MatH3>All Photos</MatH3>
+@page "/photos/all"
 
 <AuthorizeView>
     <Authorized>
@@ -14,25 +12,34 @@
 </AuthorizeView>
 
 
-@if (photos == null) {
-    <p>...Loading</p>
-} else {
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
-        @foreach (var photo in photos) {
+        <Virtualize @ref="virtualizecomponent" Context="photo" ItemsProvider="@LoadPhotos">
             <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
                 <PhotoDetailsComponent Photo="photo" Details Edit Delete></PhotoDetailsComponent>
             </div>
-        }
+        </Virtualize>
     </div>
 </div>
-}
+
 
 @code {
-    List<Photo> photos;
+    Virtualize<Photo> virtualizecomponent;
 
+    int totalNumberOfPhotos;
     protected override async Task OnInitializedAsync() {
-        photos = await photosService.GetPhotosAsync();
+        totalNumberOfPhotos = await photosService.GetPhotosCountAsync();
+        await virtualizecomponent.RefreshDataAsync();
     }
 
+    private async ValueTask<ItemsProviderResult<Photo>> LoadPhotos(ItemsProviderRequest request) {
+        var numberOfPhotos = Math.Min(request.Count, totalNumberOfPhotos - request.StartIndex);
+        try {
+            var photos = await photosService.GetPhotosAsync(request.StartIndex, numberOfPhotos, request.CancellationToken);
+
+            return new ItemsProviderResult<Photo>(photos, totalNumberOfPhotos);
+        } catch {
+            return new ItemsProviderResult<Photo>(null, 0);
+        }
+    }
 }

@@ -1,5 +1,6 @@
-﻿@page "/photos/update/{id:int}"
-@using PhotoSharingApplication.Shared.Core.Exceptions
+﻿@using PhotoSharingApplication.Shared.Core.Exceptions
+@page "/photos/update/{id:int}"
+
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
@@ -31,6 +32,6 @@
             navigationManager.NavigateTo("/photos/all");
         } catch (UnauthorizedEditAttemptException<Photo>) {
             navigationManager.NavigateTo("/forbidden");
-        } 
+        }
     }
 }

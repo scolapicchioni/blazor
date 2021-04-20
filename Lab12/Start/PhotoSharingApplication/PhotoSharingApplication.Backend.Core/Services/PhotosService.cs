@@ -11,11 +11,9 @@ namespace PhotoSharingApplication.Backend.Core.Services {
         private readonly IAuthorizationService<Photo> photosAuthorizationService;
         private readonly IUserService userService;
 
-        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) {
-            this.repository = repository;
-            this.photosAuthorizationService = photosAuthorizationService;
-            this.userService = userService;
-        }
+        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) =>
+            (this.repository, this.photosAuthorizationService, this.userService) = (repository, photosAuthorizationService, userService);
+
         public async Task<Photo> FindAsync(int id) => await repository.FindAsync(id);
         public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
         public async Task<Photo> RemoveAsync(int id) {
@@ -24,7 +22,6 @@ namespace PhotoSharingApplication.Backend.Core.Services {
             if (await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
                 return await repository.RemoveAsync(id);
             else throw new UnauthorizedDeleteAttemptException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
-
         }
         public async Task<Photo> UpdateAsync(Photo photo) {
             var user = await userService.GetUserAsync();

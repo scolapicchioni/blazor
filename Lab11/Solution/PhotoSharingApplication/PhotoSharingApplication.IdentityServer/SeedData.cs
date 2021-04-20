@@ -3,7 +3,6 @@
 
 
 using IdentityServer4.EntityFramework.DbContexts;
-using IdentityServer4.EntityFramework.Interfaces;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,7 +38,7 @@ namespace PhotoSharingApplication.IdentityServer
             }
         }
 
-        private static void EnsureSeedData(IConfigurationDbContext context)
+        private static void EnsureSeedData(ConfigurationDbContext context)
         {
             if (!context.Clients.Any())
             {
@@ -58,7 +57,7 @@ namespace PhotoSharingApplication.IdentityServer
             if (!context.IdentityResources.Any())
             {
                 Log.Debug("IdentityResources being populated");
-                foreach (var resource in Config.Ids.ToList())
+                foreach (var resource in Config.IdentityResources.ToList())
                 {
                     context.IdentityResources.Add(resource.ToEntity());
                 }
@@ -71,16 +70,21 @@ namespace PhotoSharingApplication.IdentityServer
 
             if (!context.ApiResources.Any())
             {
-                Log.Debug("ApiResources being populated");
-                foreach (var resource in Config.Apis.ToList())
+                Log.Debug("ApiScopes being populated");
+                foreach (var resource in Config.ApiScopes.ToList())
                 {
+                    context.ApiScopes.Add(resource.ToEntity());
+                }
+                context.SaveChanges();
+                Log.Debug("ApiResources being populated");
+                foreach (var resource in Config.ApiResources.ToList()) {
                     context.ApiResources.Add(resource.ToEntity());
                 }
                 context.SaveChanges();
             }
             else
             {
-                Log.Debug("ApiResources already populated");
+                Log.Debug("ApiScopes already populated");
             }
         }
     }

@@ -1,10 +1,8 @@
 ﻿@using PhotoSharingApplication.Shared.Core.Entities
-
 @using PhotoSharingApplication.Shared.Core.Interfaces;
 
 @inject IUserService UserService
 @inject IAuthorizationService<Comment> CommentsAuthorizationService
-
 <MatCardContent>
     <em>On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</em>
     <MatH5>@CommentItem.Subject</MatH5>
@@ -12,10 +10,10 @@
 </MatCardContent>
 <MatCardActions>
     @if (mayEdit) {
-    <MatButton OnClick="RaiseEdit">Edit</MatButton>
+        <MatButton OnClick="RaiseEdit">Edit</MatButton>
     }
     @if (mayDelete) {
-    <MatButton OnClick="RaiseDelete">Delete</MatButton>
+        <MatButton OnClick="RaiseDelete">Delete</MatButton>
     }
 </MatCardActions>
 
@@ -29,9 +27,6 @@
     [Parameter]
     public EventCallback<Comment> OnDelete { get; set; }
 
-    async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
-    async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
-
     bool mayEdit = false;
     bool mayDelete = false;
 
@@ -40,4 +35,7 @@
         mayEdit = await CommentsAuthorizationService.ItemMayBeUpdatedAsync(User, CommentItem);
         mayDelete = await CommentsAuthorizationService.ItemMayBeDeletedAsync(User, CommentItem);
     }
+
+    async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
+    async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
 }

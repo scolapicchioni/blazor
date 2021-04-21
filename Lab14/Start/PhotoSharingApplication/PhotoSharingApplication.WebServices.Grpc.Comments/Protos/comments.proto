@@ -6,7 +6,7 @@ option csharp_namespace = "PhotoSharingApplication.WebServices.Grpc.Comments";
 
 package comments;
 
-service CommentsBaseService {
+service Commenter {
   rpc Create (CreateRequest) returns (CreateReply);
   rpc Find(FindRequest) returns (FindReply);
   rpc GetCommentsForPhoto(GetCommentsForPhotosRequest) returns (GetCommentsForPhotosReply);

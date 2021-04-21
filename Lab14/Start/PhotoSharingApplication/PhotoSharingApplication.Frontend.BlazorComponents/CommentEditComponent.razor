@@ -1,15 +1,12 @@
-﻿@using PhotoSharingApplication.Shared.Core.Entities 
+﻿@using PhotoSharingApplication.Shared.Core.Entities
 
 <MatCardContent>
     <EditForm Model="@CommentItem" OnValidSubmit="HandleValidSubmit">
-        <FluentValidationValidator />
         <p>
             <MatTextField @bind-Value="@CommentItem.Subject" Label="Subject" FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Subject)" />
         </p>
         <p>
             <MatTextField @bind-Value="@CommentItem.Body" Label="Description" TextArea FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Body)" />
         </p>
         <p>
             <MatButton Type="submit">Update</MatButton>

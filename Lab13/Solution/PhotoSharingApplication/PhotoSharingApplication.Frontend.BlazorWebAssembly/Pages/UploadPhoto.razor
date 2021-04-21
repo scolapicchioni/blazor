@@ -1,9 +1,9 @@
-﻿@page "/photos/upload"
-@using PhotoSharingApplication.Shared.Core.Exceptions
- 
+﻿@using PhotoSharingApplication.Shared.Core.Exceptions
+@page "/photos/upload"
+@attribute [Authorize]
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
-@attribute [Authorize]
+
 
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
@@ -17,7 +17,6 @@
 
     protected override void OnInitialized() {
         photo = new Photo();
-        photo.PhotoImage = new PhotoImage();
     }
 
     private async Task Upload() {

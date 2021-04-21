@@ -1,31 +1,27 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PhotoSharingApplication.Shared.Core.Entities;
+using System;
 
 namespace PhotoSharingApplication.Backend.Infrastructure.Data {
     public class PhotoSharingApplicationContext : DbContext {
-        public PhotoSharingApplicationContext(DbContextOptions<PhotoSharingApplicationContext> options)
-            : base(options) {
-        }
-
+        public PhotoSharingApplicationContext(DbContextOptions<PhotoSharingApplicationContext> options) : base(options) { }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+            => optionsBuilder.LogTo(Console.WriteLine);
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             modelBuilder.Entity<Photo>(ConfigurePhoto);
-            modelBuilder.Entity<PhotoImage>(ConfigurePhotoImage);
             modelBuilder.Entity<Comment>(ConfigureComment);
+            modelBuilder.Entity<PhotoImage>(ConfigurePhotoImage);
         }
 
         private void ConfigurePhoto(EntityTypeBuilder<Photo> builder) {
             builder.ToTable("Photos");
 
-            builder.Property(p => p.Id)
-                .UseHiLo("photos_hilo")
-                .IsRequired();
-
-            builder.Property(p => p.Title)
+            builder.Property(photo => photo.Title)
                 .IsRequired(true)
                 .HasMaxLength(255);
 
-            builder.Ignore(p=>p.ImageUrl);
+            builder.Ignore(p => p.ImageUrl);
 
             builder.HasOne(p => p.PhotoImage)
                 .WithOne()
@@ -34,10 +30,6 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Data {
         private void ConfigurePhotoImage(EntityTypeBuilder<PhotoImage> builder) {
             builder.ToTable("Photos");
 
-            builder.Property(p => p.Id)
-                .UseHiLo("photos_hilo")
-                .IsRequired();
-
             builder.Property(p => p.PhotoFile)
                 .IsRequired(true);
 
@@ -45,25 +37,12 @@ namespace PhotoSharingApplication.Backend.Infrastructure.Data {
                 .IsRequired(true)
                 .HasMaxLength(255);
         }
-
         private void ConfigureComment(EntityTypeBuilder<Comment> builder) {
             builder.ToTable("Comments");
 
-            builder.HasKey(c => c.Id);
-
-            builder.Property(c => c.Id)
-                .UseHiLo("comments_hilo")
-               .IsRequired();
-
-            builder.Property(c => c.Subject)
+            builder.Property(comment => comment.Subject)
                 .IsRequired()
                 .HasMaxLength(250);
-
-            builder.HasOne(c => c.Photo)
-                .WithMany(p => p.Comments)
-                .HasForeignKey(c => c.PhotoId);
-
-            builder.Property(c => c.PhotoId).IsRequired();
         }
 
         public DbSet<Photo> Photos { get; set; }

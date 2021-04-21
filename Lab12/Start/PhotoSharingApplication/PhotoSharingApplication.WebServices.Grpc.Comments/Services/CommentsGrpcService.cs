@@ -49,9 +49,9 @@ namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
             }, context);
         }
 
-        private Task<TReply> executeCommand<TReply>(Func<Task<TReply>> commandToExecute, ServerCallContext context) {
+        private async Task<TReply> executeCommand<TReply>(Func<Task<TReply>> commandToExecute, ServerCallContext context) {
             try {
-                return commandToExecute();
+                return await commandToExecute();
             } catch (UnauthorizedDeleteAttemptException<Comment>) {
                 var user = context.GetHttpContext().User;
                 var metadata = new Metadata { { "User", user.Identity.Name } };

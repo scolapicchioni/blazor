@@ -61,6 +61,7 @@ This project will take care of the authentication part. It will issue JWT tokens
 - Simple Authorization
 - Resource Owner Authorization
 - CLEAN Architecture
+- Unit Testing with bUnit
 
 ## Before you begin
 
@@ -221,6 +222,12 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - Fluent Validation in the Core Service 
    - Fluent Validation in ASP.NET Core REST Service
    - Fluent Validation in Blazor with Blazored.FluentValidation
+- Lab 14 - Unit Testing Blazor Components with bUnit
+   - Unit Testing
+   - Mocking
+   - xUnit
+   - Moq
+   - bUnit
 
 
 

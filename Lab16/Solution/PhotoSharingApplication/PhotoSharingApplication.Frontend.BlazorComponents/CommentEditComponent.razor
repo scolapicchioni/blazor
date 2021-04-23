@@ -1,0 +1,34 @@
+﻿@using PhotoSharingApplication.Shared.Core.Entities 
+
+<MatCardContent>
+    <EditForm Model="@CommentItem" OnValidSubmit="HandleValidSubmit">
+        <FluentValidationValidator />
+        <p>
+            <MatTextField @bind-Value="@CommentItem.Subject" Label="Subject" FullWidth></MatTextField>
+            <ValidationMessage For="@(() => CommentItem.Subject)" />
+        </p>
+        <p>
+            <MatTextField @bind-Value="@CommentItem.Body" Label="Description" TextArea FullWidth></MatTextField>
+            <ValidationMessage For="@(() => CommentItem.Body)" />
+        </p>
+        <p>
+            <MatButton Type="submit">Update</MatButton>
+            <MatButton OnClick="OnCancel">Cancel</MatButton>
+        </p>
+    </EditForm>
+</MatCardContent>
+
+@code {
+    [Parameter]
+    public Comment CommentItem { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<Comment> OnSave { get; set; }
+
+    private async Task HandleValidSubmit() {
+        await OnSave.InvokeAsync(CommentItem);
+    }
+}

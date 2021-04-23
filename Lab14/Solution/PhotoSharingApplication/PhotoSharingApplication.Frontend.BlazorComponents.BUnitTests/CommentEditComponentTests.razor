@@ -1,0 +1,52 @@
+﻿@inherits TestContext
+@using PhotoSharingApplication.Shared.Core.Entities
+
+@code {
+    [Fact]
+    public async Task ShouldInvokeUpdate() {
+        Comment comment = new Comment();
+
+        bool uploadInvoked = false;
+        Comment actual = null;
+        Action<Comment> Upload = c => {
+            uploadInvoked = true;
+            actual = c;
+        };
+
+        JSInterop.Mode = JSRuntimeMode.Loose;
+
+        var cut = Render(@<CommentEditComponent CommentItem="comment" OnSave="Upload"></CommentEditComponent>);
+
+    var editForm = cut.FindComponent<EditForm>();
+
+    // Act
+    await cut.InvokeAsync(async () => await editForm.Instance.OnValidSubmit.InvokeAsync(null));
+
+    //Assert
+    Assert.True(uploadInvoked);
+    Assert.Equal(comment, actual);
+    }
+
+    [Fact]
+    public void ShouldInvokeUpdateOnSubmit() {
+        Comment comment = new Comment();
+
+        bool uploadInvoked = false;
+        Comment actual = null;
+        Action<Comment> Upload = c => {
+        uploadInvoked = true;
+        actual = c;
+        };
+
+        JSInterop.Mode = JSRuntimeMode.Loose;
+
+        var cut = Render(@<CommentEditComponent CommentItem="comment" OnSave="Upload"></CommentEditComponent>);
+
+        // Act
+        cut.Find("form").Submit();
+
+        Assert.True(uploadInvoked);
+        Assert.Equal(comment, actual);
+
+    }
+}

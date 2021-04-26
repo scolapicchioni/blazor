@@ -62,6 +62,7 @@ This project will take care of the authentication part. It will issue JWT tokens
 - Resource Owner Authorization
 - CLEAN Architecture
 - Unit Testing with bUnit
+- Javascript interoperability
 
 ## Before you begin
 

@@ -1,0 +1,13 @@
+﻿@if (IsLocal) {
+<MatCardMedia Wide="true" ImageUrl="@(Photo.PhotoImage?.PhotoFile is null ? "" : $"data:{Photo.PhotoImage.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoImage.PhotoFile)}")"></MatCardMedia>
+} else {
+<MatCardMedia Wide="true" ImageUrl="@Photo.ImageUrl"></MatCardMedia>
+}
+
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+
+    [Parameter]
+    public bool IsLocal { get; set; }
+}

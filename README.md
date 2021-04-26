@@ -228,6 +228,13 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - xUnit
    - Moq
    - bUnit
+- Lab 15 - Blazor / Javascript interoperability
+   - IJSRuntime
+   - Call a JavaScript function in ASP.NET Core Blazor
+   - Call .NET methods from JavaScript functions in ASP.NET Core Blazor
+   - Blazor JavaScript isolation and object references
+   - Leaflet
+   - exif.js
 
 
 

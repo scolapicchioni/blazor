@@ -1,0 +1,18 @@
+﻿@using Microsoft.JSInterop
+@inject IJSRuntime js
+
+<div id="map"></div>
+@code { 
+    [Parameter]
+    public Photo Photo { get; set; }
+
+    IJSObjectReference module;
+    protected override async Task OnInitializedAsync() {
+        module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/map.js");
+        await ShowMap();
+    }
+
+    public async ValueTask ShowMap() {
+        await module.InvokeVoidAsync("showMap",Photo.Latitude, Photo.Longitude, Photo.Title);
+    }
+}

@@ -1,0 +1,81 @@
+﻿@using Microsoft.JSInterop
+@inject IJSRuntime js
+
+<MatCard>
+    <MatH3>Upload Photo</MatH3>
+    <MatCardContent>
+        <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
+            <FluentValidationValidator />
+            <p>
+                <MatTextField @bind-Value="@Photo.Title" Label="Title" FullWidth></MatTextField>
+                <ValidationMessage For="@(() => Photo.Title)" />
+            </p>
+            <p>
+                <MatTextField @bind-Value="@Photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+            </p>
+            <p>
+                <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+                <ValidationMessage For="@(() => Photo.PhotoImage.PhotoFile)" />
+            </p>
+            <p>
+                <MatButton Type="submit">Upload</MatButton>
+            </p>
+        </EditForm>
+        <PhotoPictureComponent Photo="Photo" IsLocal="true"></PhotoPictureComponent>
+        <p>Latitude: @Photo.Latitude</p>
+        <p>Longitude: @Photo.Longitude</p>
+    </MatCardContent>
+</MatCard>
+
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+
+    [Parameter]
+    public EventCallback<Photo> OnSave { get; set; }
+
+    async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+        IMatFileUploadEntry file = files.FirstOrDefault();
+        if (file == null) {
+            return;
+        }
+        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
+        Photo.PhotoImage.ImageMimeType = file.Type;
+        using (var stream = new System.IO.MemoryStream()) {
+            await file.WriteToStreamAsync(stream);
+            Photo.PhotoImage.PhotoFile = stream.ToArray();
+        }
+
+        await ExtractCoords();
+    }
+
+    IJSObjectReference module;
+    protected override async Task OnInitializedAsync() {
+        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
+
+        action = UpdatePhotoCoords;
+
+        module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/map.js");
+    }
+
+    public async ValueTask ExtractCoords() {
+        await module.InvokeVoidAsync("extractCoords",
+            new {
+                src = Photo.PhotoImage?.PhotoFile is null ? "" :
+                $"data:{Photo.PhotoImage.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoImage.PhotoFile)}"
+            });
+    }
+
+    private static Action<double, double> action;
+
+    [JSInvokable]
+    public static Task UpdatePhotoCoordinates(double latitude, double longitude) {
+        action.Invoke(latitude,longitude);
+        return Task.CompletedTask;
+    }
+
+    public void UpdatePhotoCoords(double latitude, double longitude) {
+        Photo.Latitude = latitude;
+        Photo.Longitude = longitude;
+    }
+}

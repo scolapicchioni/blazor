@@ -1,5 +1,7 @@
 ﻿@page "/photos/all"
 
+<PageTitle>All Photos</PageTitle>
+
 <h3>AllPhotos</h3>
 
 @if (photos == null)
@@ -19,7 +21,7 @@ else
 }
 
 @code {
-    List<Photo> photos;
+    List<Photo>? photos;
 
     protected override void OnInitialized()
     {
@@ -33,7 +35,7 @@ else
     class Photo
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
     }
 }

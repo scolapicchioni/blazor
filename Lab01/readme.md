@@ -46,13 +46,11 @@ So I guess we're left with Blazor Web Assembly (AKA Blazor Client), which means:
 So, now that we know what we're going to use, let's see how.
 
 In short, you need:
-- The latest **preview** of Visual Studio 2019
-- .NET 6 Preview 
+- The latest Visual Studio 2022
+- .NET 6  
 
-In the future (November 2021) we'll get the official release of .NET 6 and it's going to be supported in Visual Studio 2019, but for now you need to install the Preview version. 
-
-- [Install the latest **preview** of Visual Studio 2019](https://visualstudio.microsoft.com/vs/preview/) *with the ASP.NET and web development workload*.
-- [Install .NET 6 Preview](https://dotnet.microsoft.com/download/dotnet/6.0)
+- [Install the latest Visual Studio 2022](https://visualstudio.microsoft.com/vs/) *with the ASP.NET and web development workload*.
+- [Install .NET 6](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 
 If my instructions don't work it's probably because the version changed, so take a look at the [Get Started](https://dotnet.microsoft.com/learn/aspnet/blazor-tutorial/install) page and follow those instructions on what to install (the versions change *pretty* often).
 
@@ -64,7 +62,7 @@ Anyway, when you're done installing, we can start creating our first project.
 - In the `Solution Name` field, type `PhotoSharingApplication`
 - In the `Project name` field, type `PhotoSharingApplication.Frontend.BlazorWebAssembly` 
 - Provide a `Location` for the project, such as `Lab01\Start`. 
-- Be sure to select the latest .net version (.Net 6.0 Preview)
+- Be sure to select the latest .net version (.Net 6.0)
 - Leave the rest as default: No authentication Type, Enable Https, Not hosted, no Progressive Web Application 
 - Select `Create`.
 
@@ -86,7 +84,7 @@ If you open `index.html`, you will find in the `<body>` section two interesting 
 
 The first one is 
 ```html
-<app>Loading...</app>
+<div id="app">Loading...</div>
 ```
 
 The second one is
@@ -110,9 +108,9 @@ From now on, your server is free to shut itself down if it pleases, because your
 - Our dll contains the `Program` class with the `Main` method
 - The `Main` method 
   - creates a `WebAssemblyHostBuilder` (which acts as a sort of hosting environment for our application) 
-  - adds `App` as a `RootComponent`, mounting it on the `app` tag
+  - adds `App` as a `RootComponent`, mounting it on the `app` id
   - builds and runs the `WebAssemblyHost`
-- The `WebAssemblyHost` now looks for the `app` tag (which we saw on the `index.html`) and replaces it with the `App` component
+- The `WebAssemblyHost` now looks for the `app` id (which we saw on the `index.html`) and replaces it with the `App` component
 - The `App` component (which you can find in the root of your project, it's called `App.razor`) contains the `Router`  component (that `<Router>` tag that you see in `App.razor`)
 - The [`Router` component](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-6.0) (which is a Microsoft component,  not part of our project source code)
   - Checks the address in the browser
@@ -138,7 +136,7 @@ But now, hopefully, you understand how to create a new page (which you now know 
 - In the `Solution Explorer`, right click the `Pages` folder and select `Add` -> `Razor Component`
 - Name the file `AllPhotos.razor`
 
-If you start the application now and navigate to `/allphotos` you'll see a `sorry, there's nothing at this adddress` message.
+If you start the application now and navigate to `/photos/all` you'll see a `sorry, there's nothing at this adddress` message.
 This is because we did not register the component with the route, so the `<Router>` component renders the `<NotFound>` part.
 
 Open the `Pages/AllPhotos.razor` file in Visual Studio and insert this code on the first line:
@@ -161,7 +159,7 @@ Read the [Component Classes](https://docs.microsoft.com/en-us/aspnet/core/blazor
 
 As a recap: each component contains
 - UI
-- Logic
+- Logic for the UI
 
 The UI is mostly HTML, but there can also be tags that *look like* HTML but they're actually nested components.
 What you can also find are bits and pieces of C#, maybe because you want to loop through your data in order to build some table rows, or you want to conditionally render a button only under a certain condition and so on.
@@ -221,8 +219,8 @@ Now of course we want to show something more than just a  title, so let's create
 
     class Photo {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
     }
 }
 ```
@@ -284,7 +282,7 @@ else
 }
 
 @code {
-    List<Photo> photos;
+    List<Photo>? photos;
 
     protected override void OnInitialized()
     {
@@ -298,8 +296,8 @@ else
     class Photo
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
     }
 }
 ```

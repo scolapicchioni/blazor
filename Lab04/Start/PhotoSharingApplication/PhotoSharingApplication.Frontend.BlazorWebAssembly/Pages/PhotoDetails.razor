@@ -4,12 +4,14 @@
 
 @page "/photos/details/{id:int}"
 
+<PageTitle>Photo Details - @photo?.Title</PageTitle>
+
 <MatH3>Details</MatH3>
 
-@if (photo == null) {
+@if (photo is null) {
     <p>...Loading...</p>
 } else {
-    <div class="mat-layout-grid">
+        <div class="mat-layout-grid">
         <div class="mat-layout-grid-inner">
             <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
                 <MatCard>
@@ -22,7 +24,7 @@
                         </MatSubtitle2>
                     </div>
                     <MatCardContent>
-                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" ></MatCardMedia>
                         <MatBody2>
                             @photo.Description
                         </MatBody2>
@@ -43,7 +45,7 @@
     [Parameter]
     public int Id { get; set; }
 
-    Photo photo;
+    Photo? photo;
 
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);

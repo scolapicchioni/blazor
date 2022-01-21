@@ -1,13 +1,15 @@
-﻿@page "/photos/delete/{id:int}"
-
-@using PhotoSharingApplication.Frontend.Core.Interfaces
+﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
+@page "/photos/delete/{id:int}"
+
+<PageTitle>Delete Photo @photo?.Title</PageTitle>
+
 <MatH3>Delete</MatH3>
 
-@if (photo == null) {
+@if (photo is null) {
     <p>...Loading...</p>
 } else {
     <div class="mat-layout-grid">
@@ -23,7 +25,7 @@
                         </MatSubtitle2>
                     </div>
                     <MatCardContent>
-                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
                         <MatBody2>
                             @photo.Description
                         </MatBody2>
@@ -43,7 +45,7 @@
     [Parameter]
     public int Id { get; set; }
 
-    Photo photo;
+    Photo? photo;
 
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);

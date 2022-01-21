@@ -22,13 +22,13 @@ We are going to build 3 parts.
 This project will interact with the user through a browser by dinamically constructing an HTML user interface and will talk to the server by using **gRPC Web** and **HttpClient**.
 
 2.1  - Photos REST Service 
-   - .NET 5 Web API Controller
+   - .NET 6 Web API Controller
    - Entity Framework Core 6.0
    - Sql Server Database
    - Identity Server Client Authentication
 
 2.2  - Comments gRPC Service 
-   - .NET 5 gRPC Service
+   - .NET 6 gRPC Service
    - Entity Framework Core 6.0
    - Sql Server Database
    - Identity Server Client Authentication
@@ -36,7 +36,7 @@ This project will interact with the user through a browser by dinamically constr
 These projects will be responsible to store the data on the server and respond to the client requests through http, json and protobuf.
 
 3. Authentication Server
-   - Identity Server 4
+   - Identity Server 4 (Duende)
    - Entity Framework Core
 
 This project will take care of the authentication part. It will issue JWT tokens that will be used by the client application to gain access to the services.
@@ -57,7 +57,7 @@ This project will take care of the authentication part. It will issue JWT tokens
 - CORS
 - Authentication and Authorization
 - OAuth 2 and Open Id Connect
-- Identity Server 4
+- Identity Server 4 (Duende)
 - Simple Authorization
 - Resource Owner Authorization
 - CLEAN Architecture
@@ -66,11 +66,9 @@ This project will take care of the authentication part. It will issue JWT tokens
 
 ## Before you begin
 
-At the time of the writing of this tutorial, .NET Core 6.0 is in preview. It is recommended that you install the latest **preview** version of Visual Studio 2019 in order to work with .NET Core 6.0.
+At the time of the writing of this tutorial, .NET Core 6.0 can be used only with Visual Studio 2022. It is recommended that you install the latest version of Visual Studio 2022 in order to work with .NET Core 6.0.
 
-If you're following this tutorial in the future (after November 2021), you may just need a normal version of Visual Studio which may come with .NET Core 6.0 on board, so your installations may vary. 
- 
-- Install the latest **preview** of [Visual Studio 2019](https://visualstudio.microsoft.com/vs/preview/) with the **ASP.NET and web development** workload  
+- Install the latest version of [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) with the **ASP.NET and web development** workload  
 - Install .NET Core 6.0 by downloading the [.NET Core 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
 
 You may want to go to the [getting started](https://dotnet.microsoft.com/learn/aspnet/blazor-tutorial/install) documentation for an updated set of instructions.
@@ -142,7 +140,7 @@ Or
 - Username: bob
 - Password: bob
 
-## A last note before we begin
+## One last note before we begin
 
 I assume you're a C# programmer interested in building a web application. Depending on how old you are, you may have already used asp, aspx, mvc and / or razor pages and now you want to try blazor. You may be already familiar with HTML and CSS and maybe you even played with some javascript framwork such as Angular, React or Vue.
 
@@ -170,7 +168,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - Parent and Child Components
    - Properties
    - EventCallbacks
-- Lab 05 - Backend: Web API with ASP.NET Core 6.0 and Visual Studio 2019 Preview
+- Lab 05 - Backend: Web API with ASP.NET Core 6.0 and Visual Studio 2022
    - REST Protocol
    - Asp.NET Core Web Api
    - Controllers
@@ -192,7 +190,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
 - Lab 07 - Frontend: Comments
    - More CLEAN architecture
    - More Components
-- Lab 08 - Backend: gRPC with ASP.NET Core 6.0 and Visual Studio 2019 Preview
+- Lab 08 - Backend: gRPC with ASP.NET Core 6.0 and Visual Studio 2022
    - More CLEAN architecture
    - gRPC
    - protobuf
@@ -203,7 +201,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - Configuration
    - CORS
 - Lab 10 - Security: Authentication and Authorization
-   - Identity Server 4
+   - Identity Server 4 (Duende)
    - Configuring the REST Service for JWT Bearer Authentication
    - Configuring the gRPC Service for JWT Bearer Authentication
    - Configuring the Blazor Client for JWT Bearer Authentication
@@ -236,6 +234,3 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - Blazor JavaScript isolation and object references
    - Leaflet
    - exif.js
-
-
-

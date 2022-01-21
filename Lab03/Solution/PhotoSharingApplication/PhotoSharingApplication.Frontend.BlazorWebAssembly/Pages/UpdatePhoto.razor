@@ -5,9 +5,9 @@
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-<MatH3>Update Photo</MatH3>
+<PageTitle>Update Photo @photo?.Title</PageTitle>
 
-@if (photo == null) {
+@if (photo is null) {
     <p>...Loading...</p>
 } else {
     <div class="mat-layout-grid">
@@ -18,47 +18,48 @@
                         <MatH3>Update Photo</MatH3>
                         <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
                             <p>
-                                <MatTextField @bind-Value="@photo.Title" Label="Title" FullWidth></MatTextField>
+                                <MatTextField @bind-Value="photo.Title" Label="Title" FullWidth ></MatTextField>
                             </p>
                             <p>
-                                <MatTextField @bind-Value="@photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+                                <MatTextField @bind-Value="photo.Description" Label="Description (optional):" FullWidth></MatTextField>
                             </p>
                             <p>
-                                <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+                                <MatFileUpload OnChange="HandleMatFileSelected"></MatFileUpload>
                             </p>
                             <p>
                                 <MatButton Type="submit">Update</MatButton>
                             </p>
                         </EditForm>
-                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
                     </MatCardContent>
                 </MatCard>
             </div>
         </div>
     </div>
 }
+
 @code {
     [Parameter]
     public int Id { get; set; }
 
-    Photo photo;
+    Photo? photo;
 
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);
     }
 
     private async Task HandleValidSubmit() {
-        await photosService.UpdateAsync(photo);
+        await photosService.UpdateAsync(photo!);
         navigationManager.NavigateTo("/photos/all");
     }
 
     async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-        IMatFileUploadEntry file = files.FirstOrDefault();
-        if (file == null) {
+        IMatFileUploadEntry? file = files.FirstOrDefault();
+        if (file is null) {
             return;
         }
         
-        photo.ImageMimeType = file.Type;
+        photo!.ImageMimeType = file.Type;
 
         using (var stream = new System.IO.MemoryStream()) {
             await file.WriteToStreamAsync(stream);

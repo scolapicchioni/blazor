@@ -1,12 +1,13 @@
-﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
+﻿@page "/photos/all"
 @using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Frontend.Core.Interfaces
 @inject IPhotosService photosService
 
-@page "/photos/all"
+<PageTitle>All Photos</PageTitle>
 
 <NavLink href="photos/upload">Upload new Photo</NavLink>
 
-@if (photos == null) {
+@if (photos is null) {
     <p>...Loading...</p>
 } else {
     @foreach (var photo in photos) {
@@ -14,7 +15,7 @@
     <p>@photo.Id</p>
     <p>@photo.Title</p>
     <p>@photo.Description</p>
-    <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+    <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
     <div>
         <NavLink href="@($"photos/details/{photo.Id}")">Details</NavLink>
         <NavLink href="@($"photos/update/{photo.Id}")">Update</NavLink>
@@ -25,9 +26,10 @@
 }
 
 @code {
-    List<Photo> photos;
+    List<Photo>? photos;
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
         photos = await photosService.GetPhotosAsync();
     }
 }

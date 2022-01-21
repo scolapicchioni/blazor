@@ -1,6 +1,6 @@
 # FrontEnd: Styling the UI with MatBlazor
 
-If yo followed Lab01 and Lab02, you can continue from your own solution. Otherwise you can begin with the `Lab03/Start` code.
+If you followed Lab01 and Lab02, you can continue from your own solution. Otherwise you can begin with the `Lab03/Start` code.
 
 ---
 
@@ -23,7 +23,7 @@ You'll see a link to a `bootstrap.min.css` file:
 
 This means that we can already use it to give a better look to our UI.
 
-For example we could transform our `Pages/AllPhotos.razor` to use a [Card](https://getbootstrap.com/docs/4.4/components/card/) for each Photo, like this:
+For example we could transform our `Pages/AllPhotos.razor` to use a [Card](https://getbootstrap.com/docs/5.0/components/card/) for each Photo, like this:
 
 ```html
 <h3>AllPhotos</h3>
@@ -57,15 +57,14 @@ For example we could transform our `Pages/AllPhotos.razor` to use a [Card](https
 }
 ```
 
-It is just a matter of learning which css class to use and what html structure to give to your content. All I did was to go to the [Bootstrap](https://getbootstrap.com/docs/4.4/getting-started/introduction/) documentation site, take a look at some example for a [Card](https://getbootstrap.com/docs/4.4/components/card/), copy some of that code into my page and tweek it to my liking.
+It is just a matter of learning which css class to use and what html structure to give to your content. All I did was to go to the [Bootstrap](https://getbootstrap.com/docs/5.0/getting-started/introduction/) documentation site, take a look at some example for a [Card](https://getbootstrap.com/docs/5.0/components/card/), copy some of that code into my page and tweek it to my liking.
 
 This is an approach you can use for all the rest of your site.
 
 What some people in the community have done, is to create Blazor Components that already wrap those css classes for you, so another approach is to use those components instead of (or together with) the base css.
 
-If you check the [Awesome Blazor Repo](https://github.com/AdrienTorris/awesome-blazor#libraries--extensions) (which contains tons of links to Blazor resources), you can see that there are many ongoing projects. When I first wrote this lab, the first link under the extensions was to [MatBlazor](https://github.com/SamProf/MatBlazor), which implements the [Google Material Design Guidelines](https://material.io/guidelines/).  
-The first place one year later has been taken by [Ant Design Blazor](https://github.com/ant-design-blazor/ant-design-blazor) since it has more stars on GitHub.  
-I am going to keep the labs with MatBlazor since it has more downloads than AntBlazor, but feel free to try any framework you like.
+If you check the [Awesome Blazor Repo](https://github.com/AdrienTorris/awesome-blazor#libraries--extensions) (which contains tons of links to Blazor resources), you can see that there are many ongoing projects. One of the first link under the extensions points to [MatBlazor](https://github.com/SamProf/MatBlazor), which implements the [Google Material Design Guidelines](https://material.io/guidelines/).    
+I am going to use MatBlazor, but feel free to try any framework you like.
 
 So what I'm going to do in my project is to use the `MatBlazor` components instead of Bootstrap. I'm not saying that it's the best choice, but it is a valid choice (there are [many](https://www.sitepoint.com/free-material-design-css-frameworks-compared/) different css framework around).
 
@@ -78,7 +77,7 @@ So let's install it following the [documentation](https://github.com/SamProf/Mat
 ## Installation
 
 - In your BlazorWebAssembly project, in the Solution Explorer, right click the Dependencies and select `Manage NuGet Packages`
-- On the `Browse` Tab, search for `MatBlazor`. **Ensure to check the `Include Prerelease` option**
+- On the `Browse` Tab, search for `MatBlazor`. 
 - Install the `MatBlazor` package by Vladimir Samoilenko
 - Add the following code in the `head` section of `index.html` 
 
@@ -91,27 +90,37 @@ So let's install it following the [documentation](https://github.com/SamProf/Mat
 
 ## Break Everything
 
-Let's remove all the stiles we don't want to use from the `wwwroot/css/app.css`. I'm going to delete everything, leaving only these two (I'll explain later what these are for):
+Let's remove all the stiles we don't want to use from the `wwwroot/css/app.css`. I'm going to delete everything, leaving only these (I'll explain later what these are for):
 
 ```css
 #blazor-error-ui {
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
+  background: lightyellow;
+  bottom: 0;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+  display: none;
+  left: 0;
+  padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+  #blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+  }
+
+.blazor-error-boundary {
+  background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+  padding: 1rem 1rem 1rem 3.7rem;
+  color: white;
+}
+
+  .blazor-error-boundary::after {
+    content: "An error has occurred."
+  }
 ```
 
 Then I'm going to remove the link to bootstrap from `index.html`
@@ -134,35 +143,36 @@ I'm going to go for this html, but feel free to use a layout you like, by lookin
 
 ```html
 @page "/photos/all"
-
-@using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Frontend.Core.Interfaces
 @inject IPhotosService photosService
 
-<MatH3>AllPhotos</MatH3>
+<PageTitle>All Photos</PageTitle>
+
+<MatH3>All Photos</MatH3>
 
 <MatButton Link="photos/upload">Upload new Photo</MatButton>
 
-@if (photos == null) {
-    <p class="mat">...Loading...</p>
+@if (photos is null) {
+  <p>...Loading...</p>
 } else {
-<div class="mat-layout-grid">
-  <div class="mat-layout-grid-inner">
-    @foreach (var photo in photos) {
+  <div class="mat-layout-grid">
+      <div class="mat-layout-grid-inner">
+  @foreach (var photo in photos) {
       <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
         <MatCard>
           <div>
             <MatHeadline6>
-                @photo.Id - @photo.Title
+              @photo.Id - @photo.Title
             </MatHeadline6>
             <MatSubtitle2>
-                @photo.CreatedDate.ToShortDateString()
+              @photo.CreatedDate.ToShortDateString()
             </MatSubtitle2>
           </div>
-          <MatCardContent>
-            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+        <MatCardContent>
+          <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" ></MatCardMedia>
             <MatBody2>
-                @photo.Description
+              @photo.Description
             </MatBody2>
           </MatCardContent>
           <MatCardActions>
@@ -175,37 +185,40 @@ I'm going to go for this html, but feel free to use a layout you like, by lookin
         </MatCard>
       </div>
     }
+    </div>
   </div>
-</div>
 }
 
 @code {
-  List<Photo> photos;
+  List<Photo>? photos;
 
-  protected override async Task OnInitializedAsync() {
-      photos = await photosService.GetPhotosAsync();
+  protected override async Task OnInitializedAsync()
+  {
+    photos = await photosService.GetPhotosAsync();
   }
 }
 ```
 
 ## The Application Bar
 
-Ok, our AllPhotos looks better, but what happened to the navigation?? And most of all, where can we fix it?
+Ok, our AllPhotos looks better (again, press CTRL+F5 in your browser if it doesn't), but what happened to the navigation?? And most of all, where can we fix it?
 
 In order to find where the navigation is defined, we need to start from the very beginning and take a look at one attribute that I did not explain yet.
 
 Open `App.razor`.
 
 ```html
-<Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p>Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
+<Router AppAssembly="@typeof(Program).Assembly">
+  <Found Context="routeData">
+    <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+  </Found>
+  <NotFound>
+    <PageTitle>Not found</PageTitle>
+    <LayoutView Layout="@typeof(MainLayout)">
+      <p role="alert">Sorry, there's nothing at this address.</p>
+    </LayoutView>
+  </NotFound>
 </Router>
 ```
 
@@ -219,7 +232,6 @@ Since the navigation is indedd something that we want to have on each page, that
 
 ```html
 @inherits LayoutComponentBase
-
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -227,7 +239,7 @@ Since the navigation is indedd something that we want to have on each page, that
 
     <div class="main">
         <div class="top-row px-4">
-            <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+            <a href="https://docs.microsoft.com/aspnet/" target="_blank" class="ml-md-auto">About</a>
         </div>
 
         <div class="content px-4">
@@ -287,11 +299,11 @@ We're going to change the value of our variable [at the click of a button](https
 
 @code
 {
-    bool Opened = true;
+  bool Opened = true;
 
-    void ButtonClicked() {
-        Opened = !Opened;
-    }
+  void ButtonClicked() {
+    Opened = !Opened;
+  }
 }
 ```
 
@@ -302,11 +314,13 @@ Running the application now, you'll see that the UI looks different, although it
 What is `<NavMenu>`? It's yet another component of ours, also to be found in the `Shared` folder, that contains the navigation bar that once was on the left of the page.
 
 ```html
-<div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">PhotoSharingApplication.Frontend.BlazorWebAssembly</a>
-    <button class="navbar-toggler" @onclick="ToggleNavMenu">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">PhotoSharingApplication.Frontend.BlazorWebAssembly</a>
+        <button title="Navifation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
 </div>
 
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
@@ -459,13 +473,13 @@ Inside the form we will need [TextFields](https://www.matblazor.com/TextField) a
 We also need to change the code to handle the selection of the file, because MatBlazor passes different parameters than the ones we had with the native Blazor `FileUpload` component.
 
 ```html
-@page "/photos/upload"
-
-@using PhotoSharingApplication.Frontend.Core.Entities
 @using PhotoSharingApplication.Frontend.Core.Interfaces
-
+@using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
+@page "/photos/upload"
+
+<PageTitle>Upload Photo</PageTitle>
 
 <div class="mat-layout-grid">
   <div class="mat-layout-grid-inner">
@@ -475,39 +489,34 @@ We also need to change the code to handle the selection of the file, because Mat
         <MatCardContent>
           <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
             <p>
-              <MatTextField @bind-Value="@photo.Title" Label="Title" FullWidth></MatTextField>
+              <MatTextField @bind-Value="photo.Title" Label="Title" FullWidth ></MatTextField> 
             </p>
             <p>
-              <MatTextField @bind-Value="@photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+              <MatTextField @bind-Value="photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
             </p>
             <p>
-              <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+              <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
             </p>
             <p>
-              <MatButton Type="submit">Upload</MatButton>
+              <MatButton Type="Submit">Upload</MatButton>
             </p>
           </EditForm>
-          <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+          <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" ></MatCardMedia>
         </MatCardContent>
       </MatCard>
     </div>
   </div>
 </div>
 @code {
-  Photo photo;
-
-  protected override void OnInitialized() {
-    photo = new Core.Entities.Photo();
-  }
+  Photo photo = new Core.Entities.Photo();
 
   private async Task HandleValidSubmit() {
     await photosService.UploadAsync(photo);
     navigationManager.NavigateTo("/photos/all");
   }
-
-  async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-    IMatFileUploadEntry file = files.FirstOrDefault();
-    if (file == null) {
+  private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+    IMatFileUploadEntry? file = files.FirstOrDefault();
+    if(file is null){
       return;
     }
     photo.ImageMimeType = file.Type;
@@ -522,7 +531,7 @@ We also need to change the code to handle the selection of the file, because Mat
 
 ## The Update Page
 
-The `UpdatePhoto.razor` will look more or less the same, we just need to modify the button into update instead of add.
+The `UpdatePhoto.razor` will look more or less the same, we just need to modify the button into update instead of add (which, again, calls for a refactor in order to apply the DRY principle, but we'll do it later).
 
 ```html
 @page "/photos/update/{id:int}"
@@ -532,9 +541,9 @@ The `UpdatePhoto.razor` will look more or less the same, we just need to modify 
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-<MatH3>Update Photo</MatH3>
+<PageTitle>Update Photo @photo?.Title</PageTitle>
 
-@if (photo == null) {
+@if (photo is null) {
   <p>...Loading...</p>
 } else {
   <div class="mat-layout-grid">
@@ -545,48 +554,48 @@ The `UpdatePhoto.razor` will look more or less the same, we just need to modify 
             <MatH3>Update Photo</MatH3>
             <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
               <p>
-                <MatTextField @bind-Value="@photo.Title" Label="Title" FullWidth></MatTextField>
+                <MatTextField @bind-Value="photo.Title" Label="Title" FullWidth ></MatTextField>
               </p>
               <p>
-                <MatTextField @bind-Value="@photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+                <MatTextField @bind-Value="photo.Description" Label="Description (optional):" FullWidth></MatTextField>
               </p>
               <p>
-                <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+                <MatFileUpload OnChange="HandleMatFileSelected"></MatFileUpload>
               </p>
               <p>
                 <MatButton Type="submit">Update</MatButton>
               </p>
             </EditForm>
-            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
           </MatCardContent>
         </MatCard>
       </div>
     </div>
   </div>
 }
+
 @code {
   [Parameter]
   public int Id { get; set; }
 
-  Photo photo;
+  Photo? photo;
 
   protected override async Task OnInitializedAsync() {
     photo = await photosService.FindAsync(Id);
   }
 
   private async Task HandleValidSubmit() {
-    await photosService.UpdateAsync(photo);
+    await photosService.UpdateAsync(photo!);
     navigationManager.NavigateTo("/photos/all");
   }
 
   async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-    IMatFileUploadEntry file = files.FirstOrDefault();
-    
-    if (file == null) {
+    IMatFileUploadEntry? file = files.FirstOrDefault();
+    if (file is null) {
       return;
     }
     
-    photo.ImageMimeType = file.Type;
+    photo!.ImageMimeType = file.Type;
 
     using (var stream = new System.IO.MemoryStream()) {
       await file.WriteToStreamAsync(stream);
@@ -601,16 +610,18 @@ The `UpdatePhoto.razor` will look more or less the same, we just need to modify 
 The last template we have to change is the one of the `DeletePhoto.razor` Page, which will look similar to the `PhotoDetails` page.
 
 ```html
-@page "/photos/delete/{id:int}"
-
 @using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
+@page "/photos/delete/{id:int}"
+
+<PageTitle>Delete Photo @photo?.Title</PageTitle>
+
 <MatH3>Delete</MatH3>
 
-@if (photo == null) {
+@if (photo is null) {
   <p>...Loading...</p>
 } else {
   <div class="mat-layout-grid">
@@ -626,7 +637,7 @@ The last template we have to change is the one of the `DeletePhoto.razor` Page, 
             </MatSubtitle2>
           </div>
           <MatCardContent>
-            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
+            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
             <MatBody2>
               @photo.Description
             </MatBody2>
@@ -646,7 +657,7 @@ The last template we have to change is the one of the `DeletePhoto.razor` Page, 
   [Parameter]
   public int Id { get; set; }
 
-  Photo photo;
+  Photo? photo;
 
   protected override async Task OnInitializedAsync() {
     photo = await photosService.FindAsync(Id);

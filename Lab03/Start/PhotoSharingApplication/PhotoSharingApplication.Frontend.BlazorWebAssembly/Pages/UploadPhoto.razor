@@ -4,6 +4,8 @@
 @inject NavigationManager navigationManager
 @page "/photos/upload"
 
+<PageTitle>Upload Photo</PageTitle>
+
 <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
     <p>
         <label>
@@ -28,11 +30,7 @@
 </EditForm>
 
 @code {
-    Photo photo;
-
-    protected override void OnInitialized() {
-        photo = new Core.Entities.Photo();
-    }
+    Photo photo = new Core.Entities.Photo();
 
     private async Task HandleValidSubmit() {
         await photosService.UploadAsync(photo);

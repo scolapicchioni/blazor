@@ -5,7 +5,9 @@
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-@if (photo == null) {
+<PageTitle>Update Photo @photo?.Title</PageTitle>
+
+@if (photo is null) {
     <p>...Loading...</p>
 } else {
     <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
@@ -27,7 +29,7 @@
                 <InputFile OnChange="HandleFileSelected" />
             </label>
         </p>
-        <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+        <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
         <button type="submit">Submit</button>
     </EditForm>
 }
@@ -36,7 +38,7 @@
     [Parameter]
     public int Id { get; set; }
 
-    Photo photo;
+    Photo? photo;
 
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);

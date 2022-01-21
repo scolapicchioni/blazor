@@ -45,82 +45,72 @@ We are going to define two interfaces: one for an IPhotosService and one for an 
 So let's create a folder `Entities` and let's create a `Photo` class in this new folder:
 
 ```cs
+namespace PhotoSharingApplication.Frontend.Core.Entities;
+
 public class Photo {
-  public int Id { get; set; }
-  public string Title { get; set; }
-  public byte[] PhotoFile { get; set; }
-  public string ImageMimeType { get; set; }
-  public string Description { get; set; }
-  public DateTime CreatedDate { get; set; }
-  public string UserName { get; set; }
+    public int Id { get; set; }
+    public string Title { get; set; } = String.Empty;
+    public byte[]? PhotoFile { get; set; }
+    public string? ImageMimeType { get; set; }
+    public string? Description { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public string? UserName { get; set; }
 }
 ```
 
 Now let's add an `Interfaces` folder and create an interface for the `IPhotosService`:
 
 ```cs
-public interface IPhotosService {
-  Task<Photo> UploadAsync(Photo photo);
-  Task<Photo> UpdateAsync(Photo photo);
-  Task<Photo> FindAsync(int id);
-  Task<List<Photo>> GetPhotosAsync(int amount = 10);
-  Task<Photo> RemoveAsync(int id);
-}
-```
-
-Don't forget to add the correct `using`:
-
-```cs
 using PhotoSharingApplication.Frontend.Core.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Core.Interfaces;
+
+public interface IPhotosService {
+    Task<Photo?> UploadAsync(Photo photo);
+    Task<Photo?> UpdateAsync(Photo photo);
+    Task<Photo?> FindAsync(int id);
+    Task<List<Photo>> GetPhotosAsync(int amount = 10);
+    Task<Photo?> RemoveAsync(int id);
+}
 ```
 
 In the same folder, let's also create an `IPhotosRepository` interface:
 
 ```cs
-public interface IPhotosRepository  {
-  Task<List<Photo>> GetPhotosAsync(int amount = 10);
-  Task<Photo> FindAsync(int id);
-  Task<Photo> CreateAsync(Photo photo);
-  Task<Photo> UpdateAsync(Photo photo);
-  Task<Photo> RemoveAsync(int id);
-}
-```
-
-Again, don't forget the `using`:
-
-```cs
 using PhotoSharingApplication.Frontend.Core.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Core.Interfaces;
+
+public interface IPhotosRepository {
+    Task<Photo?> UpdateAsync(Photo photo);
+    Task<Photo?> FindAsync(int id);
+    Task<Photo?> CreateAsync(Photo photo);
+    Task<List<Photo>> GetPhotosAsync(int amount = 10);
+    Task<Photo?> RemoveAsync(int id);
+}
 ```
 
 Now we can implement our service, which for now will just pass the data to the repository and return the results, without any additional logic (we will replace it later). We are going to use the [Dependency Injection pattern](https://martinfowler.com/articles/injection.html?) to request for a repository.
 In a new folder `Services`, add the following class:
 
 ```cs
-public class PhotosService : IPhotosService {
-  private readonly IPhotosRepository repository;
-  public PhotosService(IPhotosRepository repository) => this.repository = repository;
-  public async Task<Photo> FindAsync(int id) => await repository.FindAsync(id);
-  public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
-  public async Task<Photo> RemoveAsync(int id) => await repository.RemoveAsync(id);
-  public async Task<Photo> UpdateAsync(Photo photo) => await repository.UpdateAsync(photo);
-  public async Task<Photo> UploadAsync(Photo photo) {
-    photo.CreatedDate = DateTime.Now;
-    return await repository.CreateAsync(photo);
-  }
-}
-```
-
-Once again, don't forget the `using`:
-
-```cs
 using PhotoSharingApplication.Frontend.Core.Entities;
 using PhotoSharingApplication.Frontend.Core.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Frontend.Core.Services;
+
+public class PhotosService : IPhotosService {
+    private readonly IPhotosRepository repository;
+    public PhotosService(IPhotosRepository repository) => this.repository = repository;  
+    public async Task<Photo?> FindAsync(int id) => await repository.FindAsync(id);
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
+    public async Task<Photo?> RemoveAsync(int id) => await repository.RemoveAsync(id);
+    public async Task<Photo?> UpdateAsync(Photo photo) => await repository.UpdateAsync(photo);
+    public async Task<Photo?> UploadAsync(Photo photo) {
+        photo.CreatedDate = DateTime.Now;
+        return await repository.CreateAsync(photo);
+    }
+}
 ```
 
 Of course nothing is actually *working*, but we can already start plugging our service to our UI.
@@ -181,7 +171,9 @@ So in the end, our code should look something like this:
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 
-<h3>AllPhotos</h3>
+<PageTitle>All Photos</PageTitle>
+
+<h3>All Photos</h3>
 
 @if (photos == null) {
     <p>...Loading...</p>
@@ -197,7 +189,7 @@ So in the end, our code should look something like this:
 }
 
 @code {
-    List<Photo> photos;
+    List<Photo>? photos;
 
     protected override async Task OnInitializedAsync() {
         photos = await photosService.GetPhotosAsync();
@@ -224,50 +216,47 @@ Our page is ready, but we're missing the actual infrastructure, so let's think a
 ```cs
 using PhotoSharingApplication.Frontend.Core.Entities;
 using PhotoSharingApplication.Frontend.Core.Interfaces;
-using System.Collections.Generic;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory {
-  public class PhotosRepository : IPhotosRepository {
+namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory;
+
+public class PhotosRepository : IPhotosRepository {
     private List<Photo> photos;
     public PhotosRepository() {
-      photos = new List<Photo> { 
+        photos = new List<Photo> {
         new Photo {Id=1, Title = "One photo", Description = "Lorem ipsum dolor sit amen", CreatedDate = DateTime.Now.AddDays(-2) },
         new Photo {Id=2, Title = "Another photo", Description = "Some description" ,CreatedDate= DateTime.Now.AddDays(-1)},
         new Photo {Id=3, Title = "Yet another photo", Description = "More description here", CreatedDate= DateTime.Now }
       };
     }
-    public Task<Photo> CreateAsync(Photo photo) {
-      photo.Id = photos.Max(p=>p.Id) + 1;
-      photos.Add(photo);
-      return Task.FromResult(photo);
-  }
 
-  public Task<Photo> FindAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
-
-  public Task<List<Photo>> GetPhotosAsync(int amount = 10) => Task.FromResult(photos.OrderByDescending(p => p.CreatedDate).ThenBy(p => p.Title).Take(amount).ToList());
-
-  public Task<Photo> RemoveAsync(int id) {
-      Photo photo = photos.FirstOrDefault(p => p.Id == id);
-      if(photo!=null) photos.Remove(photo);
-      return Task.FromResult(photo);
-  }
-
-  public Task<Photo> UpdateAsync(Photo photo) {
-      Photo oldPhoto = photos.FirstOrDefault(p => p.Id == photo.Id);
-      if (oldPhoto!= null) {
-        oldPhoto.Title = photo.Title;
-        oldPhoto.PhotoFile = photo.PhotoFile;
-        oldPhoto.ImageMimeType = photo.ImageMimeType;
-        oldPhoto.Description = photo.Description;
-        oldPhoto.CreatedDate = photo.CreatedDate;
-        oldPhoto.UserName = photo.UserName;
-      }
-      return Task.FromResult(oldPhoto);
+    public Task<Photo?> CreateAsync(Photo photo) {
+        photo.Id = photos.Max(p => p.Id) + 1;
+        photos.Add(photo);
+        return Task.FromResult(photo)!;
     }
-  }
+
+    public Task<Photo?> FindAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
+
+    public Task<List<Photo>> GetPhotosAsync(int amount = 10) => Task.FromResult(photos.OrderByDescending(p => p.CreatedDate).ThenBy(p => p.Title).Take(amount).ToList());
+
+    public Task<Photo?> RemoveAsync(int id) {
+        Photo? photo = photos.FirstOrDefault(p => p.Id == id);
+        if (photo != null) photos.Remove(photo);
+        return Task.FromResult(photo);
+    }
+
+    public Task<Photo?> UpdateAsync(Photo photo) {
+        Photo? oldPhoto = photos.FirstOrDefault(p => p.Id == photo.Id);
+        if (oldPhoto != null) {
+            oldPhoto.Title = photo.Title;
+            oldPhoto.PhotoFile = photo.PhotoFile;
+            oldPhoto.ImageMimeType = photo.ImageMimeType;
+            oldPhoto.Description = photo.Description;
+            oldPhoto.CreatedDate = photo.CreatedDate;
+            oldPhoto.UserName = photo.UserName;
+        }
+        return Task.FromResult(oldPhoto);
+    }
 }
 ```
 
@@ -340,11 +329,7 @@ In the code, we want to define a photo of type Photo (the model that our form is
 
 ```cs
 @code {
-    Photo photo;
-
-    protected override void OnInitialized() {
-        photo = new Core.Entities.Photo();
-    }
+    Photo photo = new Core.Entities.Photo();
 
     private async Task HandleValidSubmit() {
         await photosService.UploadAsync(photo);
@@ -411,7 +396,7 @@ If you run the application you can see that you can, indeed, select a file from 
 
 We now need to add an `<img>` tag to our `AllPhotos.razor` page. The question is: what shall we write in the `src` attribute?
 
-We don't have a separate url where we can find the image, so we can't use the usual `http://theaddress/whereyourfileis.jpg` if you know what I mean. The file is already on the client, as an array of bytes, so how can we use that as a source for an image tag? 
+We don't have a separate url where we can find the image, so we can't use the usual `http://your.websitedoma.in/whereyourfileis.jpg` if you know what I mean. The file is already on the client, as an array of bytes, so how can we use that as a source for an image tag? 
 
 It turns out that html supports the concept of [Data URLs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs), which is a format we can use to render the array of byte as a Base64 encoded string. It looks like this:
 
@@ -463,15 +448,15 @@ It's important that the name matches the one we used in the route, although not 
 The rest is very similar to the `AllPhotos`: we work with the photosService to get the photo and we display in the html. De difference is that instead of a list of photos, we now only have one, so we don't even need to loop.
 
 ```cs
-@page "/photos/details/{id:int}"
-
 @using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 
-<h3>Details</h3>
+@page "/photos/details/{id:int}"
 
-@if (photo == null) {
+<PageTitle>Photo Details - @photo?.Title</PageTitle>
+
+@if (photo is null) {
     <p>...Loading...</p>
 } else {
     <article>
@@ -479,7 +464,7 @@ The rest is very similar to the `AllPhotos`: we work with the photosService to g
         <p>@photo.Title</p>
         <p>@photo.Description</p>
         <p>@photo.CreatedDate.ToShortDateString()</p>
-        <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+        <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
     </article>
 }
 
@@ -487,7 +472,7 @@ The rest is very similar to the `AllPhotos`: we work with the photosService to g
     [Parameter]
     public int Id { get; set; }
 
-    Photo photo;
+    Photo? photo;
 
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);
@@ -503,35 +488,34 @@ We can repeat the same steps for the Delete Page as a start.
 Add a new `DeletePhoto.razor` page to the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, then type the following code:
 
 ```cs
-@page "/photos/delete/{id:int}"
-
 @using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 
-<h3>Delete</h3>
+@page "/photos/delete/{id:int}"
 
-@if (photo == null) {
-    <p>...Loading...</p>
+<PageTitle>Delete Photo @photo?.Title</PageTitle>
+@if (photo is null) {
+  <p>...Loading...</p>
 } else {
-    <article>
-        <p>@photo.Id</p>
-        <p>@photo.Title</p>
-        <p>@photo.Description</p>
-        <p>@photo.CreatedDate.ToShortDateString()</p>
-        <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
-    </article>
+  <article>
+    <p>@photo.Id</p>
+    <p>@photo.Title</p>
+    <p>@photo.Description</p>
+    <p>@photo.CreatedDate.ToShortDateString()</p>
+    <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+  </article>
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+  [Parameter]
+  public int Id { get; set; }
 
-    Photo photo;
+  Photo? photo;
 
-    protected override async Task OnInitializedAsync() {
-        photo = await photosService.FindAsync(Id);
-    }
+  protected override async Task OnInitializedAsync() {
+    photo = await photosService.FindAsync(Id);
+  }
 }
 ```
 
@@ -567,43 +551,42 @@ Also, don't forget to ask for the NavigationManager:
 This is the complete code of the Delete page:
 
 ```cs
-@page "/photos/delete/{id:int}"
-
 @using PhotoSharingApplication.Frontend.Core.Interfaces
 @using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-<h3>Delete</h3>
+@page "/photos/delete/{id:int}"
 
-@if (photo == null) {
-    <p>...Loading...</p>
+<PageTitle>Delete Photo @photo?.Title</PageTitle>
+@if (photo is null) {
+  <p>...Loading...</p>
 } else {
-    <article>
-        <p>@photo.Id</p>
-        <p>@photo.Title</p>
-        <p>@photo.Description</p>
-        <p>@photo.CreatedDate.ToShortDateString()</p>
-        <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
-        <div>
-            <button @onclick="DeleteConfirm">Confirm Deletion</button>
-        </div>
-    </article>
+  <article>
+    <p>@photo.Id</p>
+    <p>@photo.Title</p>
+    <p>@photo.Description</p>
+    <p>@photo.CreatedDate.ToShortDateString()</p>
+    <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+    <div>
+      <button @onclick="DeleteConfirm">Confirm Deletion</button>
+    </div>
+  </article>
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+  [Parameter]
+  public int Id { get; set; }
 
-    Photo photo;
+  Photo? photo;
 
-    protected override async Task OnInitializedAsync() {
-        photo = await photosService.FindAsync(Id);
-    }
-    private async Task DeleteConfirm(MouseEventArgs e) {
-        await photosService.RemoveAsync(Id);
-        navigationManager.NavigateTo("/photos/all");
-    }
+  protected override async Task OnInitializedAsync() {
+    photo = await photosService.FindAsync(Id);
+  }
+  private async Task DeleteConfirm(MouseEventArgs e) {
+    await photosService.RemoveAsync(Id);
+    navigationManager.NavigateTo("/photos/all");
+  }
 }
 ```
 
@@ -624,40 +607,40 @@ The difference is that the save button invokes the `UpdateAsync` instead of the 
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-<h3>Update</h3>
+<PageTitle>Update Photo @photo?.Title</PageTitle>
 
-@if (photo == null) {
+@if (photo is null) {
   <p>...Loading...</p>
 } else {
-<EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
-  <p>
-    <label>
+  <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
+    <p>
+      <label>
         Title:
         <InputText @bind-Value="photo.Title" />
-    </label>
-  </p>
-  <p>
-    <label>
+      </label>
+    </p>
+    <p>
+      <label>
         Description (optional):
         <InputTextArea @bind-Value="photo.Description" />
-    </label>
-  </p>
-  <p>
-    <label>
+      </label>
+    </p>
+    <p>
+      <label>
         File:
         <InputFile OnChange="HandleFileSelected" />
-    </label>
-  </p>
-  <p><img src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
-  <button type="submit">Submit</button>
-</EditForm>
+      </label>
+    </p>
+    <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+    <button type="submit">Submit</button>
+  </EditForm>
 }
 
 @code {
   [Parameter]
   public int Id { get; set; }
 
-  Photo photo;
+  Photo? photo;
 
   protected override async Task OnInitializedAsync() {
     photo = await photosService.FindAsync(Id);

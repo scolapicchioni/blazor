@@ -1,7 +1,8 @@
-﻿@page "/photos/upload"
-
-@inject IPhotosService photosService
+﻿@inject IPhotosService photosService
 @inject NavigationManager navigationManager
+@page "/photos/upload"
+
+<PageTitle>Upload Photo</PageTitle>
 
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
@@ -11,11 +12,7 @@
     </div>
 </div>
 @code {
-    Photo photo;
-
-    protected override void OnInitialized() {
-        photo = new Photo();
-    }
+    Photo photo = new Photo();
 
     private async Task Upload() {
         await photosService.UploadAsync(photo);

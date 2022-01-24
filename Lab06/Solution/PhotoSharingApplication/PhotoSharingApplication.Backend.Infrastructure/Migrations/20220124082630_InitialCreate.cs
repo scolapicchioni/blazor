@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
+#nullable disable
+
 namespace PhotoSharingApplication.Backend.Infrastructure.Migrations
 {
     public partial class InitialCreate : Migration

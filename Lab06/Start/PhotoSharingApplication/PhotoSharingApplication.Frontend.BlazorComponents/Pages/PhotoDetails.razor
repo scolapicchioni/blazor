@@ -1,0 +1,30 @@
+﻿@inject IPhotosService photosService
+
+@page "/photos/details/{id:int}"
+
+<PageTitle>Photo Details - @photo?.Title</PageTitle>
+
+<MatH3>Details</MatH3>
+
+@if (photo is null) {
+    <p>...Loading...</p>
+} else {
+        <div class="mat-layout-grid">
+        <div class="mat-layout-grid-inner">
+            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+                <PhotoDetailsComponent Photo="photo" Edit Delete></PhotoDetailsComponent>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    Photo? photo;
+
+    protected override async Task OnInitializedAsync() {
+        photo = await photosService.FindAsync(Id);
+    }
+}

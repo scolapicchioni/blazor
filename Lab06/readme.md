@@ -10,31 +10,36 @@ We're going to replace our old Memory Repository with a new one that uses [`Http
 
 ## Create a new Repository with HttpClient
 
-- Reference the `System.Net.Http.Json` NuGet package in the `PhotoSharingApplication.Frontend.Infrastructure` project file (make sure to select the latest prerelease)
+- Reference the `System.Net.Http.Json` NuGet package in the `PhotoSharingApplication.Frontend.Infrastructure` project file
 - In the `Solution Explorer` under `Repositories` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project, add a new folder `Rest`
 - In the `Rest` folder, add a `PhotosRepository` class
 - Let the `PhotosRepository` class implement the `IPhotosRepository` interface
 
 ```cs
+using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Core.Interfaces;
+
+namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Rest;
+
 public class PhotosRepository : IPhotosRepository {
-    public async Task<Photo> CreateAsync(Photo photo) {
-        
+    public Task<Photo?> CreateAsync(Photo photo) {
+        throw new NotImplementedException();
     }
 
-    public async Task<Photo> FindAsync(int id) {
-        
+    public Task<Photo?> FindAsync(int id) {
+        throw new NotImplementedException();
     }
 
-    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) {
-        
+    public Task<List<Photo>> GetPhotosAsync(int amount = 10) {
+        throw new NotImplementedException();
     }
 
-    public async Task<Photo> RemoveAsync(int id) {
-        
+    public Task<Photo?> RemoveAsync(int id) {
+        throw new NotImplementedException();
     }
 
-    public async Task<Photo> UpdateAsync(Photo photo) {
-        
+    public Task<Photo?> UpdateAsync(Photo photo) {
+        throw new NotImplementedException();
     }
 }
 ```
@@ -49,12 +54,6 @@ public PhotosRepository(HttpClient http) {
 }
 ```
 
-which requires
-
-```cs
-using System.Net.Http;
-```
-
 Now let's implement the different actions
 
 ## The GetAll and Find
@@ -62,7 +61,7 @@ Now let's implement the different actions
 - The `FindAsync` becomes
 
 ```cs
-public async Task<Photo> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
 ```
 
 which requires
@@ -82,8 +81,8 @@ public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.Get
 - The `CreateAsync` becomes
 
 ```cs
-public async Task<Photo> CreateAsync(Photo photo) {
-    HttpResponseMessage  response = await http.PostAsJsonAsync("/photos", photo);
+public async Task<Photo?> CreateAsync(Photo photo) {
+    HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
     return await response.Content.ReadFromJsonAsync<Photo>();
 }
 ```
@@ -93,7 +92,7 @@ public async Task<Photo> CreateAsync(Photo photo) {
 - The `UpdateAsync` becomes
 
 ```cs
-public async Task<Photo> UpdateAsync(Photo photo) {
+public async Task<Photo?> UpdateAsync(Photo photo) {
     HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
     return await response.Content.ReadFromJsonAsync<Photo>();
 }
@@ -104,7 +103,7 @@ public async Task<Photo> UpdateAsync(Photo photo) {
 - The `RemoveAsync` becomes
 
 ```cs
-public async Task<Photo> RemoveAsync(int id) {
+public async Task<Photo?> RemoveAsync(int id) {
     HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
     return await response.Content.ReadFromJsonAsync<Photo>();
 }
@@ -125,7 +124,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 with
 
 ```cs
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:44379/") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7119/") });
 ```
 
 **NOTE: Your port may be different, make sure the number after localhost matches the one of your rest endpoint**
@@ -161,21 +160,20 @@ Failed to fetch
 
 This happens because our server does not allow [Cross Origin Requests (CORS)](https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0). Let's proceed to modify our server project.
 
-- Open `Startup.cs` of the `PhotoSharingApplication.WebServices.REST.Photos` project
-- In the `ConfigureServices` method, add the following code:
+- Open `Program.cs` of the `PhotoSharingApplication.WebServices.REST.Photos` project and add the following code right before the building of the app
 
 ```cs
-services.AddCors(o => o.AddPolicy("AllowAll", builder =>
-  {
-      builder.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-  }));
+builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder =>
+{
+    builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+}));
+//add the previous statement before this line:
+var app = builder.Build();
 ```
 
-- In the `Configure` method, **Between UseRouting and UseAuthorization**  
-
-add the following code:
+- Also in Program.cs, add the following code **BEFORE app.UseAuthorization**  
 
 ```cs
 app.UseCors("AllowAll");

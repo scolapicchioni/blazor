@@ -3,16 +3,16 @@
     <MatCardContent>
         <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
             <p>
-                <MatTextField @bind-Value="@Photo.Title" Label="Title" FullWidth></MatTextField>
+                <MatTextField @bind-Value="Photo.Title" Label="Title" FullWidth ></MatTextField> 
             </p>
             <p>
-                <MatTextField @bind-Value="@Photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+                <MatTextField @bind-Value="Photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
             </p>
             <p>
-                <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+                <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
             </p>
             <p>
-                <MatButton Type="submit">Upload</MatButton>
+                <MatButton Type="Submit">Upload</MatButton>
             </p>
         </EditForm>
         <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
@@ -26,13 +26,12 @@
     [Parameter]
     public EventCallback<Photo> OnSave { get; set; }
 
-    async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-        IMatFileUploadEntry file = files.FirstOrDefault();
-        Photo.ImageMimeType = file.Type;
-
-        if (file == null) {
+    private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+        IMatFileUploadEntry? file = files.FirstOrDefault();
+        if(file is null){
             return;
         }
+        Photo.ImageMimeType = file.Type;
 
         using (var stream = new System.IO.MemoryStream()) {
             await file.WriteToStreamAsync(stream);

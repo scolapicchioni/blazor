@@ -3,7 +3,9 @@
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-@if (photo == null) {
+<PageTitle>Update Photo @photo?.Title</PageTitle>
+
+@if (photo is null) {
     <p>...Loading...</p>
 } else {
     <div class="mat-layout-grid">
@@ -19,14 +21,14 @@
     [Parameter]
     public int Id { get; set; }
 
-    Photo photo;
+    Photo? photo;
 
     protected override async Task OnInitializedAsync() {
         photo = await photosService.FindAsync(Id);
     }
 
     private async Task Update() {
-        await photosService.UpdateAsync(photo);
+        await photosService.UpdateAsync(photo!);
         navigationManager.NavigateTo("/photos/all");
     }
 }

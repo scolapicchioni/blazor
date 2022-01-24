@@ -2,14 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Net.Http.Json" Version="6.0.0-preview.3.21201.4" />
+    <PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PhotoSharingApplication.Frontend.Core\PhotoSharingApplication.Frontend.Core.csproj" />
+    <ProjectReference Include="..\PhotoSharingApplication.Shared.Core\PhotoSharingApplication.Shared.Core.csproj" />
   </ItemGroup>
 
 </Project>

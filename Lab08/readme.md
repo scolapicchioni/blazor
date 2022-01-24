@@ -1,4 +1,4 @@
-# Backend: gRpc with ASP.NET 5 and Visual Studio 2019 Preview
+# Backend: gRpc with ASP.NET 6 and Visual Studio 2022
 
 In this lab we're going to take care of our Backend.
 
@@ -6,7 +6,7 @@ We're going to stick to the same [CLEAN architecture](https://blog.cleancoder.co
 
 - The *Core* project defines the business logic. There's going to be a `CommentsService` 
 - The *Infrastructure* project will contain the `CommentsRepository` where read and save the data with [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/) on a SQL Server DataBase.
-- An *Application* project, which in this case consists of a [gRpc](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET Core 6.0 gRpc](https://docs.microsoft.com/en-gb/aspnet/core/grpc/?view=aspnetcore-5.0).
+- An *Application* project, which in this case consists of a [gRpc](https://grpc.io/) service using [ASP.NET Core 6.0 gRpc](https://docs.microsoft.com/en-gb/aspnet/core/grpc/?view=aspnetcore-6.0).
 
 Both the `Service` and the `Repository` will implement the interfaces and make use of the `Comment` entity that we have already defined on the `Shared` project
 
@@ -17,9 +17,8 @@ Both the `Service` and the `Repository` will implement the interfaces and make u
 ```cs
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
+namespace PhotoSharingApplication.Backend.Core.Services;
 
 public class CommentsService : ICommentsService {
     private readonly ICommentsRepository repository;
@@ -27,20 +26,19 @@ public class CommentsService : ICommentsService {
     public CommentsService(ICommentsRepository repository) {
         this.repository = repository;
     }
-
-    public async Task<Comment> CreateAsync(Comment comment) {
+    public async Task<Comment?> CreateAsync(Comment comment) {
         comment.SubmittedOn = DateTime.Now;
         comment.UserName ??= "";
         return await repository.CreateAsync(comment);
     }
 
-    public async Task<Comment> FindAsync(int id) => await repository.FindAsync(id);
+    public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
 
-    public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
 
-    public async Task<Comment> RemoveAsync(int id) => await repository.RemoveAsync(id);
+    public async Task<Comment?> RemoveAsync(int id) => await repository.RemoveAsync(id);
 
-    public async Task<Comment> UpdateAsync(Comment comment) {
+    public async Task<Comment?> UpdateAsync(Comment comment) {
         Comment oldComment = await repository.FindAsync(comment.Id);
         oldComment.Subject = comment.Subject;
         oldComment.Body = comment.Body;
@@ -96,30 +94,28 @@ Now for the Repository that makes use of the DbContext.
 ```cs
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework {
-    public class CommentsRepository : ICommentsRepository {
-        public async Task<Comment> CreateAsync(Comment comment) {
-            
-        }
+namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
 
-        public async  Task<Comment> FindAsync(int id) {
-            
-        }
+public class CommentsRepository : ICommentsRepository {
+    public async Task<Comment?> CreateAsync(Comment comment) {
+        throw new NotImplementedException();
+    }
 
-        public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) {
-            
-        }
+    public async Task<Comment?> FindAsync(int id) {
+        throw new NotImplementedException();
+    }
 
-        public async Task<Comment> RemoveAsync(int id) {
-            
-        }
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) {
+        throw new NotImplementedException();
+    }
 
-        public async Task<Comment> UpdateAsync(Comment comment) {
-            
-        }
+    public async Task<Comment?> RemoveAsync(int id) {
+        throw new NotImplementedException();
+    }
+
+    public async Task<Comment?> UpdateAsync(Comment comment) {
+        throw new NotImplementedException();
     }
 }
 ```
@@ -188,12 +184,6 @@ To read the data, we're going to use [Asynchronous LINQ Operators](https://docs.
 public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) => await context.Comments.Where(c => c.PhotoId == photoId).ToListAsync();
 ```
 
-Which requires
-
-```cs
-using System.Linq;
-```
-
 - The code to read one comment becomes
 
 ```cs
@@ -219,7 +209,7 @@ The timestamp in the filename helps keep them ordered chronologically so you can
 
 One file has been updated:
 
-- BackEndContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
+- PhotoSharingApplicationContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
 
 To Update the Database, run the following command in the `Package Manager Console` of `Visual Studio`.
 
@@ -233,7 +223,7 @@ Now the database contains a `Comments` table, related to the `Photos` table.
 
 It's time to create a [gRpc](https://grpc.io/) Service.
 
-To create a [gRpc Service in .NET 5](https://docs.microsoft.com/en-us/aspnet/core/grpc/?view=aspnetcore-6.0) using the *proto first* approach, we're going to build an [ASP.NET Core site](https://docs.microsoft.com/en-us/aspnet/core/grpc/aspnetcore?view=aspnetcore-6.0&tabs=visual-studio) 
+To create a [gRpc Service in .NET 6](https://docs.microsoft.com/en-us/aspnet/core/grpc/?view=aspnetcore-6.0) using the *proto first* approach, we're going to build an [ASP.NET Core site](https://docs.microsoft.com/en-us/aspnet/core/grpc/aspnetcore?view=aspnetcore-6.0&tabs=visual-studio) 
 
 ### The gRpc Service
 
@@ -308,7 +298,7 @@ Many messages look the same, but we want to keep the definitions separated so th
 - On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
 - In the `Create a new project` dialog, select `gRPC Service` and select `Next`
 - Name the project `PhotoSharingApplication.WebServices.Grpc.Comments`. It's important to name the project `PhotoSharingApplication.WebServices.Grpc.Comments` so the namespaces will match when you copy and paste code.
-- Ensure to select the latest .NET Core version (6.0 Preview) and select `Create`
+- Ensure to select the latest .NET Core version (6.0) and select `Create`
 
 ### Examine the project files
 
@@ -317,8 +307,7 @@ GrpcGreeter project files:
 - `greet.proto` – The Protos/greet.proto file defines the Greeter gRPC and is used to generate the gRPC server assets. For more information, see [Introduction to gRPC](https://docs.microsoft.com/en-us/aspnet/core/grpc/?view=aspnetcore-6.0).
 - `Services` folder: Contains the implementation of the Greeter service.
 - `appSettings.json` – Contains configuration data, such as protocol used by Kestrel. For more information, see [Configuration in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0).
-- `Program.cs` – Contains the entry point for the gRPC service. For more information, see [.NET Generic Host in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host?view=aspnetcore-6.0).
-- `Startup.cs` – Contains code that configures app behavior. For more information, see [App startup](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0). 
+- `Program.cs` – Contains the entry point for the gRPC service and code that configures app behavior.
 
 ### Add the .proto file
 
@@ -451,15 +440,15 @@ We want to use the `CommentsService` of out *Backend.Core*, so let's make use of
 ```cs
 using PhotoSharingApplication.Shared.Core.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
-    public class CommentsGrpcService : Commenter.CommenterBase {
-        private readonly ICommentsService commentsService;
-        public CommentsGrpcService(ICommentsService commentsService) {
-            this.commentsService = commentsService;
-        }
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services;
+
+public class CommentsGrpcService : Commenter.CommenterBase {
+    private readonly ICommentsService commentsService;
+
+    public CommentsGrpcService(ICommentsService commentsService) {
+        this.commentsService = commentsService;
     }
 }
-
 ```
 
 Now we can start implementing our methods.
@@ -498,9 +487,6 @@ which require the following using:
 using Grpc.Core;
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 ```
 
 ## Get One Comment
@@ -586,18 +572,16 @@ The context has to be configured and added as a Service using the [Dependency In
 To use our service in the `CommentsGrpcService` gRpc Service, we need to perform a couple of steps: 
 
 - In the `PhotoSharingApplication.WebServices.Grpc.Comments` project, add a Project Reference to the `PhotoSharingApplication.Backend.Infrastructure` project
-- Add the `Microsoft.EntityFrameworkCore.Design` NuGet Package
-- Open `Startup.cs`
-- Type the following code in the `ConfigureServices` method
+- Open `Program.cs`
+- Type the following code before the building of the app
 
 ```cs
- public void ConfigureServices(IServiceCollection services) {
-    services.AddGrpc();
-    services.AddDbContext<PhotoSharingApplicationContext>(options =>
-        options.UseSqlServer(Configuration.GetConnectionString("PhotoSharingApplicationContext")));
-    services.AddScoped<ICommentsService, CommentsService>();
-    services.AddScoped<ICommentsRepository, CommentsRepository>();
-}
+builder.Services.AddDbContext<PhotoSharingApplicationContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotoSharingApplicationContext")));
+builder.Services.AddScoped<ICommentsService, CommentsService>();
+builder.Services.AddScoped<ICommentsRepository, CommentsRepository>();
+//add those previous lines befor this one:
+var app = builder.Build();
 ```
 
 This requires the following `using`
@@ -610,21 +594,6 @@ using PhotoSharingApplication.Shared.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 ```
 
-Also, in order to read the configuration string from the `appsettings.json` file, we need to explicitly indicate that we have a dependency on the `Configuration`, by creating a constructor and saving the input parameter into a property
-
-```cs
-public IConfiguration Configuration { get; }
-public Startup(IConfiguration configuration) {
-    Configuration = configuration;
-}
-```
-
-which requires
-
-```cs
-using Microsoft.Extensions.Configuration;
-```
-
 Now we can add the connection string to the `appsettings.json` (you can copy the one you have on the `REST` project)
 
 ```js
@@ -634,11 +603,11 @@ Now we can add the connection string to the `appsettings.json` (you can copy the
 ```
 ## Mapping the service as an EndPoint
 
-In the `Startup.cs` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project, find the `Configure` method
+In the `Program.cs` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project, find the `app.MapGrpcService<GreeterService>();` and replace it with
 - Inside the `UseEndPoints` method, add the following code:
 
 ```cs
-endpoints.MapGrpcService<CommentsGrpcService>();
+app.MapGrpcService<CommentsGrpcService>();
 ```
 
 Our service is ready. In the next lab we will setup the client side. 

@@ -1,0 +1,21 @@
+﻿@inject IPhotosService photosService
+@inject NavigationManager navigationManager
+@page "/photos/upload"
+
+<PageTitle>Upload Photo</PageTitle>
+
+<div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+        </div>
+    </div>
+</div>
+@code {
+    Photo photo = new Photo();
+
+    private async Task Upload() {
+        await photosService.UploadAsync(photo);
+        navigationManager.NavigateTo("/photos/all");
+    }
+}

@@ -1,0 +1,41 @@
+﻿<MatCard>
+    <MatH3>Upload Photo</MatH3>
+    <MatCardContent>
+        <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
+            <p>
+                <MatTextField @bind-Value="Photo.Title" Label="Title" FullWidth ></MatTextField> 
+            </p>
+            <p>
+                <MatTextField @bind-Value="Photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
+            </p>
+            <p>
+                <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
+            </p>
+            <p>
+                <MatButton Type="Submit">Upload</MatButton>
+            </p>
+        </EditForm>
+        <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
+    </MatCardContent>
+</MatCard>
+
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+
+    [Parameter]
+    public EventCallback<Photo> OnSave { get; set; }
+
+    private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+        IMatFileUploadEntry? file = files.FirstOrDefault();
+        if(file is null){
+            return;
+        }
+        Photo.ImageMimeType = file.Type;
+
+        using (var stream = new System.IO.MemoryStream()) {
+            await file.WriteToStreamAsync(stream);
+            Photo.PhotoFile = stream.ToArray();
+        }
+    }
+}

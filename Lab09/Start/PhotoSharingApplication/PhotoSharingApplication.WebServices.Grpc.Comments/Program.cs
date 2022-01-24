@@ -1,23 +1,26 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using PhotoSharingApplication.Backend.Core.Services;
+using PhotoSharingApplication.Backend.Infrastructure.Data;
+using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
+using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments {
-    public class Program {
-        public static void Main(string[] args) {
-            CreateHostBuilder(args).Build().Run();
-        }
+var builder = WebApplication.CreateBuilder(args);
 
-        // Additional configuration is required to successfully run gRPC on macOS.
-        // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder => {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
-}
+// Additional configuration is required to successfully run gRPC on macOS.
+// For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
+
+// Add services to the container.
+builder.Services.AddGrpc();
+builder.Services.AddDbContext<PhotoSharingApplicationContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotoSharingApplicationContext")));
+builder.Services.AddScoped<ICommentsService, CommentsService>();
+builder.Services.AddScoped<ICommentsRepository, CommentsRepository>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+app.MapGrpcService<CommentsGrpcService>();
+app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+
+app.Run();

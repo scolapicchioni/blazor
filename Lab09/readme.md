@@ -21,7 +21,7 @@ To use gRPC-Web in the `PhotoSharingApplication.Frontend.Infrastructure` project
 - Copy the `comments.proto` file from the `Protos` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` to the `Protos` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
 - In the `Solution Explorer`, right click the `comments.proto` file of the `PhotoSharingApplication.Frontend.Infrastructure` project, Select `Properties`
     - In the `Build Action` select `Protobuf Compiler`
-    - In the `gRPC Stub Actions` select `Client Only`
+    - In the `gRPC Stub Classes` select `Client Only`
 - Build the application
 - In the `Grpc` folder, add a `CommentsRepository` class
 - Let the `CommentsRepository` class implement the `ICommentsRepository` interface
@@ -29,30 +29,28 @@ To use gRPC-Web in the `PhotoSharingApplication.Frontend.Infrastructure` project
 ```cs
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Grpc {
-    public class CommentsRepository : ICommentsRepository {
-        public async Task<Comment> CreateAsync(Comment comment) {
-            
-        }
+namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Grpc;
 
-        public async Task<Comment> FindAsync(int id) {
-            
-        }
+public class CommentsRepository : ICommentsRepository {
+    public async Task<Comment?> CreateAsync(Comment comment) {
+        
+    }
 
-        public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) {
-            
-        }
+    public async Task<Comment?> FindAsync(int id) {
+        
+    }
 
-        public async Task<Comment> RemoveAsync(int id) {
-            
-        }
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) {
+        
+    }
 
-        public async Task<Comment> UpdateAsync(Comment comment) {
-            
-        }
+    public async Task<Comment?> RemoveAsync(int id) {
+        
+    }
+
+    public async Task<Comment?> UpdateAsync(Comment comment) {
+        
     }
 }
 ```
@@ -80,7 +78,7 @@ Now let's implement the different actions. Each action will need to translate th
 - The `FindAsync` becomes
 
 ```cs
-public async Task<Comment> FindAsync(int id) {
+public async Task<Comment?> FindAsync(int id) {
     FindReply c = await gRpcClient.FindAsync(new FindRequest() { Id = id });
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
 }
@@ -89,20 +87,18 @@ public async Task<Comment> FindAsync(int id) {
 - The `GetCommentsForPhotoAsync` becomes
 
 ```cs
-public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) {
+public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) {
     GetCommentsForPhotosReply resp = await gRpcClient.GetCommentsForPhotoAsync(new GetCommentsForPhotosRequest() { PhotoId = photoId });
     return resp.Comments.Select(c => new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() }).ToList();
 }
 ```
-
-which requires a `using System.Linq;`
 
 ## The Create
 
 - The `CreateAsync` becomes
 
 ```cs
-public async Task<Comment> CreateAsync(Comment comment) {
+public async Task<Comment?> CreateAsync(Comment comment) {
     CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
     CreateReply c = await gRpcClient.CreateAsync(createRequest);
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
@@ -114,7 +110,7 @@ public async Task<Comment> CreateAsync(Comment comment) {
 - The `UpdateAsync` becomes
 
 ```cs
-public async Task<Comment> UpdateAsync(Comment comment) {
+public async Task<Comment?> UpdateAsync(Comment comment) {
     UpdateReply c = await gRpcClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body });
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
 }
@@ -125,7 +121,7 @@ public async Task<Comment> UpdateAsync(Comment comment) {
 - The `RemoveAsync` becomes
 
 ```cs
-public async Task<Comment> RemoveAsync(int id) {
+public async Task<Comment?> RemoveAsync(int id) {
     RemoveReply c = await gRpcClient.RemoveAsync(new RemoveRequest() { Id = id });
     return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
 }
@@ -204,7 +200,7 @@ In the ``PhotoSharingApplication.WebServices.Grpc.Comments`` project:
 app.UseGrpcWeb();
 ```
 
-- Inside the `UseEndPoint` add the following code:
+- Add the following code:
 
 ```cs
 endpoints.MapGrpcService<CommentsGrpcService>().EnableGrpcWeb();
@@ -214,18 +210,21 @@ endpoints.MapGrpcService<CommentsGrpcService>().EnableGrpcWeb();
 
 As explained in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-6.0#grpc-web-and-cors)
 
-- In the `ConfigureServices` method, add the following code:
+- In `Program.cs`, before the building of the app, add the following code:
 
 ```cs
-services.AddCors(o => o.AddPolicy("AllowAll", builder =>{
+builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder => {
     builder.AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader()
             .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
 }));
+
+//add the previous statement before this line:
+var app = builder.Build();
 ```
 
-- In the `Configure` method under `UseGrpcWeb`, add the following code:
+- Under `UseGrpcWeb`, add the following code:
 
 ```cs
 app.UseCors();
@@ -249,7 +248,7 @@ Save and verify that the client can send data to the server.
 
 Let's reconfigure our projects to listen on ports that have no conflict with the other projects
 - The `BlazorWebAssembly` project will use `http://localhost:5000` and `https://localhost:5001`
-- The `Rest` project will use `http://localhost:5002` and `https://localhost:44303`
+- The `Rest` project will use `http://localhost:5002` and `https://localhost:5003`
 - The `gRpc` project will use `http://localhost:5004` and `https://localhost:5005`
 - The Blazor project will invoke the REST and gRpc services on the new ports
 
@@ -261,7 +260,6 @@ Let's reconfigure our projects to listen on ports that have no conflict with the
 - In the `App Url`, ensure that the value is `https://localhost:5001;http://localhost:5000`
 - Save
 - Right click the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, select `Set as Startup Project`
-- On the Visual Studio Toolbar on top, next to the green arrow, instead of `IISExpress` select `PhotoSharingApplication.Frontend.BlazorWebAssembly`
 - Click on the green arrow (or press F5) and verify that the project starts from port 5001
 - Stop the application
 
@@ -269,12 +267,9 @@ Let's reconfigure our projects to listen on ports that have no conflict with the
 
 - In the `Solution Explorer`, right click the `PhotoSharingApplication.WebServices.REST.Photos` project, select `Properties`
 - In the `Properties` window of your project, click on `Debug`
-- In the `Profile`, select `IIS Express`
+- In the `App Url`, ensure that the value is `https://localhost:5003;http://localhost:5002`
 - Save
-- Open the `launchSettings.json` file located under the `Properties` folder
-- Locate the `sslPort` property and set it to `44303`
-- Save
-- Click on the green arrow (or press F5) and verify that the project starts from port 44303
+- Click on the green arrow (or press F5) and verify that the project starts from port 5003
 - Stop the application
 
 ### Comments gRPC API
@@ -284,8 +279,6 @@ Let's reconfigure our projects to listen on ports that have no conflict with the
 - In the `Profile`, select `PhotoSharingApplication.WebServices.Grpc.Comments`
 - In the `App Url`, ensure that the value is `https://localhost:5005;http://localhost:5004`
 - Save
-- Right click the `PhotoSharingApplication.WebServices.Grpc.Comments` project, select `Set as Startup Project`
-- On the Visual Studio Toolbar on top, next to the green arrow, instead of `IISExpress` select `PhotoSharingApplication.WebServices.Grpc.Comments`
 - Click on the green arrow (or press F5) and verify that the project starts from port 5005
 - Stop the application
 
@@ -325,7 +318,7 @@ builder.Services.AddSingleton(services => {
 Also update the connection to the REST service as follows:
 
 ```cs
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:44303/") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003/") });
 ```
 
 ### Try the application

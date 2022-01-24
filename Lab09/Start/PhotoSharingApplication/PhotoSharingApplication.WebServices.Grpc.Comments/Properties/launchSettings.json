@@ -2,9 +2,9 @@
   "profiles": {
     "PhotoSharingApplication.WebServices.Grpc.Comments": {
       "commandName": "Project",
-      "dotnetRunMessages": "true",
+      "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "http://localhost:5000;https://localhost:5001",
+      "applicationUrl": "http://localhost:5229;https://localhost:7229",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

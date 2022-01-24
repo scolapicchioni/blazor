@@ -1,31 +1,33 @@
-﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
+﻿@page "/photos/all"
 @using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Frontend.Core.Interfaces
 @inject IPhotosService photosService
 
-@page "/photos/all"
+<PageTitle>All Photos</PageTitle>
 
-<MatH3>AllPhotos</MatH3>
+<MatH3>All Photos</MatH3>
 
 <MatButton Link="photos/upload">Upload new Photo</MatButton>
 
-@if (photos == null) {
-    <p class="mat">...Loading...</p>
+@if (photos is null) {
+    <p>...Loading...</p>
 } else {
-<div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-        @foreach (var photo in photos) {
+    <div class="mat-layout-grid">
+        <div class="mat-layout-grid-inner">
+    @foreach (var photo in photos) {
             <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
                 <PhotoDetailsComponent Photo="photo" Details Edit Delete></PhotoDetailsComponent>
             </div>
-        }
+    }
+        </div>
     </div>
-</div>
 }
 
 @code {
-    List<Photo> photos;
+    List<Photo>? photos;
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
         photos = await photosService.GetPhotosAsync();
     }
 }

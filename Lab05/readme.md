@@ -1,4 +1,4 @@
-# Backend: Web API with ASP.NET 6.0 and Visual Studio 2019 Preview
+# Backend: Web API with ASP.NET 6.0 and Visual Studio 2022
 
 In this lab we're going to take care of our Backend.
 
@@ -15,7 +15,7 @@ Both the `Service` and the `Repository` will implement the interfaces and make u
 - On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
 - Select `Class Library`. Click `Next`
 - In the  `Project Name` field, type `PhotoSharingApplication.Shared.Core`
-- Make sure to select the latest .NET Core Version (6.0 Preview) and click Create
+- Make sure to select the latest .NET Core Version (6.0) and click Create
 - Open the `PhotoSharingApplication.Frontend.Core`
 - Cut the following folders with their content:
     - `Interfaces`
@@ -31,9 +31,8 @@ Both the `Service` and the `Repository` will implement the interfaces and make u
     - Open the `Repository` and change the `using` to match the new namespaces
 - In the `PhotoSharingApplication.Frontend.BlazorWebAssembly`
     - Open `Program.cs` and change the `using` to match the new namespaces
-    - Open every Page and change the `using` (or just delete them from each page and add the correct ones to the _`Imports.razor`)
 - In the `PhotoSharingApplication.Frontend.BlazorComponents`
-    - Open `PhotoEditComponent` and `PhotoDetailsComponent` and change the `using` to match the new namespaces
+    - Open every Page and Component and change the `using` (or just delete them from each page and add the correct ones to the _`Imports.razor`)
 
 Run the application and verify that everything works as before
 
@@ -42,7 +41,7 @@ Run the application and verify that everything works as before
 - On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
 - Select `Class Library`. Click `Next`
 - In the  `Project Name` field, type `PhotoSharingApplication.Backend.Core`
-- Make sure to select the latest .NET Core version (6.0 Preview) and click `Create`
+- Make sure to select the latest .NET Core version (6.0) and click `Create`
 - Add a project reference to `PhotoSharingApplication.Shared.Core`
 
 Now we can implement our service, which for now will just pass the data to the repository and return the results, with little or no additional logic (we will replace it later). We are going to use the [Dependency Injection pattern](https://martinfowler.com/articles/injection.html?) to request for a repository.
@@ -50,25 +49,23 @@ Now we can implement our service, which for now will just pass the data to the r
 Create a new folder `Services` and add a `PhotosService.cs` class
 
 ```cs
-public class PhotosService : IPhotosService {
-  private readonly IPhotosRepository repository;
-  public PhotosService(IPhotosRepository repository) => this.repository = repository;
-  public async Task<Photo> FindAsync(int id) => await repository.FindAsync(id);
-  public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
-  public async Task<Photo> RemoveAsync(int id) => await repository.RemoveAsync(id);
-  public async Task<Photo> UpdateAsync(Photo photo) => await repository.UpdateAsync(photo);
-  public async Task<Photo> UploadAsync(Photo photo) {
-    photo.CreatedDate = DateTime.Now;
-    return await repository.CreateAsync(photo);
-  }
-}
-```
-
-Don't forget the `using`:
-
-```cs
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
+
+namespace PhotoSharingApplication.Backend.Core.Services;
+
+public class PhotosService : IPhotosService {
+    private readonly IPhotosRepository repository;
+    public PhotosService(IPhotosRepository repository) => this.repository = repository;
+    public async Task<Photo?> FindAsync(int id) => await repository.FindAsync(id);
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
+    public async Task<Photo?> RemoveAsync(int id) => await repository.RemoveAsync(id);
+    public async Task<Photo?> UpdateAsync(Photo photo) => await repository.UpdateAsync(photo);
+    public async Task<Photo?> UploadAsync(Photo photo) {
+        photo.CreatedDate = DateTime.Now;
+        return await repository.CreateAsync(photo);
+    }
+}
 ```
 
 Now, it's true that this class looks like the one we have for the frontend, so we may be tempted to share this as well, but we could also argue that the logic server side may very well be more convoluted than the one on the frontend (you may not want to share your *secrets* with the client), so we're going to keep them separated even if in our case they do the same thing.
@@ -78,17 +75,15 @@ Now, it's true that this class looks like the one we have for the frontend, so w
 - On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
 - Select `Class Library`. Click `Next`
 - In the  `Project Name` field, type `PhotoSharingApplication.Backend.Infrastructure`
-- Make sure to select the latest .NET Core version (6.0 Preview) and click `Create`
+- Make sure to select the latest .NET Core version (6.0) and click `Create`
 - On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Backend.Infrastructure` project
 - Select `Add Project Reference`
 - Check the checkbox next to `PhotoSharingApplication.Shared.Core`
 - Click `Ok`
 
 - Add the following NuGet packages (make sure to install the latest prerelease version):
-    - `Microsoft.EntityFrameworkCore`
     - `Microsoft.EntityFrameworkCore.SqlServer`
     - `Microsoft.EntityFrameworkCore.Tools`
-    - `Microsoft.EntityFrameworkCore.Design`
 
 ### The DbContext
 
@@ -159,30 +154,28 @@ Now for the Repository that makes use of the DbContext.
 ```cs
 using PhotoSharingApplication.Shared.Core.Entities;
 using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework {
-    public class PhotosRepository : IPhotosRepository {
-        public async Task<Photo> CreateAsync(Photo photo) {
-            
-        }
+namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
 
-        public async Task<Photo> FindAsync(int id) {
-            
-        }
+public class PhotosRepository : IPhotosRepository {
+    public Task<Photo?> CreateAsync(Photo photo) {
+        throw new NotImplementedException();
+    }
 
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) {
-            
-        }
+    public Task<Photo?> FindAsync(int id) {
+        throw new NotImplementedException();
+    }
 
-        public async Task<Photo> RemoveAsync(int id) {
-            
-        }
+    public Task<List<Photo>> GetPhotosAsync(int amount = 10) {
+        throw new NotImplementedException();
+    }
 
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            
-        }
+    public Task<Photo?> RemoveAsync(int id) {
+        throw new NotImplementedException();
+    }
+
+    public Task<Photo?> UpdateAsync(Photo photo) {
+        throw new NotImplementedException();
     }
 }
 ```
@@ -196,6 +189,13 @@ public PhotosRepository(PhotoSharingApplicationContext context) {
     this.context = context;
 }
 ```
+
+which requires
+
+```cs
+using PhotoSharingApplication.Backend.Infrastructure.Data;
+```
+
 Now we're going to use [Asynchronous operations](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/async) to Create, Reade, Update and Delete data.
 
 
@@ -219,22 +219,24 @@ public async Task<Photo> UpdateAsync(Photo photo) {
 }
 ```
 
-Which requires
-
-```cs
-using Microsoft.EntityFrameworkCore;
-```
-
 - The code to [Delete](https://docs.microsoft.com/en-gb/ef/core/saving/basic#deleting-data) a Photo from the Database becomes:
 
 
 ```cs
 public async Task<Photo> RemoveAsync(int id) {
     var photo = await context.Photos.SingleOrDefaultAsync(m => m.Id == id);
-    context.Photos.Remove(photo);
-    await context.SaveChangesAsync();
+    if (photo is not null) {
+        context.Photos.Remove(photo);
+        await context.SaveChangesAsync();
+    }
     return photo;
 }
+```
+
+which requires
+
+```
+using Microsoft.EntityFrameworkCore;
 ```
 
 To read the data, we're going to use [Asynchronous Queries](https://docs.microsoft.com/en-gb/ef/core/querying/async)
@@ -246,12 +248,6 @@ To read the data, we're going to use [Asynchronous Queries](https://docs.microso
     await (from p in context.Photos
             orderby p.CreatedDate descending
             select p).Take(amount).ToListAsync();
-```
-
-Which requires
-
-```cs
-using System.Linq;
 ```
 
 - The code to read one photo becomes
@@ -289,10 +285,11 @@ A **controller** is an object that handles HTTP requests and creates the HTTP re
 - On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
 - Select the `ASP.NET Core Web Api` project template. 
     - Name the Project `PhotoSharingApplication.WebServices.REST.Photos`
-    - Select `.NET 6.0 Preview`
+    - Select `.NET 6.0`
     - Leave the `Authentication Type` to `None`. 
     - Ensure that the `Configure for Https` checkbox is selected
     - Do not check `Enable Docker Support`.
+    - Ensure that th `Use controllers` checkbox is selected.
     - Ensure that `Enable OpenAPI Support` is selected
     - Click `Create`
 
@@ -316,16 +313,12 @@ The [ApiController](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnet
 ```cs
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PhotosController : ControllerBase {
-    }
+namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class PhotosController : ControllerBase {
 }
 ```
 
@@ -393,10 +386,10 @@ The second `Find(int id)` method returns a `Task<ActionResult<Photo>>` type:
 - A 200 status code is returned with the Photo object when the photo does exist.`.
 
 ```cs
-[HttpGet("{id:int}", Name="Find")]
+[HttpGet("{id:int}", Name = "Find")]
 public async Task<ActionResult<Photo>> Find(int id) {
-    Photo ph = await service.FindAsync(id);
-    if (ph == null) return NotFound();
+    Photo? ph = await service.FindAsync(id);
+    if (ph is null) return NotFound();
     return ph;
 }
 ```
@@ -408,7 +401,7 @@ As for REST standards, the action that adds a product to the database is bound t
 ```cs
 [HttpPost]
 public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
-    Photo p = await service.UploadAsync(photo);
+    Photo? p = await service.UploadAsync(photo);
     return CreatedAtRoute("Find", photo, new { id = photo.Id});
 }
 ```
@@ -482,17 +475,13 @@ The context has to be configured and added as a Service using the [Dependency In
 
 - Add a Project reference to your `PhotoSharingApplication.Backend.Infrastructure` 
 
-Open the [`Startup.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, find the `ConfigureServices` method and add the configuration for the DbContext:
+Open the [`Program.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, and add the configuration for the `DbContext` before building the app:
 
 ```cs
-public void ConfigureServices(IServiceCollection services) {
-    services.AddControllers();
-    services.AddDbContext<PhotoSharingApplicationContext>(options =>
-        options.UseSqlServer(Configuration.GetConnectionString("PhotoSharingApplicationContext")));
-    services.AddSwaggerGen(c => {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "PhotoSharingApplication.WebServices.REST.Photos", Version = "v1" });
-    });
-}
+builder.Services.AddDbContext<PhotoSharingApplicationContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotoSharingApplicationContext")));
+
+var app = builder.Build();
 ```
 
 Which requires
@@ -514,29 +503,23 @@ Now, the two interfaces and implementations.
 
 To use our service in the `PhotosController` controller, we need to perform a couple of steps, also described in the [Dependency Injection documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0)
 
-- Open the `Startup.cs` file of the `PhotoSharingApplication.Backend.REST.Photos`project
-- Replace the current `ConfigureServices` method with the following
+- Open the `Program.cs` file of the `PhotoSharingApplication.Backend.REST.Photos`project
+- Replace add the following lines right before the building of the app :
 
 ```cs
-public void ConfigureServices(IServiceCollection services) {
-    services.AddControllers();
-    services.AddDbContext<PhotoSharingApplicationContext>(options =>
-        options.UseSqlServer(Configuration.GetConnectionString("PhotoSharingApplicationContext")));
+builder.Services.AddScoped<IPhotosService, PhotosService>();
+builder.Services.AddScoped<IPhotosRepository, PhotosRepository>();
 
-    services.AddSwaggerGen(c => {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "PhotoSharingApplication.WebServices.REST.Photos", Version = "v1" });
-    });
-    services.AddScoped<IPhotosService, PhotosService>();
-    services.AddScoped<IPhotosRepository, PhotosRepository>();
-}
+//add the prevoius two lines before this one
+var app = builder.Build();
 ```
 
 Of course, also add the correct `using`:
 
 ```cs
+using PhotoSharingApplication.Backend.Core.Services;
 using PhotoSharingApplication.Backend.Infrastructure.Data;
 using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
-using PhotoSharingApplication.Frontend.Core.Services;
 using PhotoSharingApplication.Shared.Core.Interfaces;
 ```
 
@@ -544,11 +527,9 @@ using PhotoSharingApplication.Shared.Core.Interfaces;
 
 The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
 
-First, we need to add the tools by adding the following NuGet Packages to our `PhotoSharingApplication.WebServices.REST.Photos` project (make sure to select the latest prerelease):
+First, we need to add the tools by adding the following NuGet Packages to our `PhotoSharingApplication.WebServices.REST.Photos` project:
 
-- `Microsoft.EntityFrameworkCore`
-- `Microsoft.EntityFrameworkCore.SqlServer`
-- `Microsoft.EntityFrameworkCore.Tools`
+- `Microsoft.EntityFrameworkCore.Design`
 
 Then, as per the [documentation](https://docs.microsoft.com/en-us/ef/core/cli/powershell):
 
@@ -574,7 +555,7 @@ Three files are added to your project under the Migrations directory:
 
 - XXXXXXXXXXXXXX_InitialCreate.cs--The main migrations file. Contains the operations necessary to apply the migration (in Up()) and to revert it (in Down()).
 - XXXXXXXXXXXXXX_InitialCreate.Designer.cs--The migrations metadata file. Contains information used by EF.
-- BackEndContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
+- PhotoSharingApplicationContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
 
 The timestamp in the filename helps keep them ordered chronologically so you can see the progression of changes.
 
@@ -600,9 +581,9 @@ In Visual Studio, set the `PhotoSharingApplication.WebServices.REST.Photos` proj
   "id": 0,
   "title": "One Photo",
   "photoFile": "",
-  "imageMimeType": "jpg",
+  "imageMimeType": "",
   "description": "One Nice Photo",
-  "createdDate": "2021-04-15T19:45:53.780Z",
+  "createdDate": "2022-01-24T08:44:43.223Z",
   "userName": "alice"
 }
 ```
@@ -619,9 +600,9 @@ You should see this in the Response Body:
   "id": 1,
   "title": "One Photo",
   "photoFile": "",
-  "imageMimeType": "jpg",
+  "imageMimeType": "",
   "description": "One Nice Photo",
-  "createdDate": "2021-04-15T21:46:57.5387909",
+  "createdDate": "2022-01-24T09:46:52.825878",
   "userName": "alice"
 }
 ```
@@ -643,13 +624,13 @@ Try the `PUT` method, passing `1` as an `ID` and the following request body:
 
 ```json
 {
-  "id": 0,
-  "title": "string",
-  "photoFile": "string",
-  "imageMimeType": "string",
-  "description": "string",
-  "createdDate": "2021-04-15T19:54:12.913Z",
-  "userName": "string"
+  "id": 1,
+  "title": "One Photo But Modified",
+  "photoFile": "",
+  "imageMimeType": "",
+  "description": "One Nice Photo But Modified",
+  "createdDate": "2022-01-24T09:46:52.825878",
+  "userName": "alice"
 }
 ```
 
@@ -658,9 +639,8 @@ Verify that the response is a 200 and that its body contains the updated photo o
 
 Try the `DELETE` action passing `1` as an `ID`.
 
-Check that the Response Status Code is 200 and that its Response Body contains the first photo.
-I
-f you call the action to get all the photos, you should not see the photo with id 1 anymore.
+Check that the Response Status Code is 200 and that its Response Body contains the first photo.  
+If you call the action to get all the photos, you should not see the photo with id 1 anymore.
 
 Our service is ready. In the next lab we will setup the client side. 
 

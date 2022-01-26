@@ -1,0 +1,55 @@
+﻿@page "/photos/all"
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
+@inject IPhotosService photosService
+
+<PageTitle>All Photos</PageTitle>
+
+<MatH3>All Photos</MatH3>
+
+<MatButton Link="photos/upload">Upload new Photo</MatButton>
+
+@if (photos is null) {
+    <p>...Loading...</p>
+} else {
+    <div class="mat-layout-grid">
+        <div class="mat-layout-grid-inner">
+    @foreach (var photo in photos) {
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
+                    <MatCard>
+                        <div>
+                            <MatHeadline6>
+                                @photo.Id - @photo.Title
+                            </MatHeadline6>
+                            <MatSubtitle2>
+                                @photo.CreatedDate.ToShortDateString()
+                            </MatSubtitle2>
+                        </div>
+                        <MatCardContent>
+                            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" ></MatCardMedia>
+                            <MatBody2>
+                                @photo.Description
+                            </MatBody2>
+                        </MatCardContent>
+                        <MatCardActions>
+                            <MatCardActionButtons>
+                                <MatButton Link="@($"photos/details/{photo.Id}")">Details</MatButton>
+                                <MatButton Link="@($"photos/update/{photo.Id}")">Update</MatButton>
+                                <MatButton Link="@($"photos/delete/{photo.Id}")">Delete</MatButton>
+                            </MatCardActionButtons>
+                        </MatCardActions>
+                    </MatCard>
+                </div>
+    }
+        </div>
+    </div>
+}
+
+@code {
+    List<Photo>? photos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        photos = await photosService.GetPhotosAsync();
+    }
+}

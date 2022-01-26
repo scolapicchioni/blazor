@@ -13,7 +13,7 @@ If you want to create a nice website you *should* learn CSS, but chances are you
 There are many different [CSS frameworks](https://onaircode.com/top-css-frameworks-web-designer/) around that you could turn to in order to use predefined styles that can speed up your development.
 [Bootstrap](https://getbootstrap.com/) is already included in the application we built.
 
-Open `index.html` file under the `wwwroot` folder of your `PhotoSharingApplication.Frontend.BlazorWebAssembly` project.
+Open `index.html` file under the `wwwroot` folder of your `PhotoSharingApplication.Frontend.Client` project.
 
 You'll see a link to a `bootstrap.min.css` file:
 
@@ -30,7 +30,7 @@ For example we could transform our `Pages/AllPhotos.razor` to use a [Card](https
 
 <NavLink href="photos/upload">Upload new Photo</NavLink>
 
-@if (photos == null) {
+@if (photos is null) {
     <p>...Loading...</p>
 } else {
 <div class="row">
@@ -76,7 +76,7 @@ So let's install it following the [documentation](https://github.com/SamProf/Mat
 
 ## Installation
 
-- In your BlazorWebAssembly project, in the Solution Explorer, right click the Dependencies and select `Manage NuGet Packages`
+- In your `Fontend.Client` project, in the Solution Explorer, right click the Dependencies and select `Manage NuGet Packages`
 - On the `Browse` Tab, search for `MatBlazor`. 
 - Install the `MatBlazor` package by Vladimir Samoilenko
 - Add the following code in the `head` section of `index.html` 
@@ -143,8 +143,8 @@ I'm going to go for this html, but feel free to use a layout you like, by lookin
 
 ```html
 @page "/photos/all"
-@using PhotoSharingApplication.Frontend.Core.Entities
-@using PhotoSharingApplication.Frontend.Core.Interfaces
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 
 <PageTitle>All Photos</PageTitle>
@@ -228,7 +228,7 @@ That is a reference to our application [Layout](https://docs.microsoft.com/en-us
 
 The basic idea is that our `Page` focuses on the content, while the `Layout` takes care of all the fluff that you want to have on every page but you don't want to have to rewrite over and over and over.
 
-Since the navigation is indedd something that we want to have on each page, that is included in the Layout. Our `RouteView` says that the Layout is called `MainLayout`, which means we have to look for a component called `MainLayout.razor`. We can find it under the `Shared` folder.
+Since the navigation is indeed something we want to have on each page, that is included in the Layout. Our `RouteView` says that the Layout is called `MainLayout`, which means we have to look for a component called `MainLayout.razor`. We can find it under the `Shared` folder.
 
 ```html
 @inherits LayoutComponentBase
@@ -316,7 +316,7 @@ What is `<NavMenu>`? It's yet another component of ours, also to be found in the
 ```html
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">PhotoSharingApplication.Frontend.BlazorWebAssembly</a>
+        <a class="navbar-brand" href="">PhotoSharingApplication.Frontend.Client</a>
         <button title="Navifation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -428,9 +428,11 @@ The html section of the `PhotoDetails.razor` page will look pretty much like the
 
 
 ```html
+<PageTitle>Photo Details - @photo?.Title</PageTitle>
+
 <MatH3>Details</MatH3>
 
-@if (photo == null) {
+@if (photo is null) {
   <p>...Loading...</p>
 } else {
 <div class="mat-layout-grid">
@@ -473,8 +475,8 @@ Inside the form we will need [TextFields](https://www.matblazor.com/TextField) a
 We also need to change the code to handle the selection of the file, because MatBlazor passes different parameters than the ones we had with the native Blazor `FileUpload` component.
 
 ```html
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 @page "/photos/upload"
@@ -508,7 +510,7 @@ We also need to change the code to handle the selection of the file, because Mat
   </div>
 </div>
 @code {
-  Photo photo = new Core.Entities.Photo();
+  Photo photo = new Photo();
 
   private async Task HandleValidSubmit() {
     await photosService.UploadAsync(photo);
@@ -536,8 +538,8 @@ The `UpdatePhoto.razor` will look more or less the same, we just need to modify 
 ```html
 @page "/photos/update/{id:int}"
 
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
@@ -610,8 +612,8 @@ The `UpdatePhoto.razor` will look more or less the same, we just need to modify 
 The last template we have to change is the one of the `DeletePhoto.razor` Page, which will look similar to the `PhotoDetails` page.
 
 ```html
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 

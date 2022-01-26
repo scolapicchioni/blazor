@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,18 +12,18 @@
 
   <ItemGroup>
     <Protobuf Include="Protos\comments.proto" GrpcServices="Server" />
+    <Protobuf Include="Protos\greet.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore" Version="2.37.0-pre1" />
-    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.37.0-pre1" />
-    <PackageReference Include="IdentityModel" Version="5.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.0-preview.3.21201.13" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.42.0" />
+    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.42.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PhotoSharingApplication.Backend.Core\PhotoSharingApplication.Backend.Core.csproj" />
     <ProjectReference Include="..\PhotoSharingApplication.Backend.Infrastructure\PhotoSharingApplication.Backend.Infrastructure.csproj" />
+    <ProjectReference Include="..\PhotoSharingApplication.Shared.Core\PhotoSharingApplication.Shared.Core.csproj" />
   </ItemGroup>
 
 </Project>

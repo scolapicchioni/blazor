@@ -43,6 +43,8 @@ So I guess we're left with Blazor Web Assembly (AKA Blazor Client), which means:
   - Fetching data from the server
   - Updating the URL on the browser
 
+Since we're going to have multiple hosted applications anyway (one for the Photos Rest Service, one for the Comments gRpc service, one for our Identity Provider), we're going to host our Blazor Wasm server side as well, meaning that the client will get the files from an ASP.NET core application (which, in technical terms, is usually referred to as BFF, Backend For Frontend).
+
 So, now that we know what we're going to use, let's see how.
 
 In short, you need:
@@ -60,11 +62,18 @@ Anyway, when you're done installing, we can start creating our first project.
 - Create a new project.
 - Select `Blazor WebAssembly App`. Select `Next`.
 - In the `Solution Name` field, type `PhotoSharingApplication`
-- In the `Project name` field, type `PhotoSharingApplication.Frontend.BlazorWebAssembly` 
+- In the `Project name` field, type `PhotoSharingApplication.Frontend` 
 - Provide a `Location` for the project, such as `Lab01\Start`. 
 - Be sure to select the latest .net version (.Net 6.0)
-- Leave the rest as default: No authentication Type, Enable Https, Not hosted, no Progressive Web Application 
+- Ensure that the `ASP.NET Core hosted` Checkbox is checked.
+- Leave the rest as default: No authentication Type, Enable Https, no Progressive Web Application 
 - Select `Create`.
+
+Three projects are created for us:
+- PhotoSharingApplication.Frontend.Client
+- PhotoSharingApplication.Frontend.Server
+- PhotoSharingApplication.Frontend.Shared
+with the `Server` as startup project.  
 
 Ok, so now we have a working application (you can run it with `F5` if you want to see how it looks).
 
@@ -74,11 +83,11 @@ It is going to be a very long journey to understand what's going on, so bear wit
 
 We got a lot of folders and files, so let's start from the start.
 
-What is important to understand is that no matter what address you type, if your server doesn't find it it will reply with the content of `index.html`. 
+What is important to understand is that no matter what address you type, if your server doesn't find it it will reply with the content of `index.html`. That's because in the `Program.cs` of the `Server` project, we find the line ```app.MapFallbackToFile("index.html");``` and that's where we tell the server to serve the `index.html` file if it doesn't find the requested resource.
 
 So wether you navigate to `http://localhost:{yourport}`, `http://localhost:{yourport}/counter`, `http://localhost:{yourport}/some/other/address` or anywhere else, you are going to get `index.html`. 
 
-You can find `index.html` in your project, under the `wwwroot` folder. This folder contains all static files (such as html, css, js, images etc.) and is served as the root folder of the web site. 
+You can find `index.html` in your `Client` project, under the `wwwroot` folder. This folder contains all static files (such as html, css, js, images etc.) and is served as the root folder of the web site. 
 
 If you open `index.html`, you will find in the `<body>` section two interesting tags. 
 
@@ -94,7 +103,7 @@ The second one is
 ```
 
 The `<script>` tag is where the magic happens: that is the file that starts downloading `dotnet.wasm` and lots and lots and *lots* of dlls. If you run the application and type `F12` in your browser (opening the developer tools), you can see on the *network* tab all the files that the client gets (I told you they were a lot).
-Between those dll you should see `PhotoSharingApplication.Frontend.BlazorWebAssembly.dll`, which is where our code resides.
+Between those dll you should see `PhotoSharingApplication.Frontend.Client.dll`, which is where our code resides.
 
 So whenever you navigate to your server (no matter the address):
 
@@ -104,7 +113,7 @@ So whenever you navigate to your server (no matter the address):
 
 From now on, your server is free to shut itself down if it pleases, because your client is not going to need it anymore. All what follows happens on the browser.
 
-- `dotnet.wasm` starts (it's the mono runtime) and runs `PhotoSharingApplication.Frontend.BlazorWebAssembly.dll`
+- `dotnet.wasm` starts (it's the mono runtime) and runs `PhotoSharingApplication.Frontend.Client.dll`
 - Our dll contains the `Program` class with the `Main` method
 - The `Main` method 
   - creates a `WebAssemblyHostBuilder` (which acts as a sort of hosting environment for our application) 
@@ -133,7 +142,7 @@ But now, hopefully, you understand how to create a new page (which you now know 
 
 ## So let's create a new page.
 
-- In the `Solution Explorer`, right click the `Pages` folder and select `Add` -> `Razor Component`
+- In the `Solution Explorer`, right click the `Pages` folder of the `Client` project and select `Add` -> `Razor Component`
 - Name the file `AllPhotos.razor`
 
 If you start the application now and navigate to `/photos/all` you'll see a `sorry, there's nothing at this adddress` message.
@@ -187,7 +196,7 @@ So we need:
 
 We write a component member as a variable or property in the code section. We write the C# expression starting with the @ in the HTML.
 
-Let's change the AllPhotos.razor component like this:
+Let's change the `AllPhotos.razor` component like this:
 
 ```cs
 @page "/photos/all"
@@ -233,7 +242,7 @@ Let's correct the UI to handle this problem, by testing if the photo is null and
 
 <h3>AllPhotos</h3>
 
-@if (photo == null)
+@if (photo is null)
 {
     <p>...Loading...</p>
 }
@@ -265,7 +274,7 @@ The final code will look like this:
 
 <h3>AllPhotos</h3>
 
-@if (photos == null)
+@if (photos is null)
 {
     <p>...Loading...</p>
 }

@@ -26,17 +26,23 @@ The architecture I'm talking about is something like the [CLEAN architecture](ht
 
 If you want to see something like that in action (although this project uses it server side, but that's not the point), take a look at [eShop on Web](https://github.com/dotnet-architecture/eShopOnWeb/tree/master/src/Web)
 
-Anyway, my idea is to create 
-- A *Core* project where we define the business logic. There's going to be a Service that knows what to do (for example it validates the data before passing it to the infrastructure) 
-- An *Infrastructure* project where we define how to actually read and save the data. For now we have a simple Repository class that uses a List. Later we'll talk to a REST service
+Anyway, my idea is to create:
+- A *Shared* project where we define everything that we can share between the Backend, the Frontend, the REST service and the gRPC service. This will contain:
+  - Interfaces for the abstractions
+  - Entities to model the data
+- In each project where we will work (Backend, Frontend, Rest and gRpc) we will define:
+  - A *Core* folder to contain the business logic. There's going to be a:
+    - A Service that knows what to do (for example it validates the data before passing it to the infrastructure) 
+    - An *Infrastructure* folder where we define how to actually read and save the data. For now we have a simple Repository class that uses a List. Later we'll talk to a REST service
 
-Let's start with the Core project, the one that knows the business logic.
+Let's start with the Shared project.
+I know that we already got a Shared project, but that one was intended to share stuff between backend and frontend. We will have more projects in the future, so we will need to create a Shared project.
 
-## The Frontend Core
+## The Shared Project
 
-- On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
+ On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
 - Select `Class Library`. Click `Next`
-- In the  `Project Name` field, type `PhotoSharingApplication.Frontend.Core`
+- In the  `Project Name` field, type `PhotoSharingApplication.Shared`
 - Be sure to select the latest version of .Net (6.0 Preview)
 - Click `Create`
 
@@ -45,11 +51,11 @@ We are going to define two interfaces: one for an IPhotosService and one for an 
 So let's create a folder `Entities` and let's create a `Photo` class in this new folder:
 
 ```cs
-namespace PhotoSharingApplication.Frontend.Core.Entities;
+namespace PhotoSharingApplication.Shared.Entities;
 
 public class Photo {
     public int Id { get; set; }
-    public string Title { get; set; } = String.Empty;
+    public string Title { get; set; } = string.Empty;
     public byte[]? PhotoFile { get; set; }
     public string? ImageMimeType { get; set; }
     public string? Description { get; set; }
@@ -61,9 +67,9 @@ public class Photo {
 Now let's add an `Interfaces` folder and create an interface for the `IPhotosService`:
 
 ```cs
-using PhotoSharingApplication.Frontend.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Frontend.Core.Interfaces;
+namespace PhotoSharingApplication.Shared.Interfaces;
 
 public interface IPhotosService {
     Task<Photo?> UploadAsync(Photo photo);
@@ -77,9 +83,9 @@ public interface IPhotosService {
 In the same folder, let's also create an `IPhotosRepository` interface:
 
 ```cs
-using PhotoSharingApplication.Frontend.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Frontend.Core.Interfaces;
+namespace PhotoSharingApplication.Shared.Interfaces;
 
 public interface IPhotosRepository {
     Task<Photo?> UpdateAsync(Photo photo);
@@ -90,18 +96,24 @@ public interface IPhotosRepository {
 }
 ```
 
+## The Frontend.Client Core
+
+- On the `Frontend.Client` project, add a project reference to the `PhotoSharingApplication.Shared` project.
+- On the `Frontend.Client`project, add a new folder `Core`
+- In the `Frontend.Client.Core` folder, create a new folder called `Services`
+- In the `Frontend.Client.Core.Services` folder, create a new class called `PhotosService`
+
 Now we can implement our service, which for now will just pass the data to the repository and return the results, without any additional logic (we will replace it later). We are going to use the [Dependency Injection pattern](https://martinfowler.com/articles/injection.html?) to request for a repository.
-In a new folder `Services`, add the following class:
 
 ```cs
-using PhotoSharingApplication.Frontend.Core.Entities;
-using PhotoSharingApplication.Frontend.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Core.Services;
+namespace PhotoSharingApplication.Frontend.Client.Core.Services;
 
 public class PhotosService : IPhotosService {
     private readonly IPhotosRepository repository;
-    public PhotosService(IPhotosRepository repository) => this.repository = repository;  
+    public PhotosService(IPhotosRepository repository) => this.repository = repository;
     public async Task<Photo?> FindAsync(int id) => await repository.FindAsync(id);
     public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
     public async Task<Photo?> RemoveAsync(int id) => await repository.RemoveAsync(id);
@@ -115,11 +127,6 @@ public class PhotosService : IPhotosService {
 
 Of course nothing is actually *working*, but we can already start plugging our service to our UI.
 
-- On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
-- Select `Add Project Reference`
-- Check the checkbox next to `PhotoSharingApplication.Frontend.Core`
-- Click `Ok`
-
 To use our service in the `AllPhotos` page, we need to perform a couple of steps, also described in the [Blazor Dependency Injection documentation](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-6.0&pivots=webassembly)
 
 1. Register the service
@@ -130,7 +137,7 @@ To use our service in the `AllPhotos` page, we need to perform a couple of steps
 
 [In the docs](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-6.0&pivots=webassembly#add-services-to-an-app) they tell us what to do: 
 
-- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly`project
+- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.Client`project
 - Add the following code, before the `await builder.Build().RunAsync();`
 
 ```cs
@@ -140,25 +147,25 @@ builder.Services.AddScoped<IPhotosService, PhotosService>();
 Of course, also add the correct `using`:
 
 ```cs
-using PhotoSharingApplication.Frontend.Core.Interfaces;
-using PhotoSharingApplication.Frontend.Core.Services;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.Frontend.Client.Core.Services;
 ```
 
 ### Step 2: Request  the service from our component
 
-- Open the  `Pages`-> `AllPhotos.razor` file in the `PhotoSharingApplication.Frontend.BlazorWebAssembly`
+- Open the  `Pages`-> `AllPhotos.razor` file in the `PhotoSharingApplication.Frontend.Client`
 - Add the following lines (after the `@page "photos/all")
 
 ```cs
-@using PhotoSharingApplication.Frontend.Core.Interfaces
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 ```
 
 ### Step 3: Use the service to request the photos
 
 We want to fill our `photos` list with data coming from our photosService.
-This means that we don't need our own `Photo` class, because we want the one defined in the `PhotoSharingApplication.Frontend.Core.Entities` namespace.  
-We need to add a `using PhotoSharingApplication.Frontend.Core.Entities` and we can remove the `Photo` class from the `code` section.
+This means that we don't need our own `Photo` class, because we want the one defined in the `PhotoSharingApplication.Shared.Entities` namespace.  
+We need to add an `@using PhotoSharingApplication.Shared.Entities` and we can remove the `Photo` class from the `code` section.
 
 Because the photosService has an asynchronous method, we need to replace our old `OnInitialized` with a new `OnInitializedAsync` (remember the [Lifecycle?](https://docs.microsoft.com/en-gb/aspnet/core/blazor/components/lifecycle?view=aspnetcore-6.0))
 
@@ -167,8 +174,8 @@ So in the end, our code should look something like this:
 ```cs
 @page "/photos/all"
 
+@using PhotoSharingApplication.Shared.Entities
 @using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 
 <PageTitle>All Photos</PageTitle>
@@ -201,23 +208,15 @@ Our page is ready, but we're missing the actual infrastructure, so let's think a
 
 ## The Frontend Infrastructure
 
-- On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
-- Select `Class Library`. Click `Next`
-- In the  `Project Name` field, type `PhotoSharingApplication.Frontend.Infrastructure`
-- Make sure to select the latest .Net Core version (6.0 Preview)
-- Click `Create`
-- On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
-- Select `Add Project Reference`
-- Check the checkbox next to `PhotoSharingApplication.Frontend.Core`
-- Click `Ok`
+- In the  `PhotoSharingApplication.Frontend.Client` project, add a new `Infrastructure` folder
 - Create a new folder `Repositories` and inside that, create a subfolder `Memory`
 - In this `Memory` folder, add a new class `PhotosRepository` with the following code
 
 ```cs
-using PhotoSharingApplication.Frontend.Core.Entities;
-using PhotoSharingApplication.Frontend.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory;
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory;
 
 public class PhotosRepository : IPhotosRepository {
     private List<Photo> photos;
@@ -264,15 +263,11 @@ I know, I know, it's a very naive implementation, but it's just to have somethin
 
 Our last step is to plug this implementation in our application, so that the PhotoService can use it. We do this simply by registering this class as a service during startup.
 
-- On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
-- Select `Add Project Reference`
-- Check the checkbox next to `PhotoSharingApplication.Frontend.Infrastructure`
-- Click `Ok`
-- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly`project
+- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.Client`project
 - Add the following code, before the `await builder.Build().RunAsync();`
 
 ```cs
-builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory.PhotosRepository>();
+builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.PhotosRepository>();
 ```
 
 If you run the application now and navigate to `/photos/all` you should see the data coming from our service and infrastructure.
@@ -285,7 +280,7 @@ In this page we're going learn how to work with [Forms and validation in Blazor]
 
 You should by now know how to add a new page, but just in case:
 
-- In the `Solution Explorer`, right click on the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
+- In the `Solution Explorer`, right click on the `Pages` folder of the `PhotoSharingApplication.Frontend.Client` project
 - Select `Add` -> `Razor Component`
 - Name the component `UploadPhoto.razor`
 
@@ -298,8 +293,8 @@ Let's link this page to the `photos/upload` route by adding this line at the top
 We know we're going to talk to the `PhotosService` eventually, so let's add the  necessary `using` and `inject`, just like we did in the `AllPhotos`:
 
 ```cs
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 ```
 
@@ -329,7 +324,7 @@ In the code, we want to define a photo of type Photo (the model that our form is
 
 ```cs
 @code {
-    Photo photo = new Core.Entities.Photo();
+    Photo photo = new Photo();
 
     private async Task HandleValidSubmit() {
         await photosService.UploadAsync(photo);
@@ -448,8 +443,8 @@ It's important that the name matches the one we used in the route, although not 
 The rest is very similar to the `AllPhotos`: we work with the photosService to get the photo and we display in the html. De difference is that instead of a list of photos, we now only have one, so we don't even need to loop.
 
 ```cs
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 
 @page "/photos/details/{id:int}"
@@ -485,11 +480,11 @@ Save and check that the details view updates correctly when you enter an address
 # The Delete Page 
 
 We can repeat the same steps for the Delete Page as a start.
-Add a new `DeletePhoto.razor` page to the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, then type the following code:
+Add a new `DeletePhoto.razor` page to the `Pages` folder of the `PhotoSharingApplication.Frontend.Client` project, then type the following code:
 
 ```cs
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 
 @page "/photos/delete/{id:int}"
@@ -551,8 +546,8 @@ Also, don't forget to ask for the NavigationManager:
 This is the complete code of the Delete page:
 
 ```cs
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
@@ -560,33 +555,33 @@ This is the complete code of the Delete page:
 
 <PageTitle>Delete Photo @photo?.Title</PageTitle>
 @if (photo is null) {
-  <p>...Loading...</p>
+    <p>...Loading...</p>
 } else {
-  <article>
-    <p>@photo.Id</p>
-    <p>@photo.Title</p>
-    <p>@photo.Description</p>
-    <p>@photo.CreatedDate.ToShortDateString()</p>
-    <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
-    <div>
-      <button @onclick="DeleteConfirm">Confirm Deletion</button>
-    </div>
-  </article>
+    <article>
+        <p>@photo.Id</p>
+        <p>@photo.Title</p>
+        <p>@photo.Description</p>
+        <p>@photo.CreatedDate.ToShortDateString()</p>
+        <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+        <div>
+            <button @onclick="DeleteConfirm">Confirm Deletion</button>
+        </div>
+    </article>
 }
 
 @code {
-  [Parameter]
-  public int Id { get; set; }
+    [Parameter]
+    public int Id { get; set; }
 
-  Photo? photo;
+    Photo? photo;
 
-  protected override async Task OnInitializedAsync() {
-    photo = await photosService.FindAsync(Id);
-  }
-  private async Task DeleteConfirm(MouseEventArgs e) {
-    await photosService.RemoveAsync(Id);
-    navigationManager.NavigateTo("/photos/all");
-  }
+    protected override async Task OnInitializedAsync() {
+        photo = await photosService.FindAsync(Id);
+    }
+    private async Task DeleteConfirm(MouseEventArgs e) {
+        await photosService.RemoveAsync(Id);
+        navigationManager.NavigateTo("/photos/all");
+    }
 }
 ```
 
@@ -602,8 +597,8 @@ The difference is that the save button invokes the `UpdateAsync` instead of the 
 ```cs
 @page "/photos/update/{id:int}"
 
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 

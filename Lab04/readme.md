@@ -21,21 +21,30 @@ Let's add a `new project` to our solution.
 - Do not check the option to support Pages and Views
 - Click Create
 - Add the `MatBlazor`NuGet Package (make sure to install the latest prerelease)
-- Add a reference to the `PhotoSharingApplication.Frontend.Core` project
+- Add a reference to the `PhotoSharingApplication.Shared` project
 - Open `_Imports.razor` and add
 
 ```cs
 @using Microsoft.AspNetCore.Components.Forms
 @using MatBlazor
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
 ```
 
 - Create a new `Pages` Folder 
-- Move the `AllPhotos`, `PhotoDetails`, `UploadPhoto`, `UpdatePhoto`, `DeletePhoto` page from the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project to the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project.
-- Add a project reference to the `PhotoSharingApplication.Frontend.BlazorComponents` project in the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project.
-- Open the `_Imports.razor` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
-- Add `@using PhotoSharingApplication.Frontend.BlazorComponents.Pages`
+- Move the `AllPhotos`, `PhotoDetails`, `UploadPhoto`, `UpdatePhoto`, `DeletePhoto` page from the `PhotoSharingApplication.Frontend.Client` project to the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project.
+- Create a new `Shared` Folder 
+- Move the `MainLayout` and `NavMenu` from the `PhotoSharingApplication.Frontend.Client` project to the `Shared` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project.
+- Add a project reference to the `PhotoSharingApplication.Frontend.BlazorComponents` project in the `PhotoSharingApplication.Frontend.Client` project.
+- Open the `_Imports.razor` file of the `PhotoSharingApplication.Frontend.Client` project
+- Add the following code:
 
-Running the application now should not work, since the router cannot find the pages. That is because the only assembly where it looks is the assembly where de Layout is defined. You can see that if you open the `App.razor` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project:
+```
+@using PhotoSharingApplication.Frontend.BlazorComponents.Pages
+@using PhotoSharingApplication.Frontend.BlazorComponents.Shared
+```
+
+Running the application now should not work, since the router cannot find the pages. That is because the only assembly where it looks is the assembly where de Layout is defined. You can see that if you open the `App.razor` file of the `PhotoSharingApplication.Frontend.Client` project:
 
 ```html
 <Router AppAssembly="@typeof(Program).Assembly">
@@ -44,7 +53,7 @@ Running the application now should not work, since the router cannot find the pa
 Let's add an [additional assembly](https://docs.microsoft.com/en-us/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-6.0#route-to-components-from-multiple-assemblies), so that the router can find our pages.
 
 ```html
-<Router AppAssembly="@typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(AllPhotos).Assembly }">
+<Router AppAssembly="@typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(MainLayout).Assembly }">
 ```
 
 Run the application and verify that everything still works as before.
@@ -93,13 +102,6 @@ This time, instead of loading the product by asking it to the service, we will a
   public Photo Photo { get; set; }
 }
 ```
-
-Also, at the top of the component, add the `using`:
-
-```cs
-@using PhotoSharingApplication.Frontend.Core.Entities
-```
-
 Now let's [use the component](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0#use-components)  from within the `AllPhotos` page.
 
 We could already do it like this:
@@ -117,7 +119,7 @@ We could already do it like this:
 ```
 
 It's a bit annoying that we have to write the whole [namespace](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0#namespaces).
-To avoid this (here and in the other pages where we will use this components), let's add the `using` on our `_Imports.razor`:
+To avoid this (here and in the other pages where we will use this components), let's add the `using` on our `_Imports.razor` in the `@using PhotoSharingApplication.Frontend.BlazorComponents` project:
 
 ```cs
 @using PhotoSharingApplication.Frontend.BlazorComponents.Components
@@ -308,12 +310,6 @@ Add a `Parameter` of type `Photo`
 }
 ```
 
-Don't forget the `using`
-
-```cs
-@using PhotoSharingApplication.Frontend.Core.Entities
-```
-
 We can move here the `HandleMatFileSelected` code:
 
 ```cs
@@ -367,8 +363,6 @@ The `Update` page also looks more or less the same:
 ```html
 @page "/photos/update/{id:int}"
 
-@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
@@ -431,12 +425,6 @@ Add a `Photo` property.
     [Parameter]
     public Photo Photo { get; set; }
 }
-```
-
-Add the `using` statement
-
-```cs
-@using PhotoSharingApplication.Frontend.Core.Entities
 ```
 
 In both the `PhotoEditComponent` and the `PhotoDetailsComponent`, replace this code

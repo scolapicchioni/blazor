@@ -1,6 +1,4 @@
-﻿@using PhotoSharingApplication.Frontend.Core.Interfaces
-@using PhotoSharingApplication.Frontend.Core.Entities
-@inject IPhotosService photosService
+﻿@inject IPhotosService photosService
 @inject NavigationManager navigationManager
 @page "/photos/upload"
 
@@ -14,7 +12,7 @@
     </div>
 </div>
 @code {
-    Photo photo = new Core.Entities.Photo();
+    Photo photo = new Photo();
 
     private async Task Upload() {
         await photosService.UploadAsync(photo);

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using PhotoSharingApplication.Backend.Core.Services;
-using PhotoSharingApplication.Backend.Infrastructure.Data;
-using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.WebServices.Rest.Photos.Core.Services;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Repositories.EntityFramework;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,8 +12,10 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<PhotoSharingApplicationContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotoSharingApplicationContext")));
+
+builder.Services.AddDbContext<PhotosDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotosDbContext")));
+
 builder.Services.AddScoped<IPhotosService, PhotosService>();
 builder.Services.AddScoped<IPhotosRepository, PhotosRepository>();
 

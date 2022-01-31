@@ -4,49 +4,34 @@ In this lab we're going to take care of our Backend.
 
 We're going to use the same [CLEAN architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) that we have on the frontend:
 
-- A *Core* project where we define the business logic. There's going to be a Service that knows what to do (for example it validates the data before passing it to the infrastructure) 
-- An *Infrastructure* project where we define how to actually read and save the data. We're going to use [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/)  to talk to a SQL Server DataBase.
+- A *Core* folder where we define the business logic. There's going to be a *Service* that knows what to do (for example it validates the data before passing it to the infrastructure) 
+- An *Infrastructure* folder where we define how to actually read and save the data. We're going to use [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/)  to talk to a SQL Server DataBase.
 - An *Application* project, which in this case consists of a [REST](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET Core 6.0 Web API](https://docs.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-6.0&tabs=visual-studio).
 
-Both the `Service` and the `Repository` will implement the interfaces and make use of the `Photo` entity that we have already defined on the fontend, so before we start, let's factor those out, into a new `Shared` project.
+Both the `Service` and the `Repository` will implement the interfaces and make use of the `Photo` entity that we have already defined on the `Shared` project.
 
-## The Shared Core
+## The Backend
 
-- On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
-- Select `Class Library`. Click `Next`
-- In the  `Project Name` field, type `PhotoSharingApplication.Shared.Core`
-- Make sure to select the latest .NET Core Version (6.0) and click Create
-- Open the `PhotoSharingApplication.Frontend.Core`
-- Cut the following folders with their content:
-    - `Interfaces`
-    - `Entities`
-- Paste them into the `PhotoSharingApplication.Shared.Core` project
-- Rename the namespaces of the classes and interfaces to match project / folder name
-    - Change the namespace of the `Photo` class to `PhotoSharingApplication.Shared.Core.Entities`
-    - Change the namespace of `IPhotosRepository` and `IPhotosService` to `PhotoSharingApplication.Shared.Core.Interfaces`
-- In the `PhotoSharingApplication.Frontend.Core`, 
-    - Add a Project Reference to the `PhotoSharingApplication.Shared.Core`
-    - Open the `Services\PhotosService.cs` file and change the `using` to match the new namespaces
-- In the `PhotoSharingApplication.Frontend.Infrastructure`
-    - Open the `Repository` and change the `using` to match the new namespaces
-- In the `PhotoSharingApplication.Frontend.BlazorWebAssembly`
-    - Open `Program.cs` and change the `using` to match the new namespaces
-- In the `PhotoSharingApplication.Frontend.BlazorComponents`
-    - Open every Page and Component and change the `using` (or just delete them from each page and add the correct ones to the _`Imports.razor`)
-
-Run the application and verify that everything works as before
-
-## The Backend Core
+### Create the project
 
 - On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
-- Select `Class Library`. Click `Next`
-- In the  `Project Name` field, type `PhotoSharingApplication.Backend.Core`
-- Make sure to select the latest .NET Core version (6.0) and click `Create`
-- Add a project reference to `PhotoSharingApplication.Shared.Core`
+- Select the `ASP.NET Core Web Api` project template. 
+    - Name the Project `PhotoSharingApplication.WebServices.REST.Photos`
+    - Select `.NET 6.0`
+    - Leave the `Authentication Type` to `None`. 
+    - Ensure that the `Configure for Https` checkbox is selected
+    - Do not check `Enable Docker Support`.
+    - Ensure that the `Use controllers` checkbox is selected.
+    - Ensure that `Enable OpenAPI Support` is selected
+    - Click `Create`
+    - Add a project reference to the `PhotoSharingApplication.Shared` project.
+
+### The Core Buisness logic
 
 Now we can implement our service, which for now will just pass the data to the repository and return the results, with little or no additional logic (we will replace it later). We are going to use the [Dependency Injection pattern](https://martinfowler.com/articles/injection.html?) to request for a repository.
 
-Create a new folder `Services` and add a `PhotosService.cs` class
+Create a new `Core` folder, then under it create a new folder named `Services`.
+Add a `PhotosService.cs` class to the `Services` folder.
 
 ```cs
 using PhotoSharingApplication.Shared.Core.Entities;
@@ -72,15 +57,7 @@ Now, it's true that this class looks like the one we have for the frontend, so w
 
 ## The Backend Infrastructure
 
-- On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
-- Select `Class Library`. Click `Next`
-- In the  `Project Name` field, type `PhotoSharingApplication.Backend.Infrastructure`
-- Make sure to select the latest .NET Core version (6.0) and click `Create`
-- On the `Solution Explorer`, right click on the `Dependencies` folder of the `PhotoSharingApplication.Backend.Infrastructure` project
-- Select `Add Project Reference`
-- Check the checkbox next to `PhotoSharingApplication.Shared.Core`
-- Click `Ok`
-
+- On the `Solution Explorer`, create a new `Infrastructure` folder
 - Add the following NuGet packages (make sure to install the latest prerelease version):
     - `Microsoft.EntityFrameworkCore.SqlServer`
     - `Microsoft.EntityFrameworkCore.Tools`
@@ -89,26 +66,23 @@ Now, it's true that this class looks like the one we have for the frontend, so w
 
 Now we can add the `DbContext`
 
-- Crate a new folder `Data`
-- Add a new class `PhotoSharingApplicationContext`
+- Under the `Infrastructure` folder, create a new folder `Data`
+- Add a new class `PhotosDbContext`
 - Let the class derive from `DbContext`
 
 ```cs
 using Microsoft.EntityFrameworkCore;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
 
-namespace PhotoSharingApplication.Backend.Infrastructure.Data {
-  public class PhotoSharingApplicationContext : DbContext {
-  }
+public class PhotosDbContext : DbContext {
 }
+
 ```
 
 Because we're going to use this `DbContext` from an ASP.NET Core project, we are going to use the [constructor accepting the DbOptions](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/connection-strings#aspnet-core)
 
 ```cs
-public PhotoSharingApplicationContext(DbContextOptions<PhotoSharingApplicationContext> options)
-  : base(options) {
-
-}
+public PhotosDbContext(DbContextOptions<PhotosDbContext> options)  : base(options) {}
 ```
 
 We want to give our model some configurations and restrictions, so we're going to use [Fluent API](https://docs.microsoft.com/en-gb/ef/core/modeling/#use-fluent-api-to-configure-a-model) to do that:
@@ -136,26 +110,97 @@ public DbSet<Photo> Photos { get; set; }
 Don't forget to add the necessary `using`:
 
 ```cs
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 ```
 
-The `DbContext` is ready (at least in this project, we still need to configure it further but that's the job of the ASP.NET Core project that we will build later).
+### Configuring the DbContext
 
-### The Repository
+The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
 
-Now for the Repository that makes use of the DbContext.
+Open the [`Program.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, and add the configuration for the `DbContext` before building the app:
 
-- Create a new folder `Repositories` and inside that, create a subfolder `EntityFramework`
-- In this `EntityFramework` folder, add a new class `PhotosRepository` 
+```cs
+builder.Services.AddDbContext<PhotosDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotosDbContext")));
+
+var app = builder.Build();
+```
+
+Which requires
+
+```cs
+using Microsoft.EntityFrameworkCore;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
+```
+
+Add a `PhotosDbContext` connection string to [configure](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0) it in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-configuration):
+
+```json
+"ConnectionStrings": {
+    "PhotosDbContext": "Server=(localdb)\\mssqllocaldb;Database=PhotosDbContextBlazorLabs;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+```
+
+### Generate migrations and database
+
+The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
+
+First, we need to add the tools by adding the following NuGet Packages to our `PhotoSharingApplication.WebServices.Rest.Photos` project:
+
+- `Microsoft.EntityFrameworkCore.Design`
+
+Then, as per the [documentation](https://docs.microsoft.com/en-us/ef/core/cli/powershell):
+
+> Before using the tools:
+> 
+> - Understand the difference between target and startup project.
+> - Learn how to use the tools with .NET Standard class libraries.
+> - For ASP.NET Core projects, set the environment.
+>
+> ### Target and startup project
+> The commands refer to a project and a startup project.
+>
+> - The project is also known as the target project because it's where the commands add or remove files. By default, the Default project selected in Package Manager Console is the target project. You can specify a different project as target project by using the `--project` option.
+> - The startup project is the one that the tools build and run. The tools have to execute application code at design time to get information about the project, such as the database connection string and the configuration of the model. By default, the Startup Project in Solution Explorer is the startup project. You can specify a different project as startup project by using the `--startup-project` option.
+
+To add an initial migration, run the following command.
+
+```
+Add-Migration InitialCreate -Project PhotoSharingApplication.WebServices.Rest.Photos -StartupProject PhotoSharingApplication.WebServices.Rest.Photos
+```
+
+Three files are added to your project under the Migrations directory:
+
+- XXXXXXXXXXXXXX_InitialCreate.cs--The main migrations file. Contains the operations necessary to apply the migration (in Up()) and to revert it (in Down()).
+- XXXXXXXXXXXXXX_InitialCreate.Designer.cs--The migrations metadata file. Contains information used by EF.
+- PhotoSharingApplicationContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
+
+The timestamp in the filename helps keep them ordered chronologically so you can see the progression of changes.
+
+### Update the database
+Next, apply the migration to the database to create the schema.
+
+```
+Update-Database -Project PhotoSharingApplication.WebServices.Rest.Photos -StartupProject PhotoSharingApplication.WebServices.Rest.Photos
+```
+
+You should now have a new SQL Server database called `PhotosDbContextBlazorLabs` with one empty `Photos` table.
+
+## The Repository
+
+Now for the *Repository* that makes use of the DbContext.
+
+- In the `Infrastructure` folder, add a `Repositories` folder
+- In the `Repositories` folder, add a `EntityFramework` folder
+- In the `EntityFramework` folder, add a new class `PhotosRepository` 
 - Let the class implement the `IPhotosRepository` interface by adding the following code:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Repositories.EntityFramework;
 
 public class PhotosRepository : IPhotosRepository {
     public Task<Photo?> CreateAsync(Photo photo) {
@@ -183,17 +228,15 @@ public class PhotosRepository : IPhotosRepository {
 To make use of the `DbContext`, we're going to resort to Dependecy Injection, so we need a constructor and a field where to store the DbContext so that we can use it from the methods we have to implement:
 
 ```cs
-private readonly PhotoSharingApplicationContext context;
+private readonly PhotosDbContext context;
 
-public PhotosRepository(PhotoSharingApplicationContext context) {
-    this.context = context;
-}
+public PhotosRepository(PhotosDbContext context) => this.context = context;
 ```
 
 which requires
 
 ```cs
-using PhotoSharingApplication.Backend.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
 ```
 
 Now we're going to use [Asynchronous operations](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/async) to Create, Reade, Update and Delete data.
@@ -280,19 +323,6 @@ A **model** is an object that represents the data in your application. In this c
 
 A **controller** is an object that handles HTTP requests and creates the HTTP response. This app will have a single controller.
 
-### Create the project
-
-- On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
-- Select the `ASP.NET Core Web Api` project template. 
-    - Name the Project `PhotoSharingApplication.WebServices.REST.Photos`
-    - Select `.NET 6.0`
-    - Leave the `Authentication Type` to `None`. 
-    - Ensure that the `Configure for Https` checkbox is selected
-    - Do not check `Enable Docker Support`.
-    - Ensure that th `Use controllers` checkbox is selected.
-    - Ensure that `Enable OpenAPI Support` is selected
-    - Click `Create`
-
 ### Add the Controller
 
 - In the `Solution Explorer`, right click the `Controllers` folder, select `Add` -> `Controller`
@@ -314,7 +344,7 @@ The [ApiController](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnet
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -324,20 +354,18 @@ public class PhotosController : ControllerBase {
 
 We want to use the `Service` of out *Backend.Core*, so let's make use of the DI container by explicitly declaring the dependency on the `IPhotosService` in the Controller constructor:
 
-- Add a `Project Reference` to `PhotoSharingApplication.Backend.Core`
 - Add a constructor that accepts a `IPhotosService` parameter
 - Save the parameter into a private readonly field
 
 ```cs
-private readonly IPhotosService service;
-public PhotosController(IPhotosService service) {
-    this.service = service;
-}
+    private readonly IPhotosService service;
+
+    public PhotosController(IPhotosService service) => this.service = service;
 ```
 Which requires
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Interfaces;
 ```
 
 Now we can start implementing our CRUD methods.
@@ -363,7 +391,7 @@ public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service
 Which requires
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 ```
 
 It returns a `Task<ActionResult<IEnumerable<Photo>>>`. MVC automatically serializes the list of `Photo` to JSON and writes the JSON into the body of the response message. The response code for this method is 200, assuming there are no unhandled exceptions. (Unhandled exceptions are translated into 5xx errors.)
@@ -469,42 +497,14 @@ It returns
 - A 404 (Not Found) if the id is not found in the database
 
 
-## Registering the services and configuring the DbContext
-
-The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
-
-- Add a Project reference to your `PhotoSharingApplication.Backend.Infrastructure` 
-
-Open the [`Program.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, and add the configuration for the `DbContext` before building the app:
-
-```cs
-builder.Services.AddDbContext<PhotoSharingApplicationContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotoSharingApplicationContext")));
-
-var app = builder.Build();
-```
-
-Which requires
-
-```cs
-using Microsoft.EntityFrameworkCore;
-using PhotoSharingApplication.Backend.Infrastructure.Data;
-```
-
-Add `PhotoSharingApplicationContext` the connection string to [configure](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0) it in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-configuration):
-
-```json
-"ConnectionStrings": {
-    "PhotoSharingApplicationContext": "Server=(localdb)\\mssqllocaldb;Database=PhotoSharingApplicationContextBlazorLabs;Trusted_Connection=True;MultipleActiveResultSets=true"
-  }
-```
+## Registering the service and repository
 
 Now, the two interfaces and implementations.
 
 To use our service in the `PhotosController` controller, we need to perform a couple of steps, also described in the [Dependency Injection documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0)
 
-- Open the `Program.cs` file of the `PhotoSharingApplication.Backend.REST.Photos`project
-- Replace add the following lines right before the building of the app :
+- Open the `Program.cs` file
+- Add the following lines right before the building of the app :
 
 ```cs
 builder.Services.AddScoped<IPhotosService, PhotosService>();
@@ -517,56 +517,13 @@ var app = builder.Build();
 Of course, also add the correct `using`:
 
 ```cs
-using PhotoSharingApplication.Backend.Core.Services;
-using PhotoSharingApplication.Backend.Infrastructure.Data;
-using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.WebServices.Rest.Photos.Core.Services;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Repositories.EntityFramework;
 ```
 
-### Generate migrations and database
 
-The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
-
-First, we need to add the tools by adding the following NuGet Packages to our `PhotoSharingApplication.WebServices.REST.Photos` project:
-
-- `Microsoft.EntityFrameworkCore.Design`
-
-Then, as per the [documentation](https://docs.microsoft.com/en-us/ef/core/cli/powershell):
-
-> Before using the tools:
-> 
-> - Understand the difference between target and startup project.
-> - Learn how to use the tools with .NET Standard class libraries.
-> - For ASP.NET Core projects, set the environment.
->
-> ### Target and startup project
-> The commands refer to a project and a startup project.
->
-> - The project is also known as the target project because it's where the commands add or remove files. By default, the Default project selected in Package Manager Console is the target project. You can specify a different project as target project by using the `--project` option.
-> - The startup project is the one that the tools build and run. The tools have to execute application code at design time to get information about the project, such as the database connection string and the configuration of the model. By default, the Startup Project in Solution Explorer is the startup project. You can specify a different project as startup project by using the `--startup-project` option.
-
-To add an initial migration, run the following command.
-
-```
-Add-Migration InitialCreate -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.REST.Photos
-```
-
-Three files are added to your project under the Migrations directory:
-
-- XXXXXXXXXXXXXX_InitialCreate.cs--The main migrations file. Contains the operations necessary to apply the migration (in Up()) and to revert it (in Down()).
-- XXXXXXXXXXXXXX_InitialCreate.Designer.cs--The migrations metadata file. Contains information used by EF.
-- PhotoSharingApplicationContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
-
-The timestamp in the filename helps keep them ordered chronologically so you can see the progression of changes.
-
-### Update the database
-Next, apply the migration to the database to create the schema.
-
-```
-Update-Database -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.REST.Photos
-```
-
-You should now have a new SQL Server database called `PhotoSharingApplicationContextBlazorLabs` with one empty `Photos` table.
 
 ### Try the Actions of the controller
 

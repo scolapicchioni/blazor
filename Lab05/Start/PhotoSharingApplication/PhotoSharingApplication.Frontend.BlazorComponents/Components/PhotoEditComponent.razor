@@ -1,5 +1,4 @@
-﻿@using PhotoSharingApplication.Frontend.Core.Entities
-<MatCard>
+﻿<MatCard>
     <MatH3>Upload Photo</MatH3>
     <MatCardContent>
         <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">

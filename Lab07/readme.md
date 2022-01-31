@@ -24,19 +24,19 @@ We will replace it with one that can communicate with a gRpc service in a later 
 We're going to continue with the [CLEAN architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) that we already have.
 
 - In The *Shared* project we will introduce the *Comment* entity and the interfaces for the *CommentsService* and the *CommentsRepository*
-- In the *Core* project we will define the business logic for the *CommentsService*
-- In the *Infrastructure* project we will define a *CommentsRepository*. For now we have a simple Repository class that uses a List. Later we'll talk to a gRpc service
+- In the *Core* we will define the business logic for the *CommentsService*
+- In the *Infrastructure* we will define a *CommentsRepository*. For now we have a simple Repository class that uses a List. Later we'll talk to a gRpc service
 
 ## The Shared Code
 
-We are going to define two interfaces: one for an ICommentsService and one for an ICommentsRepository. Our interfaces will look very similar and will contain the definitions for the method to Create, Read, Update and Delete photos. Both are going to use Comment entities, that we also have to define in this project. 
+We are going to define two interfaces: one for an `ICommentsService` and one for an `ICommentsRepository`. Our interfaces will look very similar and will contain the definitions for the method to Create, Read, Update and Delete photos. Both are going to use `Comment` entity, that we also have to define in this project. 
 
 ### The Comment Entity
 
-- In the `Shared`, under the `Entities` folder, add the following `Comment` class:
+- In the `Shared` project, under the `Entities` folder, add the following `Comment` class:
 
 ```cs
-namespace PhotoSharingApplication.Shared.Core.Entities;
+namespace PhotoSharingApplication.Shared.Entities;
 
 public class Comment {
     public int Id { get; set; }
@@ -45,14 +45,7 @@ public class Comment {
     public string Subject { get; set; } = String.Empty;
     public string Body { get; set; } = String.Empty;
     public DateTime SubmittedOn { get; set; }
-    public Photo? Photo { get; set; }
 }
-```
-
-Also, add a new navigation property to the `Photo` class:
-
-```cs
-public virtual ICollection<Comment>? Comments { get; set; }
 ```
 
 ### The Interfaces
@@ -60,9 +53,9 @@ public virtual ICollection<Comment>? Comments { get; set; }
 - Under the `Interfaces` folder, add the following `ICommentsService` interface:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Interfaces;
+namespace PhotoSharingApplication.Shared.Interfaces;
 
 public interface ICommentsService {
     Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId);
@@ -76,9 +69,9 @@ public interface ICommentsService {
 - Under the same folder, add the following `ICommentsRepository` interface
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Interfaces;
+namespace PhotoSharingApplication.Shared.Interfaces;
 
 public interface ICommentsRepository {
     Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId);
@@ -89,37 +82,33 @@ public interface ICommentsRepository {
 }
 ```
 
-## The Frontend Core
-
-`PhotoSharingApplication.Frontend.Core`
+## The Frontend Client
 
 Now we can implement our service, which for now will just pass the data to the repository and return the results, without any additional logic (we will replace it later). We are going to use the [Dependency Injection pattern](https://martinfowler.com/articles/injection.html?) to request for a repository.
 
-In the `PhotoSharingApplication.Frontend.Core`, under the `Services` folder, add a new `CommentsServiceRepository` class.
+In the `PhotoSharingApplication.Frontend.Client`, under the `Core/Services` folder, add a new `CommentsServiceRepository` class.
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Core.Services;
+namespace PhotoSharingApplication.Frontend.Client.Core.Services {
+    public class CommentsService : ICommentsService {
+        private readonly ICommentsRepository repository;
+        public CommentsService(ICommentsRepository repository) => this.repository = repository;
 
-public class CommentsService : ICommentsService {
-    private readonly ICommentsRepository repository;
-    public CommentsService(ICommentsRepository repository) {
-        this.repository = repository;
-    }
+        public async Task<Comment?> CreateAsync(Comment comment) => await repository.CreateAsync(comment);
 
-    public async Task<Comment?> CreateAsync(Comment comment) => await repository.CreateAsync(comment);
+        public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
 
-    public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
+        public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
 
-    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
+        public async Task<Comment?> RemoveAsync(int id) => await repository.RemoveAsync(id);
 
-    public async Task<Comment?> RemoveAsync(int id) => await repository.RemoveAsync(id);
-
-    public async Task<Comment?> UpdateAsync(Comment comment) {
-        comment.SubmittedOn = DateTime.Now;
-        return await repository.UpdateAsync(comment);
+        public async Task<Comment?> UpdateAsync(Comment comment) {
+            comment.SubmittedOn = DateTime.Now;
+            return await repository.UpdateAsync(comment);
+        }
     }
 }
 ```
@@ -132,7 +121,7 @@ To use our service in the `Details` page, we need to perform a couple of steps, 
 
 [In the docs](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-6.0&pivots=webassembly#add-services-to-a-blazor-webassembly-app) they tell us what to do: 
 
-- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.BlazorWebAssembly`project
+- Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.Client`project
 - Add the following code, before the `await builder.Build().RunAsync();`
 
 ```cs
@@ -141,48 +130,48 @@ builder.Services.AddScoped<ICommentsService, CommentsService>();
 
 ## The Frontend Infrastructure
 
-- In the `Memory` folder, of the `PhotoSharingApplication.Frontend.Infrastructure` project, add a new class `CommentsRepository` with the following code
+- In the `Infrastructure/Repositories/Memory` folder, of the `PhotoSharingApplication.Frontend.Client` project, add a new class `CommentsRepository` with the following code
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory;
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory {
+    public class CommentsRepository : ICommentsRepository {
+        private List<Comment> comments;
+        public CommentsRepository() {
+            comments = new() {
+                new() { Id = 1, Subject = "A Comment", Body = "The Body of the comment", SubmittedOn = DateTime.Now.AddDays(-1), PhotoId = 1 },
+                new() { Id = 2, Subject = "Another Comment", Body = "Another Body of the comment", SubmittedOn = DateTime.Now.AddDays(-2), PhotoId = 1 },
+                new() { Id = 3, Subject = "Yet another Comment", Body = "Yet Another Body of the comment", SubmittedOn = DateTime.Now, PhotoId = 2 },
+                new() { Id = 4, Subject = "More Comment", Body = "More Body of the comment", SubmittedOn = DateTime.Now.AddDays(-3), PhotoId = 2 }
+            };
+        }
+        public Task<Comment?> CreateAsync(Comment comment) {
+            comment.Id = comments.Max(p => p.Id) + 1;
+            comments.Add(comment);
+            return Task.FromResult(comment);
+        }
 
-public class CommentsRepository : ICommentsRepository {
-  private List<Comment> comments;
-  public CommentsRepository() {
-    comments = new () {
-      new () { Id = 1, Subject = "A Comment", Body = "The Body of the comment", SubmittedOn = DateTime.Now.AddDays(-1), PhotoId = 1 },
-      new () { Id = 2, Subject = "Another Comment", Body = "Another Body of the comment", SubmittedOn = DateTime.Now.AddDays(-2), PhotoId = 1 },
-      new () { Id = 3, Subject = "Yet another Comment", Body = "Yet Another Body of the comment", SubmittedOn = DateTime.Now, PhotoId = 2 },
-      new () { Id = 4, Subject = "More Comment", Body = "More Body of the comment", SubmittedOn = DateTime.Now.AddDays(-3), PhotoId = 2 }
-    };
-  }
-  public Task<Comment?> CreateAsync(Comment comment) {
-    comment.Id = comments.Max(p => p.Id) + 1;
-    comments.Add(comment);
-    return Task.FromResult(comment);
-  }
+        public Task<Comment?> FindAsync(int id) => Task.FromResult(comments.FirstOrDefault(p => p.Id == id));
 
-  public Task<Comment?> FindAsync(int id) => Task.FromResult(comments.FirstOrDefault(p => p.Id == id));
+        public Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => Task.FromResult(comments.Where(c => c.PhotoId == photoId).OrderByDescending(c => c.SubmittedOn).ThenBy(c => c.Subject).ToList());
 
-  public Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => Task.FromResult(comments.Where(c => c.PhotoId == photoId).OrderByDescending(c => c.SubmittedOn).ThenBy(c => c.Subject).ToList());
+        public Task<Comment?> RemoveAsync(int id) {
+            Comment? comment = comments.FirstOrDefault(c => c.Id == id);
+            if (comment is not null) comments.Remove(comment);
+            return Task.FromResult(comment);
+        }
 
-  public Task<Comment?> RemoveAsync(int id) {
-    Comment? comment = comments.FirstOrDefault(c => c.Id == id);
-    if (comment is not null) comments.Remove(comment);
-    return Task.FromResult(comment);
-  }
-
-  public Task<Comment?> UpdateAsync(Comment comment) {
-    Comment? oldComment = comments.FirstOrDefault(c => c.Id == comment.Id);
-    if (oldComment is not null) {
-      oldComment.Subject = comment.Subject;
-      oldComment.Body = comment.Body;
+        public Task<Comment?> UpdateAsync(Comment comment) {
+            Comment? oldComment = comments.FirstOrDefault(c => c.Id == comment.Id);
+            if (oldComment is not null) {
+                oldComment.Subject = comment.Subject;
+                oldComment.Body = comment.Body;
+            }
+            return Task.FromResult(oldComment);
+        }
     }
-    return Task.FromResult(oldComment);
-  }
 }
 ```
 
@@ -194,7 +183,7 @@ Our last step is to plug this implementation in our application, so that the Com
 - Add the following code, before the `await builder.Build().RunAsync();`
 
 ```cs
-builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory.CommentsRepository>();
+builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.CommentsRepository>();
 ```
 
 ## The Comments UI
@@ -210,7 +199,7 @@ We shouldn't give too many responsibilities to the `PhotoDetails` page.
 
 We can split the functionalities by creating a `CommentsComponent` and referring to it from within the `PhotoDetails` page.
 
-The `CommentsComponent` will receive the Id of the Photo and take care of the rest. The only thing we need to add to the `PhotoDetals.razor` page of the `PhotoSharingApplication.Frontend.BlazorComponents` project is the `CommentsComponent` tag, passing the `PhotoId` as a property, which we will use to retrieve the comments.
+The `CommentsComponent` will receive the Id of the Photo and take care of the rest. The only thing we need to add to the `PhotoDetals.razor` page of the `PhotoSharingApplication.Frontend.Client` project is the `CommentsComponent` tag, passing the `PhotoId` as a property, which we will use to retrieve the comments.
 
 ```html
 @if (photo is null) {
@@ -592,7 +581,7 @@ Just to test if our frontend works, we're going to temporarily switch the `Photo
 
 This way we stay client side so that we don't run into problems when talking to the server side, which we will fix in the following lab.
 
-- Open `Program.cs` of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project 
+- Open `Program.cs` of the `PhotoSharingApplication.Frontend.Client` project 
 - Comment the following line
 
 ```cs

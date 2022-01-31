@@ -1,6 +1,6 @@
 ﻿using Grpc.Core;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
 namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 

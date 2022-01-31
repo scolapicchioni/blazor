@@ -4,28 +4,37 @@ In this lab we're going to take care of our Backend.
 
 We're going to stick to the same [CLEAN architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) that we already have:
 
-- The *Core* project defines the business logic. There's going to be a `CommentsService` 
-- The *Infrastructure* project will contain the `CommentsRepository` where read and save the data with [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/) on a SQL Server DataBase.
+- The *Core* defines the business logic. There's going to be a `CommentsService` 
+- The *Infrastructure* will contain the `CommentsRepository` where read and save the data with [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/) on a SQL Server DataBase.
 - An *Application* project, which in this case consists of a [gRpc](https://grpc.io/) service using [ASP.NET Core 6.0 gRpc](https://docs.microsoft.com/en-gb/aspnet/core/grpc/?view=aspnetcore-6.0).
 
 Both the `Service` and the `Repository` will implement the interfaces and make use of the `Comment` entity that we have already defined on the `Shared` project
 
+### Create the project
+
+- On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
+- In the `Create a new project` dialog, select `ASP.NET Core gRPC Service` and select `Next`
+- Name the project `PhotoSharingApplication.WebServices.Grpc.Comments`. It's important to name the project `PhotoSharingApplication.WebServices.Grpc.Comments` so the namespaces will match when you copy and paste code.
+- Leave the `Enable Docker` checkbox unchecked
+- Ensure to select the latest .NET Core version (6.0) and select `Create`
+- Add a project reference to the `PhotoSharingApplication.Shared` project.
+
 ## The Backend Core
 
-- On the `PhotoSharingApplication.Backend.Core`, under the `Services` folder, add the following `CommentsService` class:
+- On the ` PhotoSharingApplication.WebServices.Grpc.Comments` prject, add a new `Core` folder.
+- Under the `Core` folder, add a new `Services` folder
+- Under the `Services` folder, add the following `CommentsService` class:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Backend.Core.Services;
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services;
 
 public class CommentsService : ICommentsService {
     private readonly ICommentsRepository repository;
 
-    public CommentsService(ICommentsRepository repository) {
-        this.repository = repository;
-    }
+    public CommentsService(ICommentsRepository repository) => this.repository = repository;
     public async Task<Comment?> CreateAsync(Comment comment) {
         comment.SubmittedOn = DateTime.Now;
         comment.UserName ??= "";
@@ -51,31 +60,56 @@ public class CommentsService : ICommentsService {
 
 Just like for the `PhotosService`: it's true that this class looks like the one we have for the frontend, so we may be tempted to share this as well, but we could also argue that the logic server side may very well be more convoluted than the one on the frontend (you may not want to share your *secrets* with the client), so we're going to keep them separated even if in our case they do the same thing.
 
-## The Backend Infrastructure
+## The Infrastructure
 
-In the `PhotoSharingApplication.Backend.Infrastructure` project we need to
-- Add the `DbSet<Comment>` to the `DbContext`
+In the `PhotoSharingApplication.WebServices.Grpc.Comments` project we need to
+- Add a `DbContext` class
+- Add a `DbSet<Comment>` to the `DbContext`
+- Configure it 
+- Register it as a service
+- Add a Connection string in the configuration file
 - Add a `Migration` and update the database
 - Create the `CommentsRepository` class
 
 ### The DbContext
 
-- Open the `PhotoSharingApplicationContext` class under the `Data` folder of the `PhotoSharingApplication.Backend.Infrastructure` project.
-- Add the following property
+- On the `Solution Explorer`, create a new `Infrastructure` folder
+- Add the following NuGet packages (make sure to install the latest prerelease version):
+    - `Microsoft.EntityFrameworkCore.SqlServer`
+    - `Microsoft.EntityFrameworkCore.Design`
+    - `Microsoft.EntityFrameworkCore.Tools`
+
+### The DbContext
+
+Now we can add the `DbContext`
+
+- Under the `Infrastructure` folder, create a new folder `Data`
+- Add a new class `CommentsDbContext`
+- Let the class derive from `DbContext`
 
 ```cs
-public DbSet<Comment> Comments { get; set; }
+using Microsoft.EntityFrameworkCore;
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
+
+public class CommentsDbContext : DbContext {
+}
+
 ```
 
-We want to give our model some configurations and restrictions, so we're going to use [Fluent API](https://docs.microsoft.com/en-gb/ef/core/modeling/#use-fluent-api-to-configure-a-model) to do that.
+Because we're going to use this `DbContext` from an ASP.NET Core project, we are going to use the [constructor accepting the DbOptions](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/connection-strings#aspnet-core)
+
+```cs
+public CommentsDbContext(DbContextOptions<CommentsDbContext> options)  : base(options) {}
+```
+
+We want to give our model some configurations and restrictions, so we're going to use [Fluent API](https://docs.microsoft.com/en-gb/ef/core/modeling/#use-fluent-api-to-configure-a-model) to do that:
 
 ```cs
 protected override void OnModelCreating(ModelBuilder modelBuilder) {
-    modelBuilder.Entity<Photo>(ConfigurePhoto);    
-    modelBuilder.Entity<Comment>(ConfigureComment);
+    modelBuilder.Entity<Comment>(ConfigureComments);  
 }
 
-private void ConfigureComment(EntityTypeBuilder<Comment> builder) {
+private void ConfigurePhoto(EntityTypeBuilder<Photo> builder) {
     builder.ToTable("Comments");
 
     builder.Property(comment => comment.Subject)
@@ -84,140 +118,132 @@ private void ConfigureComment(EntityTypeBuilder<Comment> builder) {
 }
 ```
 
-### The Repository
-
-Now for the Repository that makes use of the DbContext.
-
-- In the `Repositories` -> `EntityFramework` subfolder of the `PhotoSharingApplication.Backend.Infrastructure` project, add a new class `CommentsRepository` 
-- Let the class implement the `ICommentsRepository` interface by adding the following code:
+Lastly, we're going to add a `DbSet` for the `Comment`:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-
-namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
-
-public class CommentsRepository : ICommentsRepository {
-    public async Task<Comment?> CreateAsync(Comment comment) {
-        throw new NotImplementedException();
-    }
-
-    public async Task<Comment?> FindAsync(int id) {
-        throw new NotImplementedException();
-    }
-
-    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) {
-        throw new NotImplementedException();
-    }
-
-    public async Task<Comment?> RemoveAsync(int id) {
-        throw new NotImplementedException();
-    }
-
-    public async Task<Comment?> UpdateAsync(Comment comment) {
-        throw new NotImplementedException();
-    }
-}
+public DbSet<Comment> Comments { get; set; }
 ```
 
-To make use of the `DbContext`, we're going to resort to Dependecy Injection, so we need a constructor and a field where to store the DbContext so that we can use it from the methods we have to implement:
+Don't forget to add the necessary `using`:
 
 ```cs
-private readonly PhotoSharingApplicationContext context;
-
-public CommentsRepository(PhotoSharingApplicationContext context) {
-    this.context = context;
-}
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PhotoSharingApplication.Shared.Entities;
 ```
 
-which requires
+### Configuring the DbContext
+
+The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
+
+Open the [`Program.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, and add the configuration for the `DbContext` before building the app:
 
 ```cs
-using PhotoSharingApplication.Backend.Infrastructure.Data;
+builder.Services.AddDbContext<CommentsDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("CommentsDbContext")));
+
+var app = builder.Build();
 ```
 
-Now we're going to use [Asynchronous operations](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/async) to Read, Create, Update and Delete data.
-
-
-- The code to [Add](https://docs.microsoft.com/en-gb/ef/core/saving/basic#adding-data) the Comment to the DataBase becomes:
-
-```cs
-public async Task<Comment> CreateAsync(Comment comment) {
-    context.Add(comment);
-    await context.SaveChangesAsync();
-    return comment;
-}
-```
-
-- The code to [Update](https://docs.microsoft.com/en-gb/ef/core/saving/basic#updating-data) a Comment in the database becomes:
-
-```cs
-public async Task<Comment> UpdateAsync(Comment comment) {
-    context.Update(comment);
-    await context.SaveChangesAsync();
-    return comment;
-}
-```
-
-- The code to [Delete](https://docs.microsoft.com/en-gb/ef/core/saving/basic#deleting-data) a Comment from the Database becomes:
-
-```cs
-public async Task<Comment> RemoveAsync(int id) {
-    Comment comment = await context.Comments.SingleOrDefaultAsync(m => m.Id == id);
-    context.Comments.Remove(comment);
-    await context.SaveChangesAsync();
-    return comment;
-}
-```
-
-which requires
+Which requires
 
 ```cs
 using Microsoft.EntityFrameworkCore;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 ```
 
-To read the data, we're going to use [Asynchronous LINQ Operators](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/async)
+Add a `CommentsDbContext` connection string to [configure](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0) it in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-configuration):
 
-- The code to Read all the comments for a photo becomes
-
-```cs
-public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) => await context.Comments.Where(c => c.PhotoId == photoId).ToListAsync();
-```
-
-- The code to read one comment becomes
-
-```cs
-public async Task<Comment> FindAsync(int id) => await context.Comments.SingleOrDefaultAsync(m => m.Id == id);
+```json
+"ConnectionStrings": {
+    "CommentsDbContext": "Server=(localdb)\\mssqllocaldb;Database=CommentsDbContextBlazorLabs;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
 ```
 
 ### Generate migrations and database
 
-The database has not been updated to the new schema. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to update the schema, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
+The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
 
-To add a migration, run the following command.
+First, as per the [documentation](https://docs.microsoft.com/en-us/ef/core/cli/powershell):
+
+> Before using the tools:
+> 
+> - Understand the difference between target and startup project.
+> - Learn how to use the tools with .NET Standard class libraries.
+> - For ASP.NET Core projects, set the environment.
+>
+> ### Target and startup project
+> The commands refer to a project and a startup project.
+>
+> - The project is also known as the target project because it's where the commands add or remove files. By default, the Default project selected in Package Manager Console is the target project. You can specify a different project as target project by using the `--project` option.
+> - The startup project is the one that the tools build and run. The tools have to execute application code at design time to get information about the project, such as the database connection string and the configuration of the model. By default, the Startup Project in Solution Explorer is the startup project. You can specify a different project as startup project by using the `--startup-project` option.
+
+To add an initial migration, run the following command.
 
 ```
-Add-Migration CommentsTable -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.REST.Photos
+Add-Migration InitialCreate -Project PhotoSharingApplication.WebServices.Grpc.Comments -StartupProject PhotoSharingApplication.WebServices.Grpc.Comments
 ```
 
-Two files are added to your project under the Migrations directory:
+Three files are added to your project under the Migrations directory:
 
-- XXXXXXXXXXXXXX_CommentsTable.cs--The main migrations file. Contains the operations necessary to apply the migration (in Up()) and to revert it (in Down()).
-- XXXXXXXXXXXXXX_CommentsTable.Designer.cs--The migrations metadata file. Contains information used by EF.
+- XXXXXXXXXXXXXX_InitialCreate.cs--The main migrations file. Contains the operations necessary to apply the migration (in Up()) and to revert it (in Down()).
+- XXXXXXXXXXXXXX_InitialCreate.Designer.cs--The migrations metadata file. Contains information used by EF.
+- CommentsDbContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
 
 The timestamp in the filename helps keep them ordered chronologically so you can see the progression of changes.
 
-One file has been updated:
-
-- PhotoSharingApplicationContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
-
-To Update the Database, run the following command in the `Package Manager Console` of `Visual Studio`.
+### Update the database
+Next, apply the migration to the database to create the schema.
 
 ```
-Update-Database -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.REST.Photos
+Update-Database -Project PhotoSharingApplication.WebServices.Grpc.Comments -StartupProject PhotoSharingApplication.WebServices.Grpc.Comments
 ```
 
-Now the database contains a `Comments` table, related to the `Photos` table.
+You should now have a new SQL Server database called `CommentsDbContextBlazorLabs` with one empty `Comments` table.
+
+### The Repository
+
+Now for the Repository that makes use of the `DbContext`.
+
+- Under the `Infrastructure` folder of thhe gRpc project, create a new `Repositories` folder 
+- Under the `Repositories` folder, create a new `EntityFramework` folder
+- Under the `EntityFramework` folder, add a new class `CommentsRepository` 
+- Let the class implement the `ICommentsRepository` interface by adding the following code:
+
+```cs
+using Microsoft.EntityFrameworkCore;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
+
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Repositories.EntityFramework;
+
+public class CommentsRepository : ICommentsRepository {
+    
+    public async Task<Comment?> CreateAsync(Comment comment) {
+        context.Add(comment);
+        await context.SaveChangesAsync();
+        return comment;
+    }
+
+    public async Task<Comment?> FindAsync(int id) => await context.Comments.SingleOrDefaultAsync(m => m.Id == id);
+
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await context.Comments.Where(c => c.PhotoId == photoId).ToListAsync();
+
+    public async Task<Comment?> RemoveAsync(int id) {
+        Comment comment = await context.Comments.SingleOrDefaultAsync(m => m.Id == id);
+        context.Comments.Remove(comment);
+        await context.SaveChangesAsync();
+        return comment;
+    }
+
+    public async Task<Comment?> UpdateAsync(Comment comment) {
+        context.Update(comment);
+        await context.SaveChangesAsync();
+        return comment;
+    }
+}
+```
 
 ## The Application
 
@@ -292,13 +318,6 @@ These are the messages sent back and forth:
     - DateTime SubmittedOn
 
 Many messages look the same, but we want to keep the definitions separated so that future changes wouldn't break the interface.
-
-### Create the project
-
-- On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
-- In the `Create a new project` dialog, select `gRPC Service` and select `Next`
-- Name the project `PhotoSharingApplication.WebServices.Grpc.Comments`. It's important to name the project `PhotoSharingApplication.WebServices.Grpc.Comments` so the namespaces will match when you copy and paste code.
-- Ensure to select the latest .NET Core version (6.0) and select `Create`
 
 ### Examine the project files
 
@@ -424,9 +443,9 @@ message UpdateReply {
 - Let the class derive from `Commenter.CommenterBase`
 
 ```cs
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
-    public class CommentsGrpcService : Commenter.CommenterBase {
-    }
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services ; 
+
+public class CommentsGrpcService : Commenter.CommenterBase {
 }
 ```
 
@@ -438,7 +457,7 @@ We want to use the `CommentsService` of out *Backend.Core*, so let's make use of
 - Add a `using PhotoSharingApplication.Shared.Core.Interfaces;`
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Interfaces;
 
 namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 
@@ -455,7 +474,7 @@ Now we can start implementing our methods.
 
 ## Getting all the Comments for a Photo
 
-Our `Backend.Core.CommentsService` has a `GetCommentsForPhotoAsync` method that returns a `List<Comment>`, so we will use that to start.
+Our `CommentsService` has a `GetCommentsForPhotoAsync` method that returns a `List<Comment>`, so we will use that to start.
 
 We cannot return the result as it is, because our method needs to return a `GetCommentsForPhotosReply`, so we need to create an instance of that first.
 
@@ -485,13 +504,13 @@ which require the following using:
 
 ```cs
 using Grpc.Core;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 ```
 
 ## Get One Comment
 
-Our `Backend.Core.CommentsService` has a `FindAsync` method that returns a `Comment`, so we will use that to start.
+Our `CommentsService` has a `FindAsync` method that returns a `Comment`, so we will use that to start.
 
 We cannot return the result as it is, because our method needs to return a `FindReply`, so we need to project our `Comment` into a `FindReply`.
 
@@ -513,7 +532,7 @@ public override async Task<FindReply> Find(FindRequest request, ServerCallContex
 
 ### Create a Comment
 
-Our `Backend.Core.CommentsService` has a `CreateAsync` method that accepts a `Comment` and returns a `Comment`, so we will use that to start.
+Our `CommentsService` has a `CreateAsync` method that accepts a `Comment` and returns a `Comment`, so we will use that to start.
 
 We cannot pass the comment as it is, because our method receives a `CreateRequest`, so we need to project that into an instance of a new `Comment`.
 
@@ -538,7 +557,7 @@ public override async Task<CreateReply> Create(CreateRequest request, ServerCall
 
 ### Update a Comment
 
-Update is similar to Create, but it uses the `UpdateAsync` method of the `Backend.Core.CommentsService` and returns an `UpdateReply`. We are going to return an error if the Service or the Repository throw an Exception.
+Update is similar to Create, but it uses the `UpdateAsync` method of the `CommentsService` and returns an `UpdateReply`. We are going to return an error if the Service or the Repository throw an Exception.
 
 ```cs
 public override async Task<UpdateReply> Update(UpdateRequest request, ServerCallContext context) {
@@ -552,7 +571,7 @@ public override async Task<UpdateReply> Update(UpdateRequest request, ServerCall
 ```
 ### Delete a Comment
 
-Delete is similar to Create too, but it uses the `RemoveAsync` method of the `Backend.Core.CommentsService` and returns an `RemoveReply`. We are going to return an error if the Service or the Repository throw an Exception.
+Delete is similar to Create too, but it uses the `RemoveAsync` method of the `CommentsService` and returns an `RemoveReply`. We are going to return an error if the Service or the Repository throw an Exception.
 
 ```cs
 public override async Task<RemoveReply> Remove(RemoveRequest request, ServerCallContext context) {
@@ -567,17 +586,12 @@ public override async Task<RemoveReply> Remove(RemoveRequest request, ServerCall
 
 ## Registering the services and configuring the DbContext
 
-The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
-
 To use our service in the `CommentsGrpcService` gRpc Service, we need to perform a couple of steps: 
 
-- In the `PhotoSharingApplication.WebServices.Grpc.Comments` project, add a Project Reference to the `PhotoSharingApplication.Backend.Infrastructure` project
 - Open `Program.cs`
 - Type the following code before the building of the app
 
 ```cs
-builder.Services.AddDbContext<PhotoSharingApplicationContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotoSharingApplicationContext")));
 builder.Services.AddScoped<ICommentsService, CommentsService>();
 builder.Services.AddScoped<ICommentsRepository, CommentsRepository>();
 //add those previous lines befor this one:
@@ -587,20 +601,14 @@ var app = builder.Build();
 This requires the following `using`
 
 ```cs
-using PhotoSharingApplication.Backend.Infrastructure.Data;
-using PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework;
-using PhotoSharingApplication.Backend.Core.Services;
-using PhotoSharingApplication.Shared.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Repositories.EntityFramework;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 ```
 
-Now we can add the connection string to the `appsettings.json` (you can copy the one you have on the `REST` project)
-
-```js
-"ConnectionStrings": {
-    "PhotoSharingApplicationContext": "Server=(localdb)\\mssqllocaldb;Database=PhotoSharingApplicationContextBlazorLabs;Trusted_Connection=True;MultipleActiveResultSets=true"
-}
-```
 ## Mapping the service as an EndPoint
 
 In the `Program.cs` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project, find the `app.MapGrpcService<GreeterService>();` and replace it with

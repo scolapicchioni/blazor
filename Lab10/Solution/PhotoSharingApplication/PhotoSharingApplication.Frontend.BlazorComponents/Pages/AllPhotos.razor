@@ -5,18 +5,22 @@
 
 <MatH3>All Photos</MatH3>
 
-<MatButton Link="photos/upload">Upload new Photo</MatButton>
+<AuthorizeView>
+    <Authorized><MatButton Link="photos/upload">Upload new Photo</MatButton></Authorized>
+    <NotAuthorized><MatButtonLink Href="bff/login">Log in to upload a photo<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
+</AuthorizeView>
+
 
 @if (photos is null) {
     <p>...Loading...</p>
 } else {
     <div class="mat-layout-grid">
         <div class="mat-layout-grid-inner">
-    @foreach (var photo in photos) {
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
-                <PhotoDetailsComponent Photo="photo" Details Edit Delete></PhotoDetailsComponent>
-            </div>
-    }
+            @foreach (var photo in photos) {
+                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
+                    <PhotoDetailsComponent Photo="photo" Edit Delete Details></PhotoDetailsComponent>
+                </div>
+            }
         </div>
     </div>
 }

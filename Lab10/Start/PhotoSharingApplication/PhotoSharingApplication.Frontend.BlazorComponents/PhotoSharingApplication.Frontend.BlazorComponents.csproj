@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PhotoSharingApplication.Shared.Core\PhotoSharingApplication.Shared.Core.csproj" />
+    <ProjectReference Include="..\PhotoSharingApplication.Shared\PhotoSharingApplication.Shared.csproj" />
   </ItemGroup>
 
 </Project>

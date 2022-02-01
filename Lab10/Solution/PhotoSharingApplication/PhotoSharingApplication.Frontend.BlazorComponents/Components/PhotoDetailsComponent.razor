@@ -1,11 +1,10 @@
-﻿
-<MatCard>
+﻿<MatCard>
     <div>
         <MatHeadline6>
             @Photo.Id - @Photo.Title
         </MatHeadline6>
         <MatSubtitle2>
-            @Photo.CreatedDate.ToShortDateString()
+            Uploaded on @Photo.CreatedDate.ToShortDateString() by @Photo.UserName
         </MatSubtitle2>
     </div>
     <MatCardContent>

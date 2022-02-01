@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
 namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 
@@ -26,9 +27,11 @@ public class CommentsGrpcService : Commenter.CommenterBase {
         return new FindReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
     }
 
+    [Authorize]
     public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
         try {
-            Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body });
+            var user = context.GetHttpContext().User;
+            Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user.Identity.Name });
             return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
         } catch (Exception ex) {
             throw new RpcException(new Status(StatusCode.Internal, ex.Message));

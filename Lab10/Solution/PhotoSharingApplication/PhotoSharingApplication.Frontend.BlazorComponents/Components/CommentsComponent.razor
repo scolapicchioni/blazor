@@ -9,7 +9,12 @@
     @foreach (var comment in comments) {
       <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
     }
-    <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
+    <AuthorizeView>
+    <Authorized>
+        <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
+    </Authorized>
+        <NotAuthorized><MatButtonLink Href="bff/login">Log in to add a comment<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
+    </AuthorizeView>
   </div>
 }
 

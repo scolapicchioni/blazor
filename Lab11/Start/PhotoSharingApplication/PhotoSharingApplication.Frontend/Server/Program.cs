@@ -1,8 +1,5 @@
-using Grpc.Net.Client;
+using Duende.Bff.Yarp;
 using Microsoft.AspNetCore.ResponseCompression;
-using PhotoSharingApplication.Frontend.Server.Core.Services;
-using PhotoSharingApplication.Shared.Interfaces;
-using PhotoSharingApplication.WebServices.Grpc.Comments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,17 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003") });
-builder.Services.AddScoped<IPhotosService, PhotosService>();
-builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Rest.PhotosRepository>();
-
-builder.Services.AddScoped<ICommentsService, CommentsService>();
-builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Grpc.CommentsRepository>();
-builder.Services.AddSingleton(services => {
-    var backendUrl = "https://localhost:5005"; // Local debug URL
-    var channel = GrpcChannel.ForAddress(backendUrl);
-    return new Commenter.CommenterClient(channel);
-});
+builder.Services.AddReverseProxy().AddTransforms<AccessTokenTransformProvider>().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 builder.Services.AddBff();
 
@@ -38,7 +25,7 @@ builder.Services.AddAuthentication(options => {
     options.Authority = "https://localhost:5007";
 
     options.ClientId = "photosharing.bff";
-    options.ClientSecret = "A9B27D26-E71C-4C53-89A8-3DAB53CE1854";
+    options.ClientSecret = "A9B27D26-E71C-4C53-89A8-3DAB53CE1854"; // replace this with the GUID you generated as `ClientSecrets` in the Config.cs file of the IdentityProvider project
     options.ResponseType = "code";
     options.ResponseMode = "query";
 
@@ -78,7 +65,7 @@ app.UseAuthorization();
 app.MapBffManagementEndpoints();
 
 app.MapRazorPages();
-app.MapControllers().AsBffApiEndpoint();
+app.MapReverseProxy();
 app.MapFallbackToFile("index.html");
 
 app.Run();

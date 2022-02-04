@@ -9,7 +9,7 @@ public class PhotosService : IPhotosService {
     private readonly IAuthorizationService<Photo> photosAuthorizationService;
     private readonly IUserService userService;
 
-    public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) => 
+    public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) =>
         (this.repository, this.photosAuthorizationService, this.userService) = (repository, photosAuthorizationService, userService);
     public async Task<Photo?> FindAsync(int id) => await repository.FindAsync(id);
 
@@ -17,13 +17,13 @@ public class PhotosService : IPhotosService {
 
     public async Task<Photo?> RemoveAsync(int id) {
         Photo? photo = await FindAsync(id);
-        if(photo is not null){
+        if (photo is not null) {
             var user = await userService.GetUserAsync();
-            if(!await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
+            if (!await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
                 throw new DeleteUnauthorizedException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
             photo = await repository.RemoveAsync(id);
         }
-        return photo; 
+        return photo;
     }
 
     public async Task<Photo?> UpdateAsync(Photo photo) {

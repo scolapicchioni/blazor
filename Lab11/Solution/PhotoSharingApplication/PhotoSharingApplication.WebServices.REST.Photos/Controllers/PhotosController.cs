@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Exceptions;
@@ -42,7 +41,7 @@ public class PhotosController : ControllerBase {
             return BadRequest();
         try {
             Photo? p = await service.UpdateAsync(photo);
-            if(p is null) return NotFound();
+            if (p is null) return NotFound();
             return p;
         } catch (EditUnauthorizedException<Photo>) {
             return Forbid();
@@ -53,7 +52,7 @@ public class PhotosController : ControllerBase {
     public async Task<ActionResult<Photo>> Remove(int id) {
         try {
             Photo? ph = await service.RemoveAsync(id);
-            if(ph is null) return NotFound();
+            if (ph is null) return NotFound();
             return ph;
         } catch (DeleteUnauthorizedException<Photo>) {
             return Forbid();

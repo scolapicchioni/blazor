@@ -2,7 +2,7 @@
     <MatNavItem Href="/photos/all">All Photos <MatIcon Icon="@MatIconNames.List"></MatIcon></MatNavItem>
     <AuthorizeView>
         <Authorized>
-            <strong>Hello, @context.User.Identity.Name!</strong>
+            <MatHeadline6>Hello, @context.User.Identity.Name!</MatHeadline6>
             <MatNavItem Href="/photos/upload">Upload Photo <MatIcon Icon="@MatIconNames.Add"></MatIcon></MatNavItem>
             <MatNavItem Href="@context.User.FindFirst("bff:logout_url")?.Value">Log out <MatIcon Icon="@MatIconNames.Exit_to_app"></MatIcon></MatNavItem>
         </Authorized>

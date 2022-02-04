@@ -39,7 +39,7 @@ By creating our own interfaces, we can avoid any dependency  on .NET, .NET Core,
 Also, I know that technically we already solved the `Create` in our previous lab, but we can use the same technique for that as well, so we'll also provide methods and exceptions for the Create. This way, we are ready for change, just in case we decide that being authenticated is not enough anymore to upload a photo.   
 We can reuse the same interfaces and exceptions both on the client and on the server side, so let's put them on our `Core.Shared` project.  
 
-## Shared Core
+## Shared Code
 
 ### IUserService
 - In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared` project, right click on `Add -> New Item`
@@ -57,7 +57,7 @@ public interface IUserService {
 ```
 
 ### IAuthorizationService<T>
-- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared.Core` project, right click on `Add -> New Item`
+- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared` project, right click on `Add -> New Item`
 - Select `Interface`, name the interface `IAuthorizationService` and click `Ok`
 - Let the interface be a generic of type `T`
 - Define a 
@@ -281,7 +281,6 @@ Our `PhotosController`, located under the `Controllers` folder of the `PhotoShar
 
 ```cs
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Exceptions;
@@ -431,281 +430,11 @@ public class CommentsGrpcService : Commenter.CommenterBase {
 ```
 
 
-Now we ned to go to our BFF to intercept the different status codes and act accordingly.    
-We'll do this in the repository and in the Web Service, both for the Photos and for the Comments.
-
-### The Photos Repository
-
-- Open the `PhotosRepository` class under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its content with:
-
-```cs
-using IdentityModel.Client;
-using Microsoft.AspNetCore.Authentication;
-using PhotoSharingApplication.Shared.Entities;
-using PhotoSharingApplication.Shared.Exceptions;
-using PhotoSharingApplication.Shared.Interfaces;
-using System.Net;
-
-namespace PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Rest;
-
-public class PhotosRepository : IPhotosRepository {
-    private readonly HttpClient http;
-    private readonly IHttpContextAccessor httpContextAccessor;
-
-    public PhotosRepository(HttpClient http, IHttpContextAccessor httpContextAccessor) => (this.http, this.httpContextAccessor) = (http, httpContextAccessor);
-    
-    public async Task<Photo?> CreateAsync(Photo photo) {
-        var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-        http.SetBearerToken(token);
-        HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
-        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) {
-            throw new CreateUnauthorizedException<Photo>();
-        }
-        return await response.Content.ReadFromJsonAsync<Photo>();
-    }
-
-    public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
-
-    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
-
-    public async Task<Photo?> RemoveAsync(int id) {
-      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-      http.SetBearerToken(token);
-      HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
-      return response.StatusCode switch {
-        HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
-        HttpStatusCode.Forbidden => throw new DeleteUnauthorizedException<Photo>(),
-        _ => throw new Exception(response.ReasonPhrase)
-      }; 
-    }
-
-    public async Task<Photo?> UpdateAsync(Photo photo) {
-      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-      http.SetBearerToken(token);
-      HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
-      return response.StatusCode switch {
-        HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
-        HttpStatusCode.Forbidden => throw new EditUnauthorizedException<Photo>(),
-        _ => throw new Exception(response.ReasonPhrase)
-      };
-    }
-}
-```
-
-### The Comments Repository
-
-- Open the `CommentsRepository` under the `Infrastructure/Repositories/Grpc` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its code with:
-
-```cs
-using Grpc.Core;
-using Microsoft.AspNetCore.Authentication;
-using PhotoSharingApplication.Shared.Entities;
-using PhotoSharingApplication.Shared.Exceptions;
-using PhotoSharingApplication.Shared.Interfaces;
-using PhotoSharingApplication.WebServices.Grpc.Comments;
-
-namespace PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Grpc;
-
-public class CommentsRepository : ICommentsRepository {
-  private readonly Commenter.CommenterClient gRpcClient;
-  private readonly IHttpContextAccessor httpContextAccessor;
-
-  public CommentsRepository(Commenter.CommenterClient gRpcClient, IHttpContextAccessor httpContextAccessor) => (this.gRpcClient, this.httpContextAccessor) = (gRpcClient, httpContextAccessor);
-  public async Task<Comment?> CreateAsync(Comment comment) {
-    var headers = new Metadata();
-    var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-    headers.Add("Authorization", $"Bearer {token}");
-
-    CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
-    try {
-      CreateReply c = await gRpcClient.CreateAsync(createRequest, headers);
-      return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
-    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
-      throw new CreateUnauthorizedException<Comment>(ex.Message);
-    } catch (RpcException ex) {
-      throw new Exception(ex.Message);
-    }
-  }
-
-  public async Task<Comment?> FindAsync(int id) {
-    FindReply c = await gRpcClient.FindAsync(new FindRequest() { Id = id });
-    return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
-  }
-
-  public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) {
-    GetCommentsForPhotosReply resp = await gRpcClient.GetCommentsForPhotoAsync(new GetCommentsForPhotosRequest() { PhotoId = photoId });
-    return resp.Comments.Select(c => new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() }).ToList();
-  }
-
-  public async Task<Comment?> RemoveAsync(int id) {
-    try {
-      var headers = new Metadata();
-      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-      headers.Add("Authorization", $"Bearer {token}");
-      RemoveReply c = await gRpcClient.RemoveAsync(new RemoveRequest() { Id = id }, headers);
-      return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
-    } catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) { 
-      return null;
-    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
-      throw new DeleteUnauthorizedException<Comment>(ex.Message);
-    } catch (RpcException ex){
-      throw new Exception(ex.Message);
-    }
-  }
-
-  public async Task<Comment?> UpdateAsync(Comment comment) {
-    try {
-      var headers = new Metadata();
-      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-      headers.Add("Authorization", $"Bearer {token}");
-      UpdateReply c = await gRpcClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body }, headers);
-      return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
-    } catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) {
-      return null;
-    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
-      throw new EditUnauthorizedException<Comment>(ex.Message);
-    } catch (RpcException ex) {
-      throw new Exception(ex.Message);
-    }
-  }
-}
-```
-
-### The Photos Rest API
-
-- Open the `PhotosController` class under the `Controllers` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its code with:
-
-```cs
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using PhotoSharingApplication.Shared.Entities;
-using PhotoSharingApplication.Shared.Exceptions;
-using PhotoSharingApplication.Shared.Interfaces;
-
-namespace PhotoSharingApplication.Frontend.Server.Controllers;
-
-[Route("[controller]")]
-[ApiController]
-public class PhotosController : ControllerBase {
-    private readonly IPhotosService service;
-
-    public PhotosController(IPhotosService service) => this.service = service;
-
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service.GetPhotosAsync();
-
-    [HttpGet("{id:int}", Name = "Find")]
-    public async Task<ActionResult<Photo>> Find(int id) {
-        Photo? ph = await service.FindAsync(id);
-        if (ph is null) return NotFound();
-        return ph;
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
-        try {
-            Photo? p = await service.UploadAsync(photo);
-            return CreatedAtRoute("Find", new { id = photo.Id }, p);
-        } catch (CreateUnauthorizedException<Photo>) {
-            return Forbid();
-        }
-    }
-
-    [HttpPut("{id}")]
-    public async Task<ActionResult<Photo>> Update(int id, Photo photo) {
-        if (id != photo.Id)
-            return BadRequest();
-        try {
-            Photo? p = await service.UpdateAsync(photo);
-            if (p is null) return NotFound();
-            return p;
-        } catch (EditUnauthorizedException<Photo>) {
-            return Forbid();
-        }
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<ActionResult<Photo>> Remove(int id) {
-        try {
-            Photo? ph = await service.RemoveAsync(id);
-            if (ph is null) return NotFound();
-            return ph;
-        } catch (DeleteUnauthorizedException<Photo>) {
-            return Forbid();
-        }
-    }
-}
-```
-
-### The Comments REST API
-
-- Open the `CommentsController` file under the `Controllers` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its code with:
-
-```cs
-using Microsoft.AspNetCore.Mvc;
-using PhotoSharingApplication.Shared.Entities;
-using PhotoSharingApplication.Shared.Exceptions;
-using PhotoSharingApplication.Shared.Interfaces;
-
-namespace PhotoSharingApplication.Frontend.Server.Controllers;
-
-[Route("[controller]")]
-[ApiController]
-public class CommentsController : ControllerBase {
-    private readonly ICommentsService service;
-
-    public CommentsController(ICommentsService service) {
-        this.service = service;
-    }
-    [HttpGet("/photos/{photoId:int}/comments")]
-    public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsForPhoto(int photoId) => await service.GetCommentsForPhotoAsync(photoId);
-
-    [HttpGet("{id:int}", Name = "FindComment")]
-    public async Task<ActionResult<Comment>> Find(int id) {
-        Comment? cm = await service.FindAsync(id);
-        if (cm is null) return NotFound();
-        return cm;
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<Comment>> CreateAsync(Comment comment) {
-        try {
-            Comment? c = await service.CreateAsync(comment);
-            return CreatedAtRoute("FindComment", new { id = c.Id }, c);
-        } catch (CreateUnauthorizedException<Comment>) {
-            return Forbid();
-        }
-    }
-
-    [HttpPut("{id}")]
-    public async Task<ActionResult<Comment>> Update(int id, Comment comment) {
-        if (id != comment.Id)
-            return BadRequest();
-        try {
-            Comment? c = await service.UpdateAsync(comment);
-            if (c is null) return NotFound();
-            return c;
-        } catch (EditUnauthorizedException<Comment>) {
-            return Forbid();
-        }
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<ActionResult<Comment>> Remove(int id) {
-        try {
-            Comment? cm = await service.RemoveAsync(id);
-            if (cm is null) return NotFound();
-            return cm;
-        } catch (DeleteUnauthorizedException<Comment>) {
-            return Forbid();
-        }
-    }
-}
-```
 
 ## Frontend Client
 
-Repeat the same process for the `PhotoSharingApplication.Frontend.Client` project:
+Now we ned to go to our Client to intercept the different status codes and act accordingly.    
+We'll do this in the repository and in the UI, both for the Photos and for the Comments.
 
 ### PhotosRepository
 
@@ -740,6 +469,7 @@ public class PhotosRepository : IPhotosRepository {
         HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
         return response.StatusCode switch {
             HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+            HttpStatusCode.NotFound => null,
             HttpStatusCode.Forbidden => throw new DeleteUnauthorizedException<Photo>(),
             _ => throw new Exception(response.ReasonPhrase)
         };
@@ -749,6 +479,7 @@ public class PhotosRepository : IPhotosRepository {
         HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
         return response.StatusCode switch {
             HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+            HttpStatusCode.NotFound => null,
             HttpStatusCode.Forbidden => throw new EditUnauthorizedException<Photo>(),
             _ => throw new Exception(response.ReasonPhrase)
         };
@@ -758,52 +489,68 @@ public class PhotosRepository : IPhotosRepository {
 
 ### CommentsRepository
 
-- Open the `CommentsRepository` class under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Client` project and replace its code with:
+- Open the `CommentsRepository` class under the `Infrastructure/Repositories/gRpc` folder of the `PhotoSharingApplication.Frontend.Client` project and replace its code with:
 
 ```cs
+using Grpc.Core;
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Exceptions;
 using PhotoSharingApplication.Shared.Interfaces;
-using System.Net;
-using System.Net.Http.Json;
+using PhotoSharingApplication.WebServices.Grpc.Comments;
 
-namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest;
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc;
 
 public class CommentsRepository : ICommentsRepository {
-    private readonly HttpClient http;
+    private readonly Commenter.CommenterClient gRpcClient;
 
-    public CommentsRepository(HttpClient http) {
-        this.http = http;
-    }
-
+    public CommentsRepository(Commenter.CommenterClient gRpcClient) => this.gRpcClient = gRpcClient;
     public async Task<Comment?> CreateAsync(Comment comment) {
-        HttpResponseMessage response = await http.PostAsJsonAsync("/comments", comment);
-        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) {
-            throw new CreateUnauthorizedException<Comment>();
+        
+        CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
+        try {
+            CreateReply c = await gRpcClient.CreateAsync(createRequest);
+            return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+        } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+            throw new CreateUnauthorizedException<Comment>(ex.Message);
+        } catch (RpcException ex) {
+            throw new Exception(ex.Message);
         }
-        return await response.Content.ReadFromJsonAsync<Comment>();
     }
 
-    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await http.GetFromJsonAsync<List<Comment>>($"/photos/{photoId}/comments");
-
-    public async Task<Comment?> UpdateAsync(Comment comment) {
-        HttpResponseMessage response = await http.PutAsJsonAsync($"/comments/{comment.Id}", comment);
-        return response.StatusCode switch {
-            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Comment>(),
-            HttpStatusCode.Forbidden => throw new EditUnauthorizedException<Comment>(),
-            _ => throw new Exception(response.ReasonPhrase)
-        };
+    public async Task<Comment?> FindAsync(int id) {
+        FindReply c = await gRpcClient.FindAsync(new FindRequest() { Id = id });
+        return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
     }
 
-    public async Task<Comment?> FindAsync(int id) => await http.GetFromJsonAsync<Comment>($"/comments/{id}");
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) {
+        GetCommentsForPhotosReply resp = await gRpcClient.GetCommentsForPhotoAsync(new GetCommentsForPhotosRequest() { PhotoId = photoId });
+        return resp.Comments.Select(c => new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() }).ToList();
+    }
 
     public async Task<Comment?> RemoveAsync(int id) {
-        HttpResponseMessage response = await http.DeleteAsync($"/comments/{id}");
-        return response.StatusCode switch {
-            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Comment>(),
-            HttpStatusCode.Forbidden => throw new DeleteUnauthorizedException<Comment>(),
-            _ => throw new Exception(response.ReasonPhrase)
-        };
+        try {
+            RemoveReply c = await gRpcClient.RemoveAsync(new RemoveRequest() { Id = id });
+            return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+        } catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) { 
+            return null;
+        } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+            throw new DeleteUnauthorizedException<Comment>(ex.Message);
+        } catch (RpcException ex){
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public async Task<Comment?> UpdateAsync(Comment comment) {
+        try {
+            UpdateReply c = await gRpcClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body });
+            return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+        } catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) {
+            return null;
+        } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+            throw new EditUnauthorizedException<Comment>(ex.Message);
+        } catch (RpcException ex) {
+            throw new Exception(ex.Message);
+        }
     }
 }
 ```
@@ -817,7 +564,13 @@ In our `PhotoSharingApplication.Frontend.BlazorComponents`, under the `Pages` fo
 - `DeletePhoto`
 
 In all three we'll try to talk to the service.  
-If we catch an `***UnauthorizedException`, we send our user to a new `Forbidden` page where we tell the user that nope, no can do.
+If we catch a `***UnauthorizedException`, we send our user to a new `Forbidden` page where we tell the user that he's not authorized.
+
+- First of all, open the `_Imports.razor` file in the `` project and add
+
+```cs
+@using Microsoft.AspNetCore.Authorization
+```
 
 ### UploadPhoto.razor
 
@@ -831,30 +584,30 @@ If we catch an `***UnauthorizedException`, we send our user to a new `Forbidden`
 <PageTitle>Upload Photo</PageTitle>
 
 <AuthorizeView>
-  <Authorized>
-    <div class="mat-layout-grid">
-      <div class="mat-layout-grid-inner">
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-          <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+    <Authorized>
+        <div class="mat-layout-grid">
+            <div class="mat-layout-grid-inner">
+                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+                    <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </Authorized>
-  <NotAuthorized>
-    <MatButtonLink Href="bff/login">You are not authorized. Log in to upload a picture<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink>
-  </NotAuthorized>
+    </Authorized>
+    <NotAuthorized>
+        <MatButtonLink Href="bff/login">You are not authorized. Log in to upload a picture<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink>
+    </NotAuthorized>
 </AuthorizeView>
 @code {
-  Photo photo = new Photo();
+    Photo photo = new Photo();
 
-  private async Task Upload() {
-    try {
-      await photosService.UploadAsync(photo);
-      navigationManager.NavigateTo("/photos/all");
-    } catch (CreateUnauthorizedException<Photo>) {
-      navigationManager.NavigateTo("/forbidden");
+    private async Task Upload() {
+        try {
+            await photosService.UploadAsync(photo);
+            navigationManager.NavigateTo("/photos/all");
+        } catch (CreateUnauthorizedException<Photo>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
     }
-  }
 }
 ```
 
@@ -1109,25 +862,22 @@ The code should look like this:
 
 ```cs
 using Microsoft.AspNetCore.Components.Authorization;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Frontend.Infrastructure.Identity {
-    public class UserService : IUserService {
-        private readonly AuthenticationStateProvider authenticationStateProvider;
-        public UserService(AuthenticationStateProvider authenticationStateProvider) => this.authenticationStateProvider = authenticationStateProvider;
-        public async Task<ClaimsPrincipal> GetUserAsync() => (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
-    }
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Identity;
+
+public class UserService : IUserService {
+    private readonly AuthenticationStateProvider authenticationStateProvider;
+    public UserService(AuthenticationStateProvider authenticationStateProvider) => this.authenticationStateProvider = authenticationStateProvider;
+    public async Task<ClaimsPrincipal> GetUserAsync() => (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
 }
 ```
 
-You will need to add the `Microsoft.AspNetCore.Components.Authorization` NuGet package in order to find the `AuthenticationStateProvider`.
-
 Now let's register our `UserService` as a service in our Blazor project.
-- Open the `Program` class of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
+- Open the `Program` class of the `PhotoSharingApplication.Frontend.Client` project
 - Add a call to `builder.Services.AddScoped<IUserService, UserService>();`  
-which requires a `using PhotoSharingApplication.Frontend.Infrastructure.Identity;`
+which requires a `using PhotoSharingApplication.Frontend.Client.Infrastructure.Identity;`
 
 ## Authorization
 
@@ -1411,7 +1161,7 @@ using Microsoft.AspNetCore.Authorization;
 using PhotoSharingApplication.Shared.Authorization;
 ```
 
-### PhotoSharingApplication.Frontend.BlazorWebAssembly
+### PhotoSharingApplication.Frontend.Client
 
 - In the `PhotoSharingApplication.Frontend.Client` project, a dd a project reference to the `PhotoSharingApplication.Shared.Authorization` project
 - Open the `Program.cs` and add this line of code before `await builder.Build().RunAsync();`:
@@ -1555,72 +1305,69 @@ We can do that using the same `IUserService` and `IAuthorizationService<T>` that
 The code should look like the following:
 
 ```html
-@using PhotoSharingApplication.Shared.Core.Entities
-@using PhotoSharingApplication.Shared.Core.Interfaces;
-
 @inject IUserService UserService
 @inject IAuthorizationService<Photo> PhotosAuthorizationService
 
 <MatCard>
-  <div>
-    <MatHeadline6>
-      @Photo.Id - @Photo.Title
-    </MatHeadline6>
-  </div>
-  <MatCardContent>
-    <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
-    <MatBody2>
-      @Photo.Description
-    </MatBody2>
-    <MatSubtitle2>
-      Posted on @Photo.CreatedDate.ToShortDateString() by @Photo.UserName
-    </MatSubtitle2>
-  </MatCardContent>
-  <MatCardActions>
-    <MatCardActionButtons>
-      @if (Details) {
-        <MatButton Link="@($"photos/details/{Photo.Id}")">Details</MatButton>
-      }
-      @if (Edit && mayEdit) {
-        <MatButton Link="@($"photos/update/{Photo.Id}")">Update</MatButton>
-      }
-      @if (Delete && mayDelete) {
-        <MatButton Link="@($"photos/delete/{Photo.Id}")">Delete</MatButton>
-      }
-      @if (DeleteConfirm && mayDelete) {
-        <MatButton OnClick="@(async()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))">Confirm Deletion</MatButton>
-      }
-    </MatCardActionButtons>
-  </MatCardActions>
+    <div>
+        <MatHeadline6>
+            @Photo.Id - @Photo.Title
+        </MatHeadline6>
+        <MatSubtitle2>
+            @Photo.CreatedDate.ToShortDateString() by @Photo.UserName
+        </MatSubtitle2>
+    </div>
+    <MatCardContent>
+        <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
+        <MatBody2>
+            @Photo.Description
+        </MatBody2>
+    </MatCardContent>
+    <MatCardActions>
+        <MatCardActionButtons>
+            @if (Details) {
+                <MatButton Link="@($"photos/details/{Photo.Id}")">Details</MatButton>
+            }
+            @if (Edit && mayEdit) {
+                <MatButton Link="@($"photos/update/{Photo.Id}")">Update</MatButton>
+            }
+            @if (Delete && mayDelete) {
+                <MatButton Link="@($"photos/delete/{Photo.Id}")">Delete</MatButton>
+            }
+            @if (DeleteConfirm  && mayDelete) {
+                <MatButton OnClick="@(async()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))">Confirm Deletion</MatButton>
+            }
+        </MatCardActionButtons>
+    </MatCardActions>
 </MatCard>
 
 @code {
-  [Parameter]
-  public Photo Photo { get; set; }
+    [Parameter]
+    public Photo Photo { get; set; }
 
-  [Parameter]
-  public bool Details { get; set; }
+    [Parameter]
+    public bool Details { get; set; }
 
-  [Parameter]
-  public bool Edit { get; set; }
+    [Parameter]
+    public bool Edit { get; set; }
 
-  [Parameter]
-  public bool Delete { get; set; }
+    [Parameter]
+    public bool Delete { get; set; }
 
-  [Parameter]
-  public bool DeleteConfirm { get; set; }
+    [Parameter]
+    public bool DeleteConfirm { get; set; }
 
-  [Parameter]
-  public EventCallback<int> OnDeleteConfirmed { get; set; }
+    [Parameter]
+    public EventCallback<int> OnDeleteConfirmed { get; set; }
 
-  bool mayEdit = false;
-  bool mayDelete = false;
+    private bool mayEdit = false;
+    private bool mayDelete = false;
 
-  protected override async Task OnInitializedAsync() {
-    var User = await UserService.GetUserAsync();
-    mayEdit = await PhotosAuthorizationService.ItemMayBeUpdatedAsync(User, Photo);
-    mayDelete = await PhotosAuthorizationService.ItemMayBeDeletedAsync(User, Photo);
-  }
+    protected override async Task OnInitializedAsync() {
+        var User = await UserService.GetUserAsync();
+        mayEdit = await PhotosAuthorizationService.ItemMayBeUpdatedAsync(User, Photo);
+        mayDelete = await PhotosAuthorizationService.ItemMayBeDeletedAsync(User, Photo);
+    }
 }
 ```
 

@@ -39,8 +39,8 @@ public class CommentsService : ICommentsService {
     public async Task<Comment?> UpdateAsync(Comment comment) {
         var user = await userService.GetUserAsync();
         Comment? oldComment = await repository.FindAsync(comment.Id);
-        if (oldComment is not null) { 
-            if(!await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment))
+        if (oldComment is not null) {
+            if (!await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment))
                 throw new EditUnauthorizedException<Comment>($"Unauthorized Edit Attempt of Comment {comment.Id}");
             oldComment.Subject = comment.Subject;
             oldComment.Body = comment.Body;

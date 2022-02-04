@@ -7,11 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Infrastructure\Repositories\Grpc\Protos\comments.proto" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Duende.BFF" Version="1.1.3" />
+    <PackageReference Include="Duende.BFF.Yarp" Version="1.1.3" />
     <PackageReference Include="Google.Protobuf" Version="3.19.4" />
     <PackageReference Include="Grpc.Net.Client" Version="2.42.0" />
     <PackageReference Include="Grpc.Tools" Version="2.43.0">
@@ -20,16 +17,11 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.1" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Client\PhotoSharingApplication.Frontend.Client.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Protobuf Include="Infrastructure\Repositories\Grpc\Protos\comments.proto">
-      <GrpcServices>Client</GrpcServices>
-    </Protobuf>
   </ItemGroup>
 
 

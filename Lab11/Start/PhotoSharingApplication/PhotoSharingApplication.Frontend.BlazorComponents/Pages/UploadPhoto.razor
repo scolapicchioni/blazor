@@ -1,24 +1,16 @@
 ﻿@inject IPhotosService photosService
 @inject NavigationManager navigationManager
 @page "/photos/upload"
-@attribute [Authorize]
 
 <PageTitle>Upload Photo</PageTitle>
 
-<AuthorizeView>
-    <Authorized>
-        <div class="mat-layout-grid">
-            <div class="mat-layout-grid-inner">
-                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                    <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
-                </div>
-            </div>
+<div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
         </div>
-    </Authorized>
-    <NotAuthorized>
-        <MatButtonLink Href="bff/login">You are not authorized. Log in to upload a picture<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink>
-    </NotAuthorized>
-</AuthorizeView>
+    </div>
+</div>
 @code {
     Photo photo = new Photo();
 

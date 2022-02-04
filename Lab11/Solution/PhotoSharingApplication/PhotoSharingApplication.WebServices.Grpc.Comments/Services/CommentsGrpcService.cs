@@ -30,14 +30,14 @@ public class CommentsGrpcService : Commenter.CommenterBase {
     public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
         try {
             var user = context.GetHttpContext().User;
-            Comment? c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user?.Identity?.Name ?? String.Empty});
+            Comment? c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user?.Identity?.Name ?? String.Empty });
             if (c is null) {
                 throw new RpcException(new Status(StatusCode.Internal, "Something went wrong while creating the comment"));
             }
             return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
         } catch (CreateUnauthorizedException<Comment>) {
             var user = context.GetHttpContext().User;
-            var metadata = new Metadata { { "User", user?.Identity?.Name } };
+            var metadata = new Metadata { { "User", user?.Identity?.Name ?? String.Empty } };
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Create Permission Denied"), metadata);
         } catch (Exception ex) {
             throw new RpcException(new Status(StatusCode.Internal, ex.Message));
@@ -53,7 +53,7 @@ public class CommentsGrpcService : Commenter.CommenterBase {
             return new UpdateReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
         } catch (EditUnauthorizedException<Comment>) {
             var user = context.GetHttpContext().User;
-            var metadata = new Metadata { { "User", user?.Identity?.Name } };
+            var metadata = new Metadata { { "User", user?.Identity?.Name ?? String.Empty } };
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Edit Permission Denied"), metadata);
         } catch (Exception ex) {
             throw new RpcException(new Status(StatusCode.Internal, ex.Message));
@@ -69,7 +69,7 @@ public class CommentsGrpcService : Commenter.CommenterBase {
             return new RemoveReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
         } catch (DeleteUnauthorizedException<Comment>) {
             var user = context.GetHttpContext().User;
-            var metadata = new Metadata { { "User", user?.Identity?.Name } };
+            var metadata = new Metadata { { "User", user?.Identity?.Name ?? String.Empty } };
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Delete Permission Denied"), metadata);
         } catch (Exception ex) {
             throw new RpcException(new Status(StatusCode.Internal, ex.Message));

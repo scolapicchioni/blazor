@@ -28,7 +28,7 @@ public class PhotosController : ControllerBase {
     public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
         photo.UserName = User?.Identity?.Name;
         Photo? p = await service.UploadAsync(photo);
-        return CreatedAtRoute("Find", photo, new { id = photo.Id });
+        return CreatedAtRoute("Find", new { id = p.Id }, p);
     }
 
     [HttpPut("{id}")]

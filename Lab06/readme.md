@@ -130,9 +130,9 @@ builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.C
 ## The Backend for Frontend
 
 The Client calls the Server and the Server now needs to forward the call to the REST service. We need to:  
-- Add the YARN package, as described in the [Getting Started](https://microsoft.github.io/reverse-proxy/articles/getting-started.html)
-- Add the services and middleware to the pipleline
-- Configure YARN to forward the calls to the correct backend address
+- Add the YARP package, as described in the [Getting Started](https://microsoft.github.io/reverse-proxy/articles/getting-started.html)
+- Add the services and middleware to the pipeline
+- Configure YARP to forward the calls to the correct backend address
 
 - In the `PhotoSharingApplication.Frontend.Server` project, add a `Yarp.ReverseProxy` nuGet package
 - [Add the YARP Middleware](https://microsoft.github.io/reverse-proxy/articles/getting-started.html#add-the-yarp-middleware) by opening `Program.cs` and adding the following lines:

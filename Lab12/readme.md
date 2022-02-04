@@ -34,12 +34,12 @@ So this is what we're going to do:
 The code should look like this
 
 ```cs
-namespace PhotoSharingApplication.Shared.Core.Entities {
-    public class PhotoImage {
-        public int Id { get; set; }
-        public byte[] PhotoFile { get; set; }
-        public string ImageMimeType { get; set; }
-    }
+namespace PhotoSharingApplication.Shared.Entities;
+
+public class PhotoImage {
+    public int Id { get; set; }
+    public byte[]? PhotoFile { get; set; }
+    public string? ImageMimeType { get; set; }
 }
 ```
 
@@ -51,20 +51,16 @@ namespace PhotoSharingApplication.Shared.Core.Entities {
 The code should look like this:
 
 ```cs
-using System;
-using System.Collections.Generic;
+namespace PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Entities {
-    public class Photo {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public string UserName { get; set; }
-        public string ImageUrl { get; set; }
-        public virtual ICollection<Comment> Comments { get; set; }
-        public PhotoImage PhotoImage { get; set; }
-    }
+public class Photo {
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public string? UserName { get; set; }
+    public string? ImageUrl { get; set; }
+    public PhotoImage? PhotoImage { get; set; }
 }
 ```
 
@@ -72,7 +68,7 @@ namespace PhotoSharingApplication.Shared.Core.Entities {
 
 We have to configure the relationship between the `Photo` and the `PhotoImage` entities. We're going to use [Table Splitting](https://docs.microsoft.com/en-us/ef/core/modeling/table-splitting).
 
-- In the `Solution Explorer`, under the `Data` folder of the `PhotoSharingApplication.Backend.Infrastructure` project, open the `PhotoSharingApplicationContext` class
+- In the `Solution Explorer`, under the `Infrastructure/Data` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project, open the `PhotosDbContext` class
 - Add a new `PhotoImages` property of type `DbSet<PhotoImage>`
 - Add a new `ConfigurePhotoImage` method to
     - Map the property to the `Photos` table
@@ -85,103 +81,81 @@ The code should look like this:
 ```cs
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Backend.Infrastructure.Data {
-    public class PhotoSharingApplicationContext : DbContext {
-        public PhotoSharingApplicationContext(DbContextOptions<PhotoSharingApplicationContext> options) : base(options) { }
-        protected override void OnModelCreating(ModelBuilder modelBuilder) {
-            modelBuilder.Entity<Photo>(ConfigurePhoto);
-            modelBuilder.Entity<Comment>(ConfigureComment);
-        }
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
 
-        private void ConfigurePhoto(EntityTypeBuilder<Photo> builder) {
-            builder.ToTable("Photos");
-
-            builder.Property(photo => photo.Title)
-                .IsRequired(true)
-                .HasMaxLength(255);
-
-            builder.Ignore(p => p.ImageUrl);
-
-            builder.HasOne(p => p.PhotoImage)
-                .WithOne()
-                .HasForeignKey<PhotoImage>(p => p.Id);
-        }
-        private void ConfigurePhotoImage(EntityTypeBuilder<PhotoImage> builder) {
-            builder.ToTable("Photos");
-
-            builder.Property(p => p.PhotoFile)
-                .IsRequired(true);
-
-            builder.Property(p => p.ImageMimeType)
-                .IsRequired(true)
-                .HasMaxLength(255);
-        }
-        private void ConfigureComment(EntityTypeBuilder<Comment> builder) {
-            builder.ToTable("Comments");
-
-            builder.Property(comment => comment.Subject)
-                .IsRequired()
-                .HasMaxLength(250);
-        }
-
-        public DbSet<Photo> Photos { get; set; }
-        public DbSet<PhotoImage> PhotoImages { get; set; }
-        public DbSet<Comment> Comments { get; set; }
+public class PhotosDbContext : DbContext {
+    public PhotosDbContext(DbContextOptions<PhotosDbContext> options): base(options) {    }
+    protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<Photo>(ConfigurePhoto);
+        modelBuilder.Entity<PhotoImage>(ConfigurePhotoImage);
     }
+
+    private void ConfigurePhoto(EntityTypeBuilder<Photo> builder) {
+        builder.ToTable("Photos");
+
+        builder.Property(photo => photo.Title)
+            .IsRequired(true)
+            .HasMaxLength(255);
+
+        builder.Ignore(p => p.ImageUrl);
+
+        builder.HasOne(p => p.PhotoImage)
+            .WithOne()
+            .HasForeignKey<PhotoImage>(p => p.Id);
+    }
+    private void ConfigurePhotoImage(EntityTypeBuilder<PhotoImage> builder) {
+        builder.ToTable("Photos");
+    }
+    public DbSet<Photo> Photos { get; set; }
+    public DbSet<PhotoImage> PhotoImages { get; set; }
 }
 ```
 
 ## The Interfaces
 
-- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared.Core` project, open the `IPhotosService` interface, then add
+- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared` project, open the `IPhotosService` interface, then add
     - ```Task<Photo> FindWithImageAsync(int id);```
     - ```Task<PhotoImage> GetImageAsync(int id);```
 
 The code should look like this:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Interfaces {
-    public interface IPhotosService {
-        Task<Photo> UploadAsync(Photo photo);
-        Task<Photo> UpdateAsync(Photo photo);
-        Task<Photo> FindAsync(int id);
-        Task<Photo> FindWithImageAsync(int id);
-        Task<PhotoImage> GetImageAsync(int id);
-        Task<List<Photo>> GetPhotosAsync(int amount = 10);
-        Task<Photo> RemoveAsync(int id);
-    }
+namespace PhotoSharingApplication.Shared.Interfaces;
+
+public interface IPhotosService {
+    Task<Photo?> UploadAsync(Photo photo);
+    Task<Photo?> UpdateAsync(Photo photo);
+    Task<Photo?> FindAsync(int id);
+    Task<Photo?> FindWithImageAsync(int id);
+    Task<PhotoImage?> GetImageAsync(int id);
+    Task<List<Photo>> GetPhotosAsync(int amount = 10);
+    Task<Photo?> RemoveAsync(int id);
 }
 ```
 
-- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared.Core` project, open the `IPhotosRepository` interface, then add
+- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared` project, open the `IPhotosRepository` interface, then add
     - ```Task<Photo> FindWithImageAsync(int id);```
     - ```Task<PhotoImage> GetImageAsync(int id);```
 
 The code should look like this:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Interfaces {
-    public interface IPhotosRepository {
-        Task<List<Photo>> GetPhotosAsync(int amount = 10);
-        Task<Photo> FindAsync(int id);
-        Task<Photo> FindWithImageAsync(int id);
-        Task<PhotoImage> GetImageAsync(int id);
-        Task<Photo> CreateAsync(Photo photo);
-        Task<Photo> UpdateAsync(Photo photo);
-        Task<Photo> RemoveAsync(int id);
-    }
+namespace PhotoSharingApplication.Shared.Interfaces;
+
+public interface IPhotosRepository {
+    Task<Photo?> UpdateAsync(Photo photo);
+    Task<Photo?> FindAsync(int id);
+    Task<Photo?> CreateAsync(Photo photo);
+    Task<List<Photo>> GetPhotosAsync(int amount = 10);
+    Task<Photo?> RemoveAsync(int id);
+    Task<Photo?> FindWithImageAsync(int id);
+    Task<PhotoImage?> GetImageAsync(int id);
 }
 ```
 
@@ -189,145 +163,145 @@ namespace PhotoSharingApplication.Shared.Core.Interfaces {
 
 ### The Service
 
-- In the `Solution Explorer`, under the `Services` folder of the `PhotoSharingApplication.Backend.Core` project, open the `PhotosService` class, then add
-    - ```public async Task<Photo> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);```
-    - ```public async Task<PhotoImage> GetImageAsync(int id) => await repository.GetImageAsync(id);```
+- In the `Solution Explorer`, under the `Core/Services` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project, open the `PhotosService` class, then add
+    - ```public async Task<Photo?> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);```
+    - ```public async Task<PhotoImage?> GetImageAsync(int id) => await repository.GetImageAsync(id);```
 
 The code should look like this:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Backend.Core.Services {
-    public class PhotosService : IPhotosService {
-        private readonly IPhotosRepository repository;
-        private readonly IAuthorizationService<Photo> photosAuthorizationService;
-        private readonly IUserService userService;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Core.Services;
 
-        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) =>
-            (this.repository, this.photosAuthorizationService, this.userService) = (repository, photosAuthorizationService, userService);
+public class PhotosService : IPhotosService {
+    private readonly IPhotosRepository repository;
+    private readonly IAuthorizationService<Photo> photosAuthorizationService;
+    private readonly IUserService userService;
 
-        public async Task<Photo> FindAsync(int id) => await repository.FindAsync(id);
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
-        public async Task<Photo> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);
-        public async Task<PhotoImage> GetImageAsync(int id) => await repository.GetImageAsync(id);
-        public async Task<Photo> RemoveAsync(int id) {
-            Photo photo = await FindAsync(id);
+    public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) =>
+        (this.repository, this.photosAuthorizationService, this.userService) = (repository, photosAuthorizationService, userService);
+    public async Task<Photo?> FindAsync(int id) => await repository.FindAsync(id);
+
+    public async Task<Photo?> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);
+
+    public async Task<PhotoImage?> GetImageAsync(int id) => await repository.GetImageAsync(id);
+
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
+
+    public async Task<Photo?> RemoveAsync(int id) {
+        Photo? photo = await FindAsync(id);
+        if (photo is not null) {
             var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
-                return await repository.RemoveAsync(id);
-            else throw new UnauthorizedDeleteAttemptException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
+            if (!await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
+                throw new DeleteUnauthorizedException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
+            photo = await repository.RemoveAsync(id);
         }
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo))
-                return await repository.UpdateAsync(photo);
-            else throw new UnauthorizedEditAttemptException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
-        }
-        public async Task<Photo> UploadAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
-                photo.CreatedDate = DateTime.Now;
-                photo.UserName = user.Identity.Name;
-                return await repository.CreateAsync(photo);
-            } else throw new UnauthorizedCreateAttemptException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
-        }
+        return photo;
+    }
+
+    public async Task<Photo?> UpdateAsync(Photo photo) {
+        var user = await userService.GetUserAsync();
+        if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo))
+            return await repository.UpdateAsync(photo);
+        else throw new EditUnauthorizedException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
+    }
+
+    public async Task<Photo?> UploadAsync(Photo photo) {
+        var user = await userService.GetUserAsync();
+        if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
+            photo.CreatedDate = DateTime.Now;
+            photo.UserName = user?.Identity?.Name;
+            return await repository.CreateAsync(photo);
+        } else throw new CreateUnauthorizedException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
     }
 }
 ```
 
 ### The Repository
 
-- In the `Solution Explorer`, under the `EntityFramework` folder of the `Repositories` folder of the  `PhotoSharingApplication.Backend.Infrastructure` project, open the `PhotosService` class, then add
-    - ```public async Task<Photo> FindWithImageAsync(int id) => await context.Photos.Include(nameof(PhotoImage)).AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);```
-    - ```public async Task<PhotoImage> GetImageAsync(int id) => await context.PhotoImages.AsNoTracking().SingleOrDefaultAsync(prop => prop.Id == id);```
+- In the `Solution Explorer`, under the `Infrastructure/Repositories/EntityFramework` folder of the  `PhotoSharingApplication.WebServices.Rest.Photos` project, open the `PhotosService` class, then add
+    - ```public async Task<Photo?> FindWithImageAsync(int id) => await context.Photos.Include(nameof(PhotoImage)).AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);```
+    - ```public async Task<PhotoImage?> GetImageAsync(int id) => await context.PhotoImages.AsNoTracking().SingleOrDefaultAsync(prop => prop.Id == id);```
 - Change the `RemoveAsync` to *include* the `PhotoImage` entity
 
 The code should look like this:
 
 ```cs
 using Microsoft.EntityFrameworkCore;
-using PhotoSharingApplication.Backend.Infrastructure.Data;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
 
-namespace PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework {
-    public class PhotosRepository : IPhotosRepository {
-        private readonly PhotoSharingApplicationContext context;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Repositories.EntityFramework;
 
-        public PhotosRepository(PhotoSharingApplicationContext context) {
-            this.context = context;
-        }
-        public async Task<Photo> CreateAsync(Photo photo) {
-            context.Add(photo);
-            await context.SaveChangesAsync();
-            return photo;
-        }
+public class PhotosRepository : IPhotosRepository {
+    private readonly PhotosDbContext context;
 
-        public async Task<Photo> FindAsync(int id) => await context.Photos.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
-        public async Task<Photo> FindWithImageAsync(int id) => await context.Photos.Include(nameof(PhotoImage)).AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
-        public async Task<PhotoImage> GetImageAsync(int id) => await context.PhotoImages.AsNoTracking().SingleOrDefaultAsync(prop => prop.Id == id);
+    public PhotosRepository(PhotosDbContext context) => this.context = context;
+    public async Task<Photo?> CreateAsync(Photo photo) {
+        context.Add(photo);
+        await context.SaveChangesAsync();
+        return photo;
+    }
 
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) =>
-            await (from p in context.Photos
-                   orderby p.CreatedDate descending
-                   select p).Take(amount).ToListAsync();
+    public async Task<Photo?> FindAsync(int id) => await context.Photos.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
 
-        public async Task<Photo> RemoveAsync(int id) {
-            var photo = await context.Photos.SingleOrDefaultAsync(m => m.Id == id);
+    public async Task<Photo?> FindWithImageAsync(int id) => await context.Photos.Include(nameof(PhotoImage)).AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
+
+    public async Task<PhotoImage?> GetImageAsync(int id)=> await context.PhotoImages.AsNoTracking().SingleOrDefaultAsync(prop => prop.Id == id);
+
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => 
+        await(from p in context.Photos
+          orderby p.CreatedDate descending
+          select p).Take(amount).ToListAsync();
+
+    public async Task<Photo?> RemoveAsync(int id) {
+        var photo = await context.Photos.SingleOrDefaultAsync(m => m.Id == id);
+        if (photo is not null) {
             context.Photos.Remove(photo);
             await context.SaveChangesAsync();
-            return photo;
         }
+        return photo;
+    }
 
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            context.Update(photo);
-            await context.SaveChangesAsync();
-            return photo;
-        }
+    public async Task<Photo?> UpdateAsync(Photo photo) {
+        context.Update(photo);
+        await context.SaveChangesAsync();
+        return photo;
     }
 }
 ```
 
 ### The REST Controller
 
-- In the `Solution Explorer`, under the `Controllers` folder of the  `PhotoSharingApplication.WebServices.REST.Photos` project, open the `PhotosControllers` class, then add
-    -  The `FindWithImage` method
-
+- In the `Solution Explorer`, under the `Controllers` folder of the  `PhotoSharingApplication.WebServices.Rest.Photos` project, open the `PhotosControllers` class, then add
+    
 ```cs
 [HttpGet("withimage/{id:int}", Name = "FindWithImage")]
 public async Task<ActionResult<Photo>> FindWithImage(int id) {
-    Photo ph = await service.FindWithImageAsync(id);
-    if (ph == null) return NotFound();
+    Photo? ph = await service.FindWithImageAsync(id);
+    if (ph is null) return NotFound();
     return ph;
 }
-```
-    - The `GetImage` method
 
-```cs
 [HttpGet("image/{id:int}", Name = "GetImage")]
 public async Task<IActionResult> GetImage(int id) {
-    PhotoImage ph = await service.GetImageAsync(id);
-    if (ph == null) return NotFound();
+    PhotoImage? ph = await service.GetImageAsync(id);
+    if (ph is null || ph.PhotoFile is null || ph.ImageMimeType is null) return NotFound();
     return File(ph.PhotoFile, ph.ImageMimeType);
 }
 ```
 
-    - Change the `FindImage` to include the `ImageUrl` address, as explained in the [article](https://odetocode.com/blogs/scott/archive/2013/03/27/webapi-tip-5-generating-links.aspx) of the late Scott Allen:
+- Change the `FindImage` to include the `ImageUrl` address, as explained in the [article](https://odetocode.com/blogs/scott/archive/2013/03/27/webapi-tip-5-generating-links.aspx) of the late Scott Allen:
 
 ```cs
 [HttpGet("{id:int}", Name = "Find")]
 public async Task<ActionResult<Photo>> Find(int id) {
-    Photo ph = await service.FindAsync(id);
-    if (ph == null) return NotFound();
+    Photo? ph = await service.FindAsync(id);
+    if (ph is null) return NotFound();
     ph.ImageUrl = Url.Link(nameof(GetImage), new { id = ph.Id });
     return ph;
 }
@@ -337,11 +311,7 @@ public async Task<ActionResult<Photo>> Find(int id) {
 
 ```cs
 [HttpGet]
-public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() {
-    List<Photo> photos = (await service.GetPhotosAsync()).ToList();
-    photos.ForEach(p => p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id }));
-    return photos;
-}
+    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => (await service.GetPhotosAsync()).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id })}).ToList();
 ```
 
 The final code should look like this:
@@ -349,210 +319,176 @@ The final code should look like this:
 ```cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers {
-    [Route("[controller]")]
-    [ApiController]
-    public class PhotosController : ControllerBase {
-        private readonly IPhotosService service;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Controllers;
 
-        public PhotosController(IPhotosService service) {
-            this.service = service;
+[Route("[controller]")]
+[ApiController]
+public class PhotosController : ControllerBase {
+    private readonly IPhotosService service;
+
+    public PhotosController(IPhotosService service) => this.service = service;
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => (await service.GetPhotosAsync()).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id })}).ToList();
+
+    [HttpGet("{id:int}", Name = "Find")]
+    public async Task<ActionResult<Photo>> Find(int id) {
+        Photo? ph = await service.FindAsync(id);
+        if (ph is null) return NotFound();
+        ph.ImageUrl = Url.Link(nameof(GetImage), new { id = ph.Id });
+        return ph;
+    }
+
+    [HttpGet("withimage/{id:int}", Name = "FindWithImage")]
+    public async Task<ActionResult<Photo>> FindWithImage(int id) {
+        Photo? ph = await service.FindWithImageAsync(id);
+        if (ph is null) return NotFound();
+        return ph;
+    }
+
+    [HttpGet("image/{id:int}", Name = "GetImage")]
+    public async Task<IActionResult> GetImage(int id) {
+        PhotoImage? ph = await service.GetImageAsync(id);
+        if (ph is null || ph.PhotoFile is null || ph.ImageMimeType is null) return NotFound();
+        return File(ph.PhotoFile, ph.ImageMimeType);
+    }
+
+    [Authorize]
+    [HttpPost]
+    public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
+        try {
+            photo.UserName = User?.Identity?.Name;
+            Photo? p = await service.UploadAsync(photo);
+            return CreatedAtRoute("Find", new { id = photo.Id }, p);
+        } catch (CreateUnauthorizedException<Photo>) {
+            return Forbid();
         }
+    }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() {
-            List<Photo> photos = await service.GetPhotosAsync();
-            photos.ForEach(p => p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id }));
-            return photos;
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Photo>> Update(int id, Photo photo) {
+        if (id != photo.Id)
+            return BadRequest();
+        try {
+            Photo? p = await service.UpdateAsync(photo);
+            if (p is null) return NotFound();
+            return p;
+        } catch (EditUnauthorizedException<Photo>) {
+            return Forbid();
         }
+    }
 
-        [HttpGet("{id:int}", Name = "Find")]
-        public async Task<ActionResult<Photo>> Find(int id) {
-            Photo ph = await service.FindAsync(id);
-            if (ph == null) return NotFound();
-            ph.ImageUrl = Url.Link(nameof(GetImage), new { id = ph.Id });
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<Photo>> Remove(int id) {
+        try {
+            Photo? ph = await service.RemoveAsync(id);
+            if (ph is null) return NotFound();
             return ph;
-        }
-
-        [HttpGet("withimage/{id:int}", Name = "FindWithImage")]
-        public async Task<ActionResult<Photo>> FindWithImage(int id) {
-            Photo ph = await service.FindWithImageAsync(id);
-            if (ph == null) return NotFound();
-            return ph;
-        }
-
-        [HttpGet("image/{id:int}", Name = "GetImage")]
-        public async Task<IActionResult> GetImage(int id) {
-            PhotoImage ph = await service.GetImageAsync(id);
-            if (ph == null) return NotFound();
-            return File(ph.PhotoFile, ph.ImageMimeType);
-        }
-
-        [Authorize]
-        [HttpPost]
-        public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
-            try {
-                photo.UserName = User.Identity.Name;
-                Photo p = await service.UploadAsync(photo);
-                return CreatedAtRoute(nameof(Find), p, new { id = p.Id });
-            } catch (UnauthorizedCreateAttemptException<Photo>) {
-                return Forbid();
-            }
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Photo>> Update(int id, Photo photo) {
-            if (id != photo.Id)
-                return BadRequest();
-            Photo ph = await service.FindAsync(id);
-            if (ph == null) return NotFound();
-
-            try {
-                return await service.UpdateAsync(photo);
-            } catch (UnauthorizedEditAttemptException<Photo>) {
-                return Forbid();
-            }
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Photo>> Remove(int id) {
-            Photo ph = await service.FindAsync(id);
-            if (ph == null) return NotFound();
-            try {
-                return await service.RemoveAsync(id);
-            } catch (UnauthorizedDeleteAttemptException<Photo>) {
-                return Forbid();
-            }
+        } catch (DeleteUnauthorizedException<Photo>) {
+            return Forbid();
         }
     }
 }
 ```
 
-## The Frontend
+## The Frontend Client
 
 ### The Service
 
-- In the `Solution Explorer`, under the `Services` folder of the `PhotoSharingApplication.Frontend.Core` project, open the `PhotosService` class, then add
-    - ```public async Task<Photo> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);```
-    - ```public async Task<PhotoImage> GetImageAsync(int id) => await repository.GetImageAsync(id);```
+- In the `Solution Explorer`, under the `Core/Services` folder of the `PhotoSharingApplication.Frontend.Client` project, open the `PhotosService` class, then add
+
+```cs
+public async Task<Photo?> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);
+public async Task<PhotoImage?> GetImageAsync(int id) => await repository.GetImageAsync(id);
+```
 
 The code should look like this:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Core.Services {
-    public class PhotosService : IPhotosService {
-        private readonly IPhotosRepository repository;
-        private readonly IAuthorizationService<Photo> photosAuthorizationService;
-        private readonly IUserService userService;
+namespace PhotoSharingApplication.Frontend.Client.Core.Services;
 
-        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) {
-            this.repository = repository;
-            this.photosAuthorizationService = photosAuthorizationService;
-            this.userService = userService;
-        }
-        public async Task<Photo> FindAsync(int id) => await repository.FindAsync(id);
-        public async Task<Photo> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);
-        public async Task<PhotoImage> GetImageAsync(int id) => await repository.GetImageAsync(id);
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
-        public async Task<Photo> RemoveAsync(int id) {
-            Photo photo = await FindAsync(id);
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
-                return await repository.RemoveAsync(id);
-            else throw new UnauthorizedDeleteAttemptException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
-             
-        }
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user,photo))
-                return await repository.UpdateAsync(photo);
-            else throw new UnauthorizedEditAttemptException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
-        }
-        public async Task<Photo> UploadAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeCreatedAsync(user,photo)) {
-                photo.CreatedDate = DateTime.Now;
-                photo.UserName = user.Identity.Name;
-                return await repository.CreateAsync(photo);
-            }else throw new UnauthorizedCreateAttemptException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
-        }
+public class PhotosService : IPhotosService {
+    private readonly IPhotosRepository repository;
+    public PhotosService(IPhotosRepository repository) => this.repository = repository;
+    public async Task<Photo?> FindAsync(int id) => await repository.FindAsync(id);
+    public async Task<Photo?> FindWithImageAsync(int id) => await repository.FindWithImageAsync(id);
+    public async Task<PhotoImage?> GetImageAsync(int id) => await repository.GetImageAsync(id);
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
+    public async Task<Photo?> RemoveAsync(int id) => await repository.RemoveAsync(id);
+    public async Task<Photo?> UpdateAsync(Photo photo) => await repository.UpdateAsync(photo);
+    public async Task<Photo?> UploadAsync(Photo photo) {
+        photo.CreatedDate = DateTime.Now;
+        return await repository.CreateAsync(photo);
     }
 }
 ```
 
 ### The Repository
 
-- In the `Solution Explorer`, under the `Rest` folder of the `Repositories` folder of the  `PhotoSharingApplication.Frontend.Infrastructure` project, open the `PhotosService` class, then add
-    - ```public async Task<Photo> FindWithImageAsync(int id) => await publicPhotosClient.FindWithImageAsync(id);```
-    - ```public async Task<PhotoImage> GetImageAsync(int id) => await publicPhotosClient.GetImageAsync(id);```
+- In the `Solution Explorer`, under the `Rest` folder of the `Infrastructure/Repositories/Rest` folder of the  `PhotoSharingApplication.Frontend.Client` project, open the `PhotosService` class, then add
+
+```cs
+public async Task<PhotoImage?> GetImageAsync(int id) => await http.GetFromJsonAsync<PhotoImage>($"/photos/image/{id}");
+public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
+```
+
 
 The code should look like this:
 
 ```cs
-using PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Rest {
-    public class PhotosRepository : IPhotosRepository {
-        private readonly PublicPhotosClient publicPhotosClient;
-        private readonly ProtectedPhotosClient protectedPhotosClient;
-
-        public PhotosRepository(PublicPhotosClient publicPhotosClient, ProtectedPhotosClient protectedPhotosClient) {
-            this.publicPhotosClient = publicPhotosClient;
-            this.protectedPhotosClient = protectedPhotosClient;
-        }
-        public async Task<Photo> CreateAsync(Photo photo) => await protectedPhotosClient.CreateAsync(photo);
-
-        public async Task<Photo> FindAsync(int id) => await publicPhotosClient.FindAsync(id);
-
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await publicPhotosClient.GetPhotosAsync(amount);
-        public async Task<Photo> FindWithImageAsync(int id) => await publicPhotosClient.FindWithImageAsync(id);
-        public async Task<PhotoImage> GetImageAsync(int id) => await publicPhotosClient.GetImageAsync(id);
-        public async Task<Photo> RemoveAsync(int id) => await protectedPhotosClient.RemoveAsync(id);
-        public async Task<Photo> UpdateAsync(Photo photo) => await protectedPhotosClient.UpdateAsync(photo);
-    }
-}
-```
-### PublicPhotosClient
-
-- In the `PublicPhotosClient` file located under the `TypedHttpClients` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project, add
-    - ```public async Task<Photo> FindWithImageAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/withimage/{id}");```
-    - ```public async Task<PhotoImage> GetImageAsync(int id) => await http.GetFromJsonAsync<PhotoImage>($"/photos/image/{id}");```
-
-The code should look like this
-
-```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using System.Collections.Generic;
-using System.Net.Http;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+using System.Net;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients {
-    public class PublicPhotosClient {
-        private readonly HttpClient http;
-        public PublicPhotosClient(HttpClient http) => this.http = http;
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest;
 
-        public async Task<Photo> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
-        public async Task<Photo> FindWithImageAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/withimage/{id}");
-        public async Task<PhotoImage> GetImageAsync(int id) => await http.GetFromJsonAsync<PhotoImage>($"/photos/image/{id}");
+public class PhotosRepository : IPhotosRepository {
+    private readonly HttpClient http;
+
+    public PhotosRepository(HttpClient http) => this.http = http;
+    public async Task<Photo?> CreateAsync(Photo photo) {
+        HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) {
+            throw new CreateUnauthorizedException<Photo>();
+        }
+        return await response.Content.ReadFromJsonAsync<Photo>();
+    }
+
+    public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+
+    public async Task<Photo?> FindWithImageAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/withimage/{id}");
+
+    public async Task<PhotoImage?> GetImageAsync(int id) => await http.GetFromJsonAsync<PhotoImage>($"/photos/image/{id}");
+
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
+
+    public async Task<Photo?> RemoveAsync(int id) {
+        HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
+        return response.StatusCode switch {
+            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+            HttpStatusCode.NotFound => null,
+            HttpStatusCode.Forbidden => throw new DeleteUnauthorizedException<Photo>(),
+            _ => throw new Exception(response.ReasonPhrase)
+        };
+    }
+
+    public async Task<Photo?> UpdateAsync(Photo photo) {
+        HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
+        return response.StatusCode switch {
+            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+            HttpStatusCode.NotFound => null,
+            HttpStatusCode.Forbidden => throw new EditUnauthorizedException<Photo>(),
+            _ => throw new Exception(response.ReasonPhrase)
+        };
     }
 }
 ```
@@ -564,60 +500,60 @@ namespace PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients {
  The code should look like this:
 
  ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Infrastructure.Repositories.Memory {
-    public class PhotosRepository : IPhotosRepository {
-        private List<Photo> photos;
-        private List<PhotoImage> photoImages;
-        public PhotosRepository() {
-            photos = new List<Photo> {
-                new Photo {Id=1, Title = "One photo", Description = "Lorem ipsum dolor sit amen", CreatedDate = DateTime.Now.AddDays(-2) },
-                new Photo {Id=2, Title = "Another photo", Description = "Some description" ,CreatedDate= DateTime.Now.AddDays(-1)},
-                new Photo {Id=3, Title = "Yet another photo", Description = "More description here", CreatedDate= DateTime.Now }
-            };
-            photoImages = new List<PhotoImage> {
-                new PhotoImage {Id=1, ImageMimeType="jpg"},
-                new PhotoImage {Id=2, ImageMimeType = "gif"},
-                new PhotoImage {Id=3, ImageMimeType = "png"}
-            };
-        }
-        public Task<Photo> CreateAsync(Photo photo) {
-            photo.Id = photos.Max(p => p.Id) + 1;
-            photos.Add(photo);
-            return Task.FromResult(photo);
-        }
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory;
 
-        public Task<Photo> FindAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
-        public Task<List<Photo>> GetPhotosAsync(int amount = 10) => Task.FromResult(photos.OrderByDescending(p => p.CreatedDate).ThenBy(p => p.Title).Take(amount).ToList());
-        public Task<Photo> FindWithImageAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
-        public Task<PhotoImage> GetImageAsync(int id) => Task.FromResult(photoImages.FirstOrDefault(p => p.Id == id));
+public class PhotosRepository : IPhotosRepository {
+    private List<Photo> photos;
+    private List<PhotoImage> photoImages;
+    public PhotosRepository() {
+        photos = new List<Photo> {
+            new Photo {Id=1, Title = "One photo", Description = "Lorem ipsum dolor sit amen", CreatedDate = DateTime.Now.AddDays(-2) },
+            new Photo {Id=2, Title = "Another photo", Description = "Some description" ,CreatedDate= DateTime.Now.AddDays(-1)},
+            new Photo {Id=3, Title = "Yet another photo", Description = "More description here", CreatedDate= DateTime.Now }
+        };
+        photoImages = new List<PhotoImage> {
+            new PhotoImage {Id=1, ImageMimeType="jpg"},
+            new PhotoImage {Id=2, ImageMimeType = "gif"},
+            new PhotoImage {Id=3, ImageMimeType = "png"}
+        };
+    }
 
-        public Task<Photo> RemoveAsync(int id) {
-            Photo photo = photos.FirstOrDefault(p => p.Id == id);
-            if (photo != null) photos.Remove(photo);
-            return Task.FromResult(photo);
-        }
+    public Task<Photo?> CreateAsync(Photo photo) {
+        photo.Id = photos.Max(p => p.Id) + 1;
+        photos.Add(photo);
+        return Task.FromResult(photo)!;
+    }
 
-        public Task<Photo> UpdateAsync(Photo photo) {
-            Photo oldPhoto = photos.FirstOrDefault(p => p.Id == photo.Id);
-            if (oldPhoto != null) {
-                oldPhoto.Title = photo.Title;
-                oldPhoto.Description = photo.Description;
-                oldPhoto.CreatedDate = photo.CreatedDate;
-                oldPhoto.UserName = photo.UserName;
-                if (oldPhoto.PhotoImage == null)
-                    oldPhoto.PhotoImage = new PhotoImage();
-                oldPhoto.PhotoImage.PhotoFile = photo.PhotoImage?.PhotoFile;
-                oldPhoto.PhotoImage.ImageMimeType = photo.PhotoImage?.ImageMimeType;
-            }
-            return Task.FromResult(oldPhoto);
+    public Task<Photo?> FindAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
+
+    public Task<Photo?> FindWithImageAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
+
+    public Task<PhotoImage?> GetImageAsync(int id) => Task.FromResult(photoImages.FirstOrDefault(p => p.Id == id));
+
+    public Task<List<Photo>> GetPhotosAsync(int amount = 10) => Task.FromResult(photos.OrderByDescending(p => p.CreatedDate).ThenBy(p => p.Title).Take(amount).ToList());
+
+    public Task<Photo?> RemoveAsync(int id) {
+        Photo? photo = photos.FirstOrDefault(p => p.Id == id);
+        if (photo is not null) photos.Remove(photo);
+        return Task.FromResult(photo);
+    }
+
+    public Task<Photo?> UpdateAsync(Photo photo) {
+        Photo? oldPhoto = photos.FirstOrDefault(p => p.Id == photo.Id);
+        if (oldPhoto is not null) {
+            oldPhoto.Title = photo.Title;
+            oldPhoto.Description = photo.Description;
+            oldPhoto.CreatedDate = photo.CreatedDate;
+            oldPhoto.UserName = photo.UserName;
+            if (oldPhoto.PhotoImage is null)
+                oldPhoto.PhotoImage = new PhotoImage();
+            oldPhoto.PhotoImage.PhotoFile = photo.PhotoImage?.PhotoFile;
+            oldPhoto.PhotoImage.ImageMimeType = photo.PhotoImage?.ImageMimeType;
         }
+        return Task.FromResult(oldPhoto);
     }
 }
 ```
@@ -663,19 +599,19 @@ The code should look like this:
     <MatCardContent>
         <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
             <p>
-                <MatTextField @bind-Value="@Photo.Title" Label="Title" FullWidth></MatTextField>
+                <MatTextField @bind-Value="Photo.Title" Label="Title" FullWidth ></MatTextField> 
             </p>
             <p>
-                <MatTextField @bind-Value="@Photo.Description" Label="Description" TextArea FullWidth></MatTextField>
+                <MatTextField @bind-Value="Photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
             </p>
             <p>
-                <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
+                <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
             </p>
             <p>
-                <MatButton Type="submit">Upload</MatButton>
+                <MatButton Type="Submit">Upload</MatButton>
             </p>
         </EditForm>
-        <PhotoPictureComponent Photo="Photo" IsLocal="true"></PhotoPictureComponent>
+        <PhotoPictureComponent Photo="Photo" IsLocal></PhotoPictureComponent>
     </MatCardContent>
 </MatCard>
 
@@ -686,13 +622,14 @@ The code should look like this:
     [Parameter]
     public EventCallback<Photo> OnSave { get; set; }
 
-    async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-        IMatFileUploadEntry file = files.FirstOrDefault();
-        if (file == null) {
+    private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+        IMatFileUploadEntry? file = files.FirstOrDefault();
+        if(file is null){
             return;
         }
         if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
         Photo.PhotoImage.ImageMimeType = file.Type;
+
         using (var stream = new System.IO.MemoryStream()) {
             await file.WriteToStreamAsync(stream);
             Photo.PhotoImage.PhotoFile = stream.ToArray();
@@ -701,28 +638,36 @@ The code should look like this:
 }
 ```
 
-### Blazor Web Assembly
+### UploadPhoto
 
- - In the `Solution Explorer`, under the  `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, open the `UploadPhoto` razor component
+ - In the `Solution Explorer`, under the `Pages` folder of the  `PhotoSharingApplication.Frontend.BlazorComponents` project, open the `UploadPhoto.razor` file
  - Locate the `OnInitialized` method and change its content to instantiate both the `Photo` and the `PhotoImage` objects
 
 The code should look like this:
 
 ```html
-@page "/photos/upload"
-@using PhotoSharingApplication.Shared.Core.Exceptions
- 
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
+@page "/photos/upload"
+@using PhotoSharingApplication.Shared.Exceptions
 @attribute [Authorize]
 
-<div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-            <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+<PageTitle>Upload Photo</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="mat-layout-grid">
+            <div class="mat-layout-grid-inner">
+                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+                    <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+    </Authorized>
+    <NotAuthorized>
+        <MatButtonLink Href="bff/login">You are not authorized. Log in to upload a picture<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink>
+    </NotAuthorized>
+</AuthorizeView>
 @code {
     Photo photo;
 
@@ -730,19 +675,20 @@ The code should look like this:
         photo = new Photo();
         photo.PhotoImage = new PhotoImage();
     }
-
     private async Task Upload() {
         try {
             await photosService.UploadAsync(photo);
             navigationManager.NavigateTo("/photos/all");
-        } catch (UnauthorizedCreateAttemptException<Photo>) {
+        } catch (CreateUnauthorizedException<Photo>) {
             navigationManager.NavigateTo("/forbidden");
         }
     }
 }
 ```
 
-- In the `Solution Explorer`, under the  `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, open the `UpdatePhoto` razor component
+### UpdatePhoto
+
+- In the `Solution Explorer`, under the `Pages` folder `PhotoSharingApplication.Frontend.BlazorComponents` project, open the `UpdatePhoto.razor` file
 - Locate the `OnInitialized` method and change its content to invoke the `FindWithImageAsync` method
 
 The code should look like this:
@@ -811,38 +757,33 @@ The `Virtualize` component will take care of knowing the value to send as a star
 In order to know how many items to ask for, we will also need to know how many items are there in total, which means that we will need to add a new method to return the photos count.  
 
 We need to change:
-- Two interfaces in the `PhotoSharingApplication.Shared.Core.Interfaces`
+- Two interfaces in the `PhotoSharingApplication.Shared.Interfaces`
     - `IPhotosService.GetPhotosAsync` so that it accepts more parameters
     - `IPhotosService.GetPhotosCountAsync` to return an int
     - `IPhotosRepository.GetPhotosAsync` so that it accepts more parameters
     - `IPhotosRepository.GetPhotosCountAsync` to return an int
-- One class in the `PhotoSharingApplication.Frontend.Core.Services`
+- Three classes in the `PhotoSharingApplication.Frontend.Client`
     - Modify `PhotosService.GetPhotosAsync`
     - Add `PhotosService.GetPhotosCountAsync`
-- Two classes in the `PhotoSharingApplication.Frontend.Infrastructure.Repositories`
     - Modify `Rest.PhotosRepository.GetPhotosAsync`
     - Add `Rest.PhotosRepository.GetPhotosCountAsync`
     - Modify `Memory.PhotosRepository.GetPhotosAsync`
     - Add `Memory.PhotosRepository.GetPhotosCountAsync`
-- One class in the `PhotoSharingApplication.Frontend.Infrastructure.TypedHttpClients`
-    - Modify `PublicPhotosClient.GetPhotosAsync`
-    - Add `PublicPhotosClient.GetPhotosCountAsync`
-- One class in the `PhotoSharingApplication.Backend.Core.Services`
+- Two classes in the `PhotoSharingApplication.WebServices.REST.Photos`
     - Modify `PhotosService.GetPhotosAsync`
     - Add `PhotosService.GetPhotosCountAsync`
-- One class in the `PhotoSharingApplication.Backend.Infrastructure.Repositories.EntityFramework`
     - Modify `PhotosRepository.GetPhotosAsync`
     - Add `PhotosRepository.GetPhotosCountAsync`
 - One class in the `PhotoSharingApplication.WebServices.REST.Photos.Controllers`
-    - Modify `GetPhotos`
-    - Add `GetPhotosCount`
-- One razor component in the `PhotoSharingApplication.Frontend.BlazorWebAssembly.Pages`
+    - Modify `PhotosController.GetPhotos`
+    - Add `PhotosController.GetPhotosCount`
+- One razor component in the `PhotoSharingApplication.Frontend.BlazorComponents.Pages`
     - `AllPhotos.razor`
 
 Let's get to it.
 
 ## Interfaces
-- Open the `IPhotosService` interface located under the `Interfaces` folder of the `PhotoSharingApplication.Shared.Core` project
+- Open the `IPhotosService` interface located under the `Interfaces` folder of the `PhotoSharingApplication.Shared` project
 - Replace this code
 
 ```cs
@@ -856,7 +797,7 @@ Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, CancellationToken c
 Task<int> GetPhotosCountAsync();
 ```
 
-- Open the `IPhotosRepository` interface located under the `Interfaces` folder of the `PhotoSharingApplication.Shared.Core` project.
+- Open the `IPhotosRepository` interface located under the `Interfaces` folder of the `PhotoSharingApplication.Core` project.
 - Replace this code
 
 ```cs
@@ -870,9 +811,9 @@ Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, CancellationToken c
 Task<int> GetPhotosCountAsync();
 ```
 
-## FrontEnd
+## FrontEnd.Client
 
-- Open the `PhotosService` class located under the `Services` folder of the `PhotoSharingApplication.Frontend.Core` project 
+- Open the `PhotosService` class located under the `Core/Services` folder of the `PhotoSharingApplication.Frontend.Client` project 
 - Replace this code 
 
 ```cs
@@ -885,16 +826,15 @@ public async Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, Cancel
 
 public async Task<int> GetPhotosCountAsync() => await repository.GetPhotosCountAsync();
 ```
-- Open the `PhotosRepository` class located under the `Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
+- Open the `PhotosRepository` class located under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Client` project
 - Replace this code
 ```cs
 public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await publicPhotosClient.GetPhotosAsync(amount);
 ```
 with this
 ```cs
-public async Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, CancellationToken cancellationToken) => await publicPhotosClient.GetPhotosAsync(amount);
-
-public async Task<int> GetPhotosCountAsync()=> await publicPhotosClient.GetPhotosCountAsync();
+public async Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, CancellationToken cancellationToken) => await http.GetFromJsonAsync<List<Photo>>($"/photos/{startIndex}/{amount}", cancellationToken);
+public async Task<int> GetPhotosCountAsync() => int.Parse(await http.GetStringAsync($"/photos/count"));
 ``` 
 - Open the `PhotosRepository` class located under the `Repositories/Memory` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project
 - Replace this code
@@ -908,20 +848,8 @@ public Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, Cancellation
 public Task<int> GetPhotosCountAsync() => Task.FromResult(photos.Count);
 ``` 
 
-- Open the `PublicPhotosClient` located under the `TypedHttpClients` folder of the `PhotoSharingApplication.Frontend.Infrastructure` project.
-- Replace this code
-```cs
-public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
-```
-with this
-```cs
-public async Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, CancellationToken cancellationToken) => await http.GetFromJsonAsync<List<Photo>>($"/photos/{startIndex}/{amount}", cancellationToken);
-
-public async Task<int> GetPhotosCountAsync() => int.Parse(await http.GetStringAsync($"/photos/count"));
-```
-
 ## BackEnd
-- Open the `PhotosService` class located under the `Services` folder of the `PhotoSharingApplication.Backend.Core` project
+- Open the `PhotosService` class located under the `Core/Services` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project
 - Replace this code
 ```cs
 public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
@@ -932,7 +860,7 @@ public async Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, Cancel
         
 public async Task<int> GetPhotosCountAsync() => await repository.GetPhotosCountAsync();
 ```
-- Open the `PhotosRepository` class located under the `Repositories/EntityFramework` folder of the `PhotoSharingApplication.Backend.Infrastructure` project
+- Open the `PhotosRepository` class located under the `Infrastructure/Repositories/EntityFramework` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project
 - Replace this code
 ```cs
 public async Task<List<Photo>> GetPhotosAsync(int amount = 10) =>
@@ -949,31 +877,23 @@ public async Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, Cancel
 
 public async Task<int> GetPhotosCountAsync() => await context.Photos.CountAsync();
 ```
-- Open the `PhotosController` class located under the `Controllers` folder of the `PhotoSharingApplication.WebServices.REST.Photos` project
+- Open the `PhotosController` class located under the `Controllers` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project
 - Replace this code
 ```cs
 [HttpGet]
-public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() {
-    List<Photo> photos = await service.GetPhotosAsync();
-    photos.ForEach(p => p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id }));
-    return photos;
-}
+    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => (await service.GetPhotosAsync()).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id })}).ToList();
 ```
 with this
 ```cs
 [HttpGet("{startIndex}/{amount}")]
-public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos(int startIndex, int amount, CancellationToken cancellationToken) {
-    List<Photo> photos = await service.GetPhotosAsync(startIndex, amount, cancellationToken);
-    photos.ForEach(p => p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id }));
-    return photos;
-}
+public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos(int startIndex, int amount, CancellationToken cancellationToken) => (await service.GetPhotosAsync(startIndex,amount,cancellationToken)).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id })}).ToList();
 
 [HttpGet("count")]
 public async Task<ActionResult<int>> GetPhotosCount() => await service.GetPhotosCountAsync();
 ```
 
 ## Blazor UI
-- Open the `AllPhotos.razor` component located under the in the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
+- Open the `AllPhotos.razor` component located under the in the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project
 - Replace the following code 
 ```html
 @foreach (var photo in photos) {
@@ -1019,7 +939,7 @@ Modify the code like this:
 ## Try it
 
 Start all your applications.  
-Log on as `alice` (password `alice`) or `bob` (password `bob`) to upload at least 10 to 15 pictures.  
+Log on as `alice` or `bob` (password `Pass123$`) to upload at least 10 to 15 pictures.  
 Go to `AllPhotos`. You should see that the scrollbar never changes, but you can keep scrolling.  
 If you inspect the network you shold see the different calls made to the server.
 

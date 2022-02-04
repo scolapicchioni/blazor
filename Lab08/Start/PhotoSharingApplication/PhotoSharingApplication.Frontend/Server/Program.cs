@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.ResponseCompression;
-using PhotoSharingApplication.Frontend.Server.Core.Services;
 using PhotoSharingApplication.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,9 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003") });
-builder.Services.AddScoped<IPhotosService, PhotosService>();
-builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Rest.PhotosRepository>();
+builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 var app = builder.Build();
 
@@ -33,7 +30,7 @@ app.UseRouting();
 
 
 app.MapRazorPages();
-app.MapControllers();
+app.MapReverseProxy();
 app.MapFallbackToFile("index.html");
 
 app.Run();

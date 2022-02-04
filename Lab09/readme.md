@@ -2,132 +2,95 @@
 
 In this lab we're going connect our FrontEnd to the BackEnd.  
 
-Once again, since we have a [BFF](https://docs.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), our client will just call our own *home* REST service, being unaware that back there we actually have a gRpc service. It will be the job of the BFF to call the gRpc service and return the results to the client.
+Once again, since we have a [BFF](https://docs.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), our client will just call our own *home*. YARP will forward the call to the gRpc service in the backend return the results to the client.
 
 Our client will issue requests to our server and it will handle the results to update the model. Blazor already takes care of updating the UI.
 
-Let's start by our `Frontend.Server` project, where we need to build:
-- A Controller
-- A Service
-- A Repository
+Let's start by our `Frontend.Server` project, where we need to configure YARP to forward the calls to the backend.  
 
-## The Controller 
+- Open appsettings.json and replace
 
-We need to build a REST service, which will be the endpoint that the client will use. Just like we did to talk to the Photos Rest service, we will create a CommentsController API Controller, deriving from `ControllerBase`.
-
-- Under the `Controllers` folder, add a new API Controller called `CommentsController`.
-- Add a dependency on an `ICommentsService` interface.
-- Add the REST actions to
-    - Get Comments For a specific photo given its id
-    - Find a comment given its id
-    - Add a comment
-    - Update a comment
-    - Delete a comment
-
-```cs
-using Microsoft.AspNetCore.Mvc;
-using PhotoSharingApplication.Shared.Entities;
-using PhotoSharingApplication.Shared.Interfaces;
-
-namespace PhotoSharingApplication.Frontend.Server.Controllers;
-
-[Route("[controller]")]
-[ApiController]
-public class CommentsController : ControllerBase {
-    private readonly ICommentsService service;
-
-    public CommentsController(ICommentsService service) {
-        this.service = service;
+```json
+"ReverseProxy": {
+    "Routes": {
+      "photosrestroute": {
+        "ClusterId": "photosrestcluster",
+        "Match": {
+          "Path": "/photos/{*any}"
+        }
+      }
+    },
+    "Clusters": {
+      "photosrestcluster": {
+        "Destinations": {
+          "photosrestdestination": {
+            "Address": "https://localhost:5003/"
+          }
+        }
+      }
     }
-    [HttpGet("/photos/{photoId:int}/comments")]
-    public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsForPhoto(int photoId) => await service.GetCommentsForPhotoAsync(photoId);
-
-    [HttpGet("{id:int}", Name = "FindComment")]
-    public async Task<ActionResult<Comment>> Find(int id) {
-        Comment? cm = await service.FindAsync(id);
-        if (cm is null) return NotFound();
-        return cm;
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<Comment>> CreateAsync(Comment comment) {
-        Comment? c = await service.CreateAsync(comment);
-        return CreatedAtRoute("FindComment", new { id = c.Id }, c);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<ActionResult<Comment>> Update(int id, Comment comment) {
-        if (id != comment.Id)
-            return BadRequest();
-        return await service.UpdateAsync(comment);
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<ActionResult<Comment>> Remove(int id) {
-        Comment? cm = await service.FindAsync(id);
-        if (cm is null) return NotFound();
-        return await service.RemoveAsync(id);
-    }
-}
+  }
 ```
 
-## The Service
+with
 
-As per our usual pattern, the `CommentsService` will make use of the `CommentsRepository`.
-- Under the `Core/Services` folder of the `PhotoSharingApplication.Frontend.Server` project, add a new `CommentsService` class. Let the class implement the `ICommentsService` interface.
-- Add a dependency on the `ICommentsRepository` interface.
-- Implement the interface to use the `CommentsRepository` to get the data.
-
-```cs
-using PhotoSharingApplication.Shared.Entities;
-using PhotoSharingApplication.Shared.Interfaces;
-
-namespace PhotoSharingApplication.Frontend.Server.Core.Services;
-
-public class CommentsService : ICommentsService {
-    private readonly ICommentsRepository repository;
-
-    public CommentsService(ICommentsRepository repository) {
-        this.repository = repository;
+```json
+"ReverseProxy": {
+    "Routes": {
+      "photosrestroute": {
+        "ClusterId": "photosrestcluster",
+        "Match": {
+          "Path": "/photos/{*any}"
+        }
+      },
+      "commentsgrpcroute": {
+        "ClusterId": "commentsgrpccluster",
+        "Match": {
+          "Path": "/comments.Commenter/{*any}"
+        }
+      }
+    },
+    "Clusters": {
+      "photosrestcluster": {
+        "Destinations": {
+          "photosrestdestination": {
+            "Address": "https://localhost:5003/"
+          }
+        }
+      },
+      "commentsgrpccluster": {
+        "Destinations": {
+          "commentsgrpdestination": {
+            "Address": "https://localhost:5005/"
+          }
+        }
+      }
     }
-    public async Task<Comment?> CreateAsync(Comment comment) {
-        comment.SubmittedOn = DateTime.Now;
-        comment.UserName ??= "";
-        return await repository.CreateAsync(comment);
-    }
-
-    public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
-
-    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
-
-    public async Task<Comment?> RemoveAsync(int id) => await repository.RemoveAsync(id);
-
-    public async Task<Comment?> UpdateAsync(Comment comment) {
-        Comment oldComment = await repository.FindAsync(comment.Id);
-        oldComment.Subject = comment.Subject;
-        oldComment.Body = comment.Body;
-        oldComment.SubmittedOn = DateTime.Now;
-        oldComment.UserName ??= "";
-        return await repository.UpdateAsync(oldComment);
-    }
-}
+  }
 ```
+
+## The Frontend.Client
+
+On the client, we need to replace our in memory repository with one that talks to the gRpc service. By adding the proto file to our client project, we can let the gpRpc tools generate a client for us. We will then use that client in our repository.
+
+### Client generation
+
+To use gRPC-Client in the `PhotoSharingApplication.Frontend.Client` project: 
+- Add a reference to the following NuGet Packages:
+    - `Google.Protobuf`
+    - `Grpc.Net.Client`
+    - `Grpc.Net.Client.Web`
+    - `Grpc.Tools`
+- In the `Solution Explorer` under `Repositories` folder, add a new folder `Grpc`
+- Copy the `Protos` folder (and its content) of the `PhotoSharingApplication.WebServices.Grpc.Comments` under the `Grpc` folder
+- In the `Solution Explorer`, right click the `comments.proto` file of the `PhotoSharingApplication.Frontend.Client` project, Select `Properties`
+    - In the `Build Action` select `Protobuf Compiler`
+    - In the `gRPC Stub Classes` select `Client Only`
+- Build the application
 
 ## The Repository 
 We're going create a Repository that uses `gRPC Client` as described in [the Microsoft Documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/client?view=aspnetcore-6.0).
 
-
-To use gRPC-Client in the `PhotoSharingApplication.Frontend.Server` project: 
-- Add a reference to the following NuGet Packages:
-    - `Google.Protobuf`
-    - `Grpc.Net.Client`
-    - `Grpc.Tools`
-- In the `Solution Explorer` under `Repositories` folder, add a new folder `Grpc`
-- Copy the `Protos` folder (and its content) of the `PhotoSharingApplication.WebServices.Grpc.Comments` under the `Grpc` folder
-- In the `Solution Explorer`, right click the `comments.proto` file of the `PhotoSharingApplication.Frontend.Server` project, Select `Properties`
-    - In the `Build Action` select `Protobuf Compiler`
-    - In the `gRPC Stub Classes` select `Client Only`
-- Build the application
 - In the `Grpc` folder, add a `CommentsRepository` class
 - Let the `CommentsRepository` class implement the `ICommentsRepository` interface
 
@@ -135,7 +98,7 @@ To use gRPC-Client in the `PhotoSharingApplication.Frontend.Server` project:
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Grpc;
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc;
 
 public class CommentsRepository : ICommentsRepository {
     public Task<Comment?> CreateAsync(Comment comment) {
@@ -234,15 +197,24 @@ Now we need to inject the Repository and configure the gRpcClient.
 
 ## Configuration
 
-- In the `PhotoSharingApplication.Frontend.Server`project:
-- Open the `Program.cs` file and add the following code
+- In the `PhotoSharingApplication.Frontend.Client`project:
+- Open the `Program.cs` file and replace
 
 ```cs
-builder.Services.AddScoped<ICommentsService, CommentsService>();
-builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Grpc.CommentsRepository>();
+builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.PhotosRepository>();
+builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.CommentsRepository>();
+```
+
+with
+
+```cs
+builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest.PhotosRepository>();
+builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc.CommentsRepository>();
 builder.Services.AddSingleton(services => {
-    var backendUrl = "https://localhost:5005"; // Local debug URL
-    var channel = GrpcChannel.ForAddress(backendUrl);
+    var backendUrl = new Uri(builder.HostEnvironment.BaseAddress);
+    var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions {
+        HttpHandler = new GrpcWebHandler(new HttpClientHandler())
+    });
     return new Commenter.CommenterClient(channel);
 });
 ```
@@ -251,77 +223,13 @@ which requires
 
 ```cs
 using Grpc.Net.Client;
-using PhotoSharingApplication.Frontend.Server.Core.Services;
-using PhotoSharingApplication.Shared.Interfaces;
+using Grpc.Net.Client.Web;
+using PhotoSharingApplication.Frontend.Client;
+using PhotoSharingApplication.Frontend.Client.Core.Services;
 using PhotoSharingApplication.WebServices.Grpc.Comments;
 ```
 
 **NOTE: Your port may be different, make sure the number after localhost matches the one of your gRPC endpoint**
-
-## The Client
-
-Now that the BFF is ready, we need the client to talk to the BFF.  
-We need to replace the fake MemoryRepository we made in the previous lab with a new Repository that uses an HttpClient to talk to our Rest service.
-
-- Under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Client` project, add a new `CommentsRepository` class
-    - Add a dependency on a `HttpClient` object
-    - Implement the `ICommentsRepository` interface and make use of the httpclient to talk to the BFF
-
-```cs
-using PhotoSharingApplication.Shared.Entities;
-using PhotoSharingApplication.Shared.Interfaces;
-using System.Net.Http.Json;
-
-namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest;
-
-public class CommentsRepository : ICommentsRepository {
-    private readonly HttpClient http;
-
-    public CommentsRepository(HttpClient http) {
-        this.http = http;
-    }
-
-    public async Task<Comment?> CreateAsync(Comment comment) {
-        HttpResponseMessage response = await http.PostAsJsonAsync("/comments", comment);
-        if (response.IsSuccessStatusCode)
-            return await response.Content.ReadFromJsonAsync<Comment>();
-        else throw new Exception(response.ReasonPhrase);
-    }
-
-    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await http.GetFromJsonAsync<List<Comment>>($"/photos/{photoId}/comments");
-
-    public async Task<Comment?> UpdateAsync(Comment comment) {
-        HttpResponseMessage response = await http.PutAsJsonAsync($"/comments/{comment.Id}", comment);
-        if (response.IsSuccessStatusCode)
-            return await response.Content.ReadFromJsonAsync<Comment>();
-        else throw new Exception(response.ReasonPhrase);
-    }
-
-    public async Task<Comment?> FindAsync(int id) => await http.GetFromJsonAsync<Comment>($"/comments/{id}");
-
-    public async Task<Comment?> RemoveAsync(int id) {
-        HttpResponseMessage response = await http.DeleteAsync($"/comments/{id}");
-        if (response.IsSuccessStatusCode)
-            return await response.Content.ReadFromJsonAsync<Comment>();
-        else throw new Exception(response.ReasonPhrase);
-    }
-}
-```
-
-### Register the repository
-
-In the `Program.cs` of the `PhotoSharingApplication.Frontend.Client` project, replace 
-
-```cs
-builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.PhotosRepository>();
-builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.CommentsRepository>();
-```
-with
-
-```cs
-builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest.PhotosRepository>();
-builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest.CommentsRepository>();
-```
 
 ## Start 3 projects
 
@@ -382,9 +290,24 @@ with
 app.MapGrpcService<CommentsGrpcService>().RequireCors("AllowAll"); 
 ```
 
-Save and verify that the client can send data to the server.
+Save and run the application. You will get yet another error: `Content-Type 'application/grpc-web' is not supported.`. 
+This is due to the fact that our gRpc service is not configured to accept gRpc-Web requests. Let's fix that:  
 
-## Reconfiguring ports ans startup projects
+- Add the `Grpc.AspNetCore.Web` package to the `PhotoSharingApplication.WebServices.Grpc.Comments` project
+- Open `Program.cs` file of the `PhotoSharingApplication.WebServices.Grpc.Comments` project and replace the following code:
+
+```cs
+app.MapGrpcService<CommentsGrpcService>().RequireCors("AllowAll"); 
+```
+
+with
+```cs
+app.UseGrpcWeb();
+app.MapGrpcService<CommentsGrpcService>().RequireCors("AllowAll").EnableGrpcWeb();  
+```
+
+
+## Reconfiguring ports and startup projects
 
 Let's reconfigure our projects to listen on ports that have no conflict with the other projects
 - The `Frontend.Server` project will use `http://localhost:5000` and `https://localhost:5001`
@@ -432,22 +355,9 @@ Let's reconfigure our projects to listen on ports that have no conflict with the
 
 We need to reconfigure the `HttpClient` and the `gRPC Client` of the `Frontend.Server` project with the new ports.
 
-- Open `Program.cs` of the `PhotoSharingApplication.Frontend.Server` project
-- Update the port of the GrpcChannel
-
-```cs
-builder.Services.AddSingleton(services => {
-    var backendUrl = "https://localhost:5005"; // Local debug URL
-    var channel = GrpcChannel.ForAddress(backendUrl);
-    return new Commenter.CommenterClient(channel);
-});
-```
-
-Also update the connection to the REST service:
-
-```cs
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003/") });
-```
+- Open `appsettings.json` of the `PhotoSharingApplication.Frontend.Server` project
+- Update the `Address` entry under the `photosrestdestination` to `https://localhost:5003/`
+- Update the `Address` entry under the `commentsgrpdestination` to `https://localhost:5005/`
 
 ### Try the application
 

@@ -2,7 +2,7 @@
 using PhotoSharingApplication.Shared.Interfaces;
 using PhotoSharingApplication.WebServices.Grpc.Comments;
 
-namespace PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Grpc;
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc;
 
 public class CommentsRepository : ICommentsRepository {
     private readonly Commenter.CommenterClient gRpcClient;

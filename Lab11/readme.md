@@ -42,18 +42,17 @@ We can reuse the same interfaces and exceptions both on the client and on the se
 ## Shared Core
 
 ### IUserService
-- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared.Core` project, right click on `Add -> New Item`
+- In the `Solution Explorer`, under the `Interfaces` folder of the `PhotoSharingApplication.Shared` project, right click on `Add -> New Item`
 - Select `Interface`, name the interface `IUserService` and click `Ok`
 - Define a `GetUserAsync` method returning a `Task<ClaimsPrincipal>`
 
 ```cs
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Shared.Core.Interfaces {
-  public interface IUserService {
-    Task<ClaimsPrincipal> GetUserAsync();
-  }
+namespace PhotoSharingApplication.Shared.Interfaces;
+
+public interface IUserService {
+  Task<ClaimsPrincipal> GetUserAsync();
 }
 ```
 
@@ -69,383 +68,279 @@ namespace PhotoSharingApplication.Shared.Core.Interfaces {
 
 ```cs
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Shared.Core.Interfaces {
-  public interface IAuthorizationService<T> {
-    Task<bool> ItemMayBeCreatedAsync(ClaimsPrincipal User, T item);
-    Task<bool> ItemMayBeUpdatedAsync(ClaimsPrincipal User, T item);
-    Task<bool> ItemMayBeDeletedAsync(ClaimsPrincipal User, T item);
-  }
+namespace PhotoSharingApplication.Shared.Interfaces;
+
+public interface IAuthorizationService<T> {
+  Task<bool> ItemMayBeCreatedAsync(ClaimsPrincipal User, T item);
+  Task<bool> ItemMayBeUpdatedAsync(ClaimsPrincipal User, T item);
+  Task<bool> ItemMayBeDeletedAsync(ClaimsPrincipal User, T item);
 }
 ```
 
 ### The Exceptions
 - In the `Solution Explorer`, in the `PhotoSharingApplication.Shared.Core` project, create a new folder named `Exceptions`.
 - Under the `Exceptions` folder, add three new classes:
-  - `UnauthorizedCreateAttemptException<T>`
-  - `UnauthorizedDeleteAttemptException<T>`
-  - `UnauthorizedEditAttemptException<T>`  
+  - `CreateUnauthorizedException<T>`
+  - `DeleteUnauthorizedException<T>`
+  - `EditUnauthorizedException<T>`  
  In each exception, create the necessary constructors, like this:
 
  ```cs
-using System;
 using System.Runtime.Serialization;
 
-namespace PhotoSharingApplication.Shared.Core.Exceptions {
-    [Serializable]
-    public class UnauthorizedCreateAttemptException<T> : Exception {
-        public UnauthorizedCreateAttemptException() { }
-        public UnauthorizedCreateAttemptException(string message) : base(message) { }
-        public UnauthorizedCreateAttemptException(string message, Exception inner) : base(message, inner) { }
-        protected UnauthorizedCreateAttemptException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-    }
+namespace PhotoSharingApplication.Shared.Exceptions;
+
+[Serializable]
+public class CreateUnauthorizedException<T> : Exception {
+  public CreateUnauthorizedException() { }
+  public CreateUnauthorizedException(string message) : base(message) { }
+  public CreateUnauthorizedException(string message, Exception inner) : base(message, inner) { }
+  protected CreateUnauthorizedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 }
 ``` 
 
 ```cs
-using System;
 using System.Runtime.Serialization;
 
-namespace PhotoSharingApplication.Shared.Core.Exceptions {
-    [Serializable]
-    public class UnauthorizedDeleteAttemptException<T> : Exception {
-        public UnauthorizedDeleteAttemptException() { }
-        public UnauthorizedDeleteAttemptException(string message) : base(message) { }
-        public UnauthorizedDeleteAttemptException(string message, Exception inner) : base(message, inner) { }
-        protected UnauthorizedDeleteAttemptException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-    }
+namespace PhotoSharingApplication.Shared.Exceptions;
+
+[Serializable]
+public class DeleteUnauthorizedException<T> : Exception {
+    public DeleteUnauthorizedException() { }
+    public DeleteUnauthorizedException(string message) : base(message) { }
+    public DeleteUnauthorizedException(string message, Exception inner) : base(message, inner) { }
+    protected DeleteUnauthorizedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 }
 ```
 
 ```cs
-using System;
 using System.Runtime.Serialization;
 
-namespace PhotoSharingApplication.Shared.Core.Exceptions {
-    [Serializable]
-    public class UnauthorizedEditAttemptException<T> : Exception {
-        public UnauthorizedEditAttemptException() { }
-        public UnauthorizedEditAttemptException(string message) : base(message) { }
-        public UnauthorizedEditAttemptException(string message, Exception inner) : base(message, inner) { }
-        protected UnauthorizedEditAttemptException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-    }
+namespace PhotoSharingApplication.Shared.Exceptions;
+
+[Serializable]
+public class EditUnauthorizedException<T> : Exception {
+    public EditUnauthorizedException() { }
+    public EditUnauthorizedException(string message) : base(message) { }
+    public EditUnauthorizedException(string message, Exception inner) : base(message, inner) { }
+    protected EditUnauthorizedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 }
 ```
 
-It's time to use them from within our Core Service.
+It's time to use them from within our Core Services.
 
 ## Backend Core
 
 ### PhotosService
 
-- In the `Solution Explorer`, open the `PhotosService` located under the `Services` folder of the `PhotoSharingApplication.Backend.Core` project.
+- In the `Solution Explorer`, open the `PhotosService` located under the `Core/Services` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project.
 - Modify the constructor to accept and save an `IUserService` and an `IAuthenticationService<Photo>` parameter
 - Modify the `UploadAsync` to
   - Get the User by invoking the `GetUserAsync` of the `userService`
   - Decide whether or not to upload the photo by invoking the `ItemMayBeCreated` of the `authorizationService`
-  - Eventually throw an `UnauthorizedCreateAttempt<Photo>` exception
+  - Eventually throw a `CreateUnauthorizedException<Photo>` exception
 - Modify the `UpdateAsync` to
   - Get the User by invoking the `GetUserAsync` of the `userService`
   - Decide whether or not to update the photo by invoking the `ItemMayBeUpdatedAsync` of the `authorizationService`
-  - Eventually throw an `UnauthorizedEditAttemptException<Photo>` exception
+  - Eventually throw an `EditUnauthorizedException<Photo>` exception
 - Modify the `RemoveAsync` to
   - Get the User by invoking the `GetUserAsync` of the `userService`
   - Decide whether or not to delete the photo by invoking the `ItemMayBeDeletedAsync` of the `authorizationService`
-  - Eventually throw an `UnauthorizedDeleteAttemptException<Photo>` exception
+  - Eventually throw a `DeleteUnauthorizedException<Photo>` exception
 
 The code should look like this:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Backend.Core.Services {
-    public class PhotosService : IPhotosService {
-        private readonly IPhotosRepository repository;
-        private readonly IAuthorizationService<Photo> photosAuthorizationService;
-        private readonly IUserService userService;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Core.Services;
 
-        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) =>
-            (this.repository, this.photosAuthorizationService, this.userService) = (repository, photosAuthorizationService, userService);
+public class PhotosService : IPhotosService {
+    private readonly IPhotosRepository repository;
+    private readonly IAuthorizationService<Photo> photosAuthorizationService;
+    private readonly IUserService userService;
 
-        public async Task<Photo> FindAsync(int id) => await repository.FindAsync(id);
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
-        public async Task<Photo> RemoveAsync(int id) {
-            Photo photo = await FindAsync(id);
+    public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) => 
+        (this.repository, this.photosAuthorizationService, this.userService) = (repository, photosAuthorizationService, userService);
+    public async Task<Photo?> FindAsync(int id) => await repository.FindAsync(id);
+
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
+
+    public async Task<Photo?> RemoveAsync(int id) {
+        Photo? photo = await FindAsync(id);
+        if(photo is not null){
             var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
-                return await repository.RemoveAsync(id);
-            else throw new UnauthorizedDeleteAttemptException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
+            if(!await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
+                throw new DeleteUnauthorizedException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
+            photo = await repository.RemoveAsync(id);
         }
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo))
-                return await repository.UpdateAsync(photo);
-            else throw new UnauthorizedEditAttemptException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
-        }
-        public async Task<Photo> UploadAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
-                photo.CreatedDate = DateTime.Now;
-                photo.UserName = user.Identity.Name;
-                return await repository.CreateAsync(photo);
-            } else throw new UnauthorizedCreateAttemptException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
-        }
+        return photo; 
+    }
+
+    public async Task<Photo?> UpdateAsync(Photo photo) {
+        var user = await userService.GetUserAsync();
+        if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo))
+            return await repository.UpdateAsync(photo);
+        else throw new EditUnauthorizedException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
+    }
+
+    public async Task<Photo?> UploadAsync(Photo photo) {
+        var user = await userService.GetUserAsync();
+        if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
+            photo.CreatedDate = DateTime.Now;
+            photo.UserName = user?.Identity?.Name;
+            return await repository.CreateAsync(photo);
+        } else throw new CreateUnauthorizedException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
     }
 }
 ```
 
 ### CommentsService
 
-- In the `Solution Explorer`, open the `CommentsService` located under the `Services` folder of the `PhotoSharingApplication.Backend.Core` project.
+- In the `Solution Explorer`, open the `CommentsService` located under the `Core/Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project.
 - Modify the constructor to accept and save an `IUserService` and an `IAuthenticationService<Photo>` parameter
 - Modify the `CreateAsync` to
   - Get the User by invoking the `GetUserAsync` of the `userService`
   - Decide whether or not to submit the comment by invoking the `ItemMayBeCreated` of the `authorizationService`
-  - Eventually throw an `UnauthorizedCreateAttempt<Comment>` exception
+  - Eventually throw a `CreateUnauthorized<Comment>` exception
 - Modify the `UpdateAsync` to
   - Get the User by invoking the `GetUserAsync` of the `userService`
   - Decide whether or not to update the comment by invoking the `ItemMayBeUpdatedAsync` of the `authorizationService`
-  - Eventually throw an `UnauthorizedEditAttemptException<Comment>` exception
+  - Eventually throw an `EditUnauthorizedException<Comment>` exception
 - Modify the `RemoveAsync` to
   - Get the User by invoking the `GetUserAsync` of the `userService`
   - Decide whether or not to delete the comment by invoking the `ItemMayBeDeletedAsync` of the `authorizationService`
-  - Eventually throw an `UnauthorizedDeleteAttemptException<Photo>` exception
+  - Eventually throw a `DeleteUnauthorizedException<Photo>` exception
 The code should look like this:
 
 ```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services;
 
 public class CommentsService : ICommentsService {
   private readonly ICommentsRepository repository;
   private readonly IAuthorizationService<Comment> commentsAuthorizationService;
   private readonly IUserService userService;
+
   public CommentsService(ICommentsRepository repository, IAuthorizationService<Comment> commentsAuthorizationService, IUserService userService) =>
     (this.repository, this.commentsAuthorizationService, this.userService) = (repository, commentsAuthorizationService, userService);
-
-  public async Task<Comment> CreateAsync(Comment comment) {
+  public async Task<Comment?> CreateAsync(Comment comment) {
     var user = await userService.GetUserAsync();
     if (await commentsAuthorizationService.ItemMayBeCreatedAsync(user, comment)) {
-      comment.SubmittedOn = DateTime.Now;
-      comment.UserName = user.Identity.Name;
-      return await repository.CreateAsync(comment);
-    } else throw new UnauthorizedCreateAttemptException<Comment>($"Unauthorized Create Attempt of Comment {comment.Id}");
+        comment.SubmittedOn = DateTime.Now;
+        comment.UserName = user.Identity?.Name ?? "";
+        return await repository.CreateAsync(comment);
+    } else throw new CreateUnauthorizedException<Comment>($"Unauthorized Create Attempt of Comment {comment.Id}");
   }
 
-  public async Task<Comment> FindAsync(int id) => await repository.FindAsync(id);
+  public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
 
-  public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
+  public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
 
-  public async Task<Comment> RemoveAsync(int id) {
-    Comment comment = await FindAsync(id);
-    var user = await userService.GetUserAsync();
-    if (await commentsAuthorizationService.ItemMayBeDeletedAsync(user, comment))
-      return await repository.RemoveAsync(id);
-    else throw new UnauthorizedDeleteAttemptException<Comment>($"Unauthorized Deletion Attempt of Comment {comment.Id}");
+  public async Task<Comment?> RemoveAsync(int id) {
+    Comment? comment = await FindAsync(id);
+    if (comment is not null) {
+        var user = await userService.GetUserAsync();
+        if (!await commentsAuthorizationService.ItemMayBeDeletedAsync(user, comment)) {
+            throw new DeleteUnauthorizedException<Comment>($"Unauthorized Deletion Attempt of Comment {comment.Id}");
+        }
+        comment = await repository.RemoveAsync(id);
+    }
+    return comment;
   }
 
-  public async Task<Comment> UpdateAsync(Comment comment) {
+  public async Task<Comment?> UpdateAsync(Comment comment) {
     var user = await userService.GetUserAsync();
-    Comment oldComment = await repository.FindAsync(comment.Id);
-    if (await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment)) {
+    Comment? oldComment = await repository.FindAsync(comment.Id);
+    if (oldComment is not null) { 
+      if(!await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment))
+        throw new EditUnauthorizedException<Comment>($"Unauthorized Edit Attempt of Comment {comment.Id}");
       oldComment.Subject = comment.Subject;
       oldComment.Body = comment.Body;
       oldComment.SubmittedOn = DateTime.Now;
-      return await repository.UpdateAsync(oldComment);
-    } else throw new UnauthorizedEditAttemptException<Comment>($"Unauthorized Edit Attempt of Comment {comment.Id}");
+      oldComment = await repository.UpdateAsync(oldComment);
+    }
+    return oldComment;
   }
 }
 ```
 
-## Frontend Core
-
-Repeat the same process for the `PhotoSharingApplication.Frontend.Core`:
-
-### PhotosService
-
-```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace PhotoSharingApplication.Frontend.Core.Services {
-    public class PhotosService : IPhotosService {
-        private readonly IPhotosRepository repository;
-        private readonly IAuthorizationService<Photo> photosAuthorizationService;
-        private readonly IUserService userService;
-
-        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService) =>
-            (this.repository, this.photosAuthorizationService, this.userService) = (repository, photosAuthorizationService, userService);
-        public async Task<Photo> FindAsync(int id) => await repository.FindAsync(id);
-        public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await repository.GetPhotosAsync(amount);
-        public async Task<Photo> RemoveAsync(int id) {
-            Photo photo = await FindAsync(id);
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeDeletedAsync(user, photo))
-                return await repository.RemoveAsync(id);
-            else throw new UnauthorizedDeleteAttemptException<Photo>($"Unauthorized Deletion Attempt of Photo {photo.Id}");
-        }
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo))
-                return await repository.UpdateAsync(photo);
-            else throw new UnauthorizedEditAttemptException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
-        }
-        public async Task<Photo> UploadAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
-                photo.CreatedDate = DateTime.Now;
-                photo.UserName = user.Identity.Name;
-                return await repository.CreateAsync(photo);
-            } else throw new UnauthorizedCreateAttemptException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
-        }
-    }
-}
-```
-
-### CommentsService
-
-```cs
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace PhotoSharingApplication.Frontend.Core.Services {
-    public class CommentsService : ICommentsService {
-        private readonly ICommentsRepository repository;
-        private readonly IAuthorizationService<Comment> commentsAuthorizationService;
-        private readonly IUserService userService;
-
-        public CommentsService(ICommentsRepository repository, IAuthorizationService<Comment> commentsAuthorizationService, IUserService userService) =>
-            (this.repository, this.commentsAuthorizationService, this.userService) = (repository, commentsAuthorizationService, userService);
-
-        public async Task<Comment> CreateAsync(Comment comment) {
-            var user = await userService.GetUserAsync();
-            if (await commentsAuthorizationService.ItemMayBeCreatedAsync(user, comment)) {
-                comment.SubmittedOn = DateTime.Now;
-                comment.UserName = user.Identity.Name;
-                return await repository.CreateAsync(comment);
-            } else throw new UnauthorizedCreateAttemptException<Comment>($"Unauthorized Create Attempt of Comment {comment.Id}");
-        }
-        public async Task<Comment> FindAsync(int id) => await repository.FindAsync(id);
-        public async Task<List<Comment>> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
-
-        public async Task<Comment> RemoveAsync(int id) {
-            Comment comment = await FindAsync(id);
-            var user = await userService.GetUserAsync();
-            if (await commentsAuthorizationService.ItemMayBeDeletedAsync(user, comment))
-                return await repository.RemoveAsync(id);
-            else throw new UnauthorizedDeleteAttemptException<Comment>($"Unauthorized Deletion Attempt of Comment {comment.Id}");
-        }
-
-        public async Task<Comment> UpdateAsync(Comment comment) {
-            var user = await userService.GetUserAsync();
-            Comment oldComment = await repository.FindAsync(comment.Id);
-            if (await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment)) {
-                oldComment.Subject = comment.Subject;
-                oldComment.Body = comment.Body;
-                oldComment.SubmittedOn = DateTime.Now;
-                return await repository.UpdateAsync(oldComment);
-            } else throw new UnauthorizedEditAttemptException<Comment>($"Unauthorized Edit Attempt of Comment {comment.Id}");
-        }
-    }
-}
-```
-Ok, great, our logic is sound, neat and clean. We still don't know how to actually check users and permissions, but that's a job for the infrastructure, we'll figure it out later.  
-In the meantime we can change our *Application* layer.  
-Server side, the *Application layer* is represented by our two web services.  
-Client side, we have our Blazor Components.
-
-## Backend 
+### The Photos REST API
 
 ### Photos Rest Controller
 
 Our actions are already calling the service. What we have to do is to intercept the eventual exceptions and transform them into a response that the client can handle.  
 We do that by returning a `ForbidResult`.  
-Our `PhotosController`, located under the `Controllers` folder of the `PhotoSharingApplication.WebServices.REST.Photos` project, becomes:
+Our `PhotosController`, located under the `Controllers` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project, becomes:
 
 ```cs
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers {
-    [Route("[controller]")]
-    [ApiController]
-    public class PhotosController : ControllerBase {
-        private readonly IPhotosService service;
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Controllers;
 
-        public PhotosController(IPhotosService service) {
-            this.service = service;
-        }
+[Route("[controller]")]
+[ApiController]
+public class PhotosController : ControllerBase {
+  private readonly IPhotosService service;
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service.GetPhotosAsync();
+  public PhotosController(IPhotosService service) => this.service = service;
 
-        [HttpGet("{id:int}", Name = "Find")]
-        public async Task<ActionResult<Photo>> Find(int id) {
-            Photo ph = await service.FindAsync(id);
-            if (ph == null) return NotFound();
-            return ph;
-        }
+  [HttpGet]
+  public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service.GetPhotosAsync();
 
-        [Authorize]
-        [HttpPost]
-        public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
-            try {
-                photo.UserName = User.Identity.Name;
-                Photo p = await service.UploadAsync(photo);
-                return CreatedAtRoute(nameof(Find), p, new { id = p.Id });
-            } catch (UnauthorizedCreateAttemptException<Photo>) {
-                return Forbid();
-            }
-        }
+  [HttpGet("{id:int}", Name = "Find")]
+  public async Task<ActionResult<Photo>> Find(int id) {
+    Photo? ph = await service.FindAsync(id);
+    if (ph is null) return NotFound();
+    return ph;
+  }
 
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Photo>> Update(int id, Photo photo) {
-            if (id != photo.Id)
-                return BadRequest();
-            Photo ph = await service.FindAsync(id);
-            if (ph == null) return NotFound();
-
-            try {
-                return await service.UpdateAsync(photo);
-            } catch (UnauthorizedEditAttemptException<Photo>) {
-                return Forbid();
-            }
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Photo>> Remove(int id) {
-            Photo ph = await service.FindAsync(id);
-            if (ph == null) return NotFound();
-            try {
-                return await service.RemoveAsync(id);
-            } catch (UnauthorizedDeleteAttemptException<Photo>) {
-                return Forbid();
-            }
-        }
+  [Authorize]
+  [HttpPost]
+  public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
+    try {
+      photo.UserName = User?.Identity?.Name;
+      Photo? p = await service.UploadAsync(photo);
+      return CreatedAtRoute("Find", new { id = photo.Id }, p);
+    } catch (CreateUnauthorizedException<Photo>) {
+      return Forbid();
     }
+  }
+
+  [HttpPut("{id}")]
+  public async Task<ActionResult<Photo>> Update(int id, Photo photo) {
+    if (id != photo.Id)
+      return BadRequest();
+    try {
+      Photo? p = await service.UpdateAsync(photo);
+      if(p is null) return NotFound();
+      return p;
+    } catch (EditUnauthorizedException<Photo>) {
+      return Forbid();
+    }
+  }
+
+  [HttpDelete("{id}")]
+  public async Task<ActionResult<Photo>> Remove(int id) {
+    try {
+      Photo? ph = await service.RemoveAsync(id);
+      if(ph is null) return NotFound();
+      return ph;
+    } catch (DeleteUnauthorizedException<Photo>) {
+      return Forbid();
+    }
+  }
 }
 ```
 
@@ -457,275 +352,674 @@ Under the `Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Com
 ```cs
 using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Exceptions;
-using PhotoSharingApplication.Shared.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services {
-  public class CommentsGrpcService : Commenter.CommenterBase {
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services;
+
+public class CommentsGrpcService : Commenter.CommenterBase {
     private readonly ICommentsService commentsService;
+
     public CommentsGrpcService(ICommentsService commentsService) => this.commentsService = commentsService;
     public override async Task<GetCommentsForPhotosReply> GetCommentsForPhoto(GetCommentsForPhotosRequest request, ServerCallContext context) {
-      List<Comment> comments = await commentsService.GetCommentsForPhotoAsync(request.PhotoId);
-      GetCommentsForPhotosReply r = new GetCommentsForPhotosReply();
-      IEnumerable<GetCommentsForPhotosReplyItem> replyItems = comments.Select(c => new GetCommentsForPhotosReplyItem() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) });
-      r.Comments.AddRange(replyItems);
-      return r;
+        List<Comment>? comments = await commentsService.GetCommentsForPhotoAsync(request.PhotoId);
+        GetCommentsForPhotosReply r = new GetCommentsForPhotosReply();
+        IEnumerable<GetCommentsForPhotosReplyItem>? replyItems = comments?.Select(c => new GetCommentsForPhotosReplyItem() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) });
+        r.Comments.AddRange(replyItems);
+        return r;
     }
+
     public override async Task<FindReply> Find(FindRequest request, ServerCallContext context) {
-      Comment c = await commentsService.FindAsync(request.Id);
-      if (c is null) {
-          throw new RpcException(new Status(StatusCode.NotFound, "Comment not found"));
-      }
-      return new FindReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
+        Comment? c = await commentsService.FindAsync(request.Id);
+        if (c is null) {
+            throw new RpcException(new Status(StatusCode.NotFound, "Comment not found"));
+        }
+        return new FindReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
     }
 
     [Authorize]
     public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
-      return await executeCommand(async () => {
-        var user = context.GetHttpContext().User;
-        Comment c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user.Identity.Name });
-        return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
-      }, context);
+        try {
+            var user = context.GetHttpContext().User;
+            Comment? c = await commentsService.CreateAsync(new Comment { PhotoId = request.PhotoId, Subject = request.Subject, Body = request.Body, UserName = user?.Identity?.Name ?? String.Empty});
+            if (c is null) {
+                throw new RpcException(new Status(StatusCode.Internal, "Something went wrong while creating the comment"));
+            }
+            return new CreateReply() { Id = c.Id, PhotoId = c.PhotoId, Body = c.Body, Subject = c.Subject, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()), UserName = c.UserName };
+        } catch (CreateUnauthorizedException<Comment>) {
+            var user = context.GetHttpContext().User;
+            var metadata = new Metadata { { "User", user?.Identity?.Name } };
+            throw new RpcException(new Status(StatusCode.PermissionDenied, "Create Permission Denied"), metadata);
+        } catch (Exception ex) {
+            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+        }
     }
+
     public override async Task<UpdateReply> Update(UpdateRequest request, ServerCallContext context) {
-      return await executeCommand(async () => {
-        Comment c = await commentsService.UpdateAsync(new Comment { Id = request.Id, Subject = request.Subject, Body = request.Body });
-        return new UpdateReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
-      }, context);
+        try {
+            Comment? c = await commentsService.UpdateAsync(new Comment { Id = request.Id, Subject = request.Subject, Body = request.Body });
+            if (c is null) {
+                throw new RpcException(new Status(StatusCode.NotFound, "Comment not found"));
+            }
+            return new UpdateReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
+        } catch (EditUnauthorizedException<Comment>) {
+            var user = context.GetHttpContext().User;
+            var metadata = new Metadata { { "User", user?.Identity?.Name } };
+            throw new RpcException(new Status(StatusCode.PermissionDenied, "Edit Permission Denied"), metadata);
+        } catch (Exception ex) {
+            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+        }
     }
 
     public override async Task<RemoveReply> Remove(RemoveRequest request, ServerCallContext context) {
-      return await executeCommand(async () => {
-        Comment c = await commentsService.RemoveAsync(request.Id);
-        return new RemoveReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
-      }, context);
+        try {
+            Comment? c = await commentsService.RemoveAsync(request.Id);
+            if (c is null) {
+                throw new RpcException(new Status(StatusCode.NotFound, "Comment not found"));
+            }
+            return new RemoveReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
+        } catch (DeleteUnauthorizedException<Comment>) {
+            var user = context.GetHttpContext().User;
+            var metadata = new Metadata { { "User", user?.Identity?.Name } };
+            throw new RpcException(new Status(StatusCode.PermissionDenied, "Delete Permission Denied"), metadata);
+        } catch (Exception ex) {
+            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+        }
+    }
+}
+```
+
+
+Now we ned to go to our BFF to intercept the different status codes and act accordingly.    
+We'll do this in the repository and in the Web Service, both for the Photos and for the Comments.
+
+### The Photos Repository
+
+- Open the `PhotosRepository` class under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its content with:
+
+```cs
+using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+using System.Net;
+
+namespace PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Rest;
+
+public class PhotosRepository : IPhotosRepository {
+    private readonly HttpClient http;
+    private readonly IHttpContextAccessor httpContextAccessor;
+
+    public PhotosRepository(HttpClient http, IHttpContextAccessor httpContextAccessor) => (this.http, this.httpContextAccessor) = (http, httpContextAccessor);
+    
+    public async Task<Photo?> CreateAsync(Photo photo) {
+        var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
+        http.SetBearerToken(token);
+        HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) {
+            throw new CreateUnauthorizedException<Photo>();
+        }
+        return await response.Content.ReadFromJsonAsync<Photo>();
     }
 
-    private async Task<TReply> executeCommand<TReply>(Func<Task<TReply>> commandToExecute, ServerCallContext context) {
-      try {
-        return await commandToExecute();
-      } catch (UnauthorizedDeleteAttemptException<Comment>) {
-        var user = context.GetHttpContext().User;
-        var metadata = new Metadata { { "User", user.Identity.Name } };
-        throw new RpcException(new Status(StatusCode.PermissionDenied, "Permission denied"), metadata);
-      } catch (Exception ex) {
-        throw new RpcException(new Status(StatusCode.Internal, ex.Message));
-      }
+    public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
+
+    public async Task<Photo?> RemoveAsync(int id) {
+      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
+      http.SetBearerToken(token);
+      HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
+      return response.StatusCode switch {
+        HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+        HttpStatusCode.Forbidden => throw new DeleteUnauthorizedException<Photo>(),
+        _ => throw new Exception(response.ReasonPhrase)
+      }; 
+    }
+
+    public async Task<Photo?> UpdateAsync(Photo photo) {
+      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
+      http.SetBearerToken(token);
+      HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
+      return response.StatusCode switch {
+        HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+        HttpStatusCode.Forbidden => throw new EditUnauthorizedException<Photo>(),
+        _ => throw new Exception(response.ReasonPhrase)
+      };
+    }
+}
+```
+
+### The Comments Repository
+
+- Open the `CommentsRepository` under the `Infrastructure/Repositories/Grpc` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its code with:
+
+```cs
+using Grpc.Core;
+using Microsoft.AspNetCore.Authentication;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.WebServices.Grpc.Comments;
+
+namespace PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Grpc;
+
+public class CommentsRepository : ICommentsRepository {
+  private readonly Commenter.CommenterClient gRpcClient;
+  private readonly IHttpContextAccessor httpContextAccessor;
+
+  public CommentsRepository(Commenter.CommenterClient gRpcClient, IHttpContextAccessor httpContextAccessor) => (this.gRpcClient, this.httpContextAccessor) = (gRpcClient, httpContextAccessor);
+  public async Task<Comment?> CreateAsync(Comment comment) {
+    var headers = new Metadata();
+    var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
+    headers.Add("Authorization", $"Bearer {token}");
+
+    CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
+    try {
+      CreateReply c = await gRpcClient.CreateAsync(createRequest, headers);
+      return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+      throw new CreateUnauthorizedException<Comment>(ex.Message);
+    } catch (RpcException ex) {
+      throw new Exception(ex.Message);
+    }
+  }
+
+  public async Task<Comment?> FindAsync(int id) {
+    FindReply c = await gRpcClient.FindAsync(new FindRequest() { Id = id });
+    return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+  }
+
+  public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) {
+    GetCommentsForPhotosReply resp = await gRpcClient.GetCommentsForPhotoAsync(new GetCommentsForPhotosRequest() { PhotoId = photoId });
+    return resp.Comments.Select(c => new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() }).ToList();
+  }
+
+  public async Task<Comment?> RemoveAsync(int id) {
+    try {
+      var headers = new Metadata();
+      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
+      headers.Add("Authorization", $"Bearer {token}");
+      RemoveReply c = await gRpcClient.RemoveAsync(new RemoveRequest() { Id = id }, headers);
+      return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) { 
+      return null;
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+      throw new DeleteUnauthorizedException<Comment>(ex.Message);
+    } catch (RpcException ex){
+      throw new Exception(ex.Message);
+    }
+  }
+
+  public async Task<Comment?> UpdateAsync(Comment comment) {
+    try {
+      var headers = new Metadata();
+      var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
+      headers.Add("Authorization", $"Bearer {token}");
+      UpdateReply c = await gRpcClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body }, headers);
+      return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) {
+      return null;
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+      throw new EditUnauthorizedException<Comment>(ex.Message);
+    } catch (RpcException ex) {
+      throw new Exception(ex.Message);
     }
   }
 }
 ```
 
-## Frontend
+### The Photos Rest API
 
-In our `PhotoSharingApplication.Frontend.BlazorWebAssembly`, under the `Pages` folder, we have three pages where we have to update our logic for the Photo:
+- Open the `PhotosController` class under the `Controllers` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its code with:
+
+```cs
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+
+namespace PhotoSharingApplication.Frontend.Server.Controllers;
+
+[Route("[controller]")]
+[ApiController]
+public class PhotosController : ControllerBase {
+    private readonly IPhotosService service;
+
+    public PhotosController(IPhotosService service) => this.service = service;
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service.GetPhotosAsync();
+
+    [HttpGet("{id:int}", Name = "Find")]
+    public async Task<ActionResult<Photo>> Find(int id) {
+        Photo? ph = await service.FindAsync(id);
+        if (ph is null) return NotFound();
+        return ph;
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
+        try {
+            Photo? p = await service.UploadAsync(photo);
+            return CreatedAtRoute("Find", new { id = photo.Id }, p);
+        } catch (CreateUnauthorizedException<Photo>) {
+            return Forbid();
+        }
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Photo>> Update(int id, Photo photo) {
+        if (id != photo.Id)
+            return BadRequest();
+        try {
+            Photo? p = await service.UpdateAsync(photo);
+            if (p is null) return NotFound();
+            return p;
+        } catch (EditUnauthorizedException<Photo>) {
+            return Forbid();
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<Photo>> Remove(int id) {
+        try {
+            Photo? ph = await service.RemoveAsync(id);
+            if (ph is null) return NotFound();
+            return ph;
+        } catch (DeleteUnauthorizedException<Photo>) {
+            return Forbid();
+        }
+    }
+}
+```
+
+### The Comments REST API
+
+- Open the `CommentsController` file under the `Controllers` folder of the `PhotoSharingApplication.Frontend.Server` project and replace its code with:
+
+```cs
+using Microsoft.AspNetCore.Mvc;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+
+namespace PhotoSharingApplication.Frontend.Server.Controllers;
+
+[Route("[controller]")]
+[ApiController]
+public class CommentsController : ControllerBase {
+    private readonly ICommentsService service;
+
+    public CommentsController(ICommentsService service) {
+        this.service = service;
+    }
+    [HttpGet("/photos/{photoId:int}/comments")]
+    public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsForPhoto(int photoId) => await service.GetCommentsForPhotoAsync(photoId);
+
+    [HttpGet("{id:int}", Name = "FindComment")]
+    public async Task<ActionResult<Comment>> Find(int id) {
+        Comment? cm = await service.FindAsync(id);
+        if (cm is null) return NotFound();
+        return cm;
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Comment>> CreateAsync(Comment comment) {
+        try {
+            Comment? c = await service.CreateAsync(comment);
+            return CreatedAtRoute("FindComment", new { id = c.Id }, c);
+        } catch (CreateUnauthorizedException<Comment>) {
+            return Forbid();
+        }
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Comment>> Update(int id, Comment comment) {
+        if (id != comment.Id)
+            return BadRequest();
+        try {
+            Comment? c = await service.UpdateAsync(comment);
+            if (c is null) return NotFound();
+            return c;
+        } catch (EditUnauthorizedException<Comment>) {
+            return Forbid();
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<Comment>> Remove(int id) {
+        try {
+            Comment? cm = await service.RemoveAsync(id);
+            if (cm is null) return NotFound();
+            return cm;
+        } catch (DeleteUnauthorizedException<Comment>) {
+            return Forbid();
+        }
+    }
+}
+```
+
+## Frontend Client
+
+Repeat the same process for the `PhotoSharingApplication.Frontend.Client` project:
+
+### PhotosRepository
+
+- Open the `PhotosRepository` class under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Client` project and replace its code with:
+
+```cs
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+using System.Net;
+using System.Net.Http.Json;
+
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest;
+
+public class PhotosRepository : IPhotosRepository {
+    private readonly HttpClient http;
+
+    public PhotosRepository(HttpClient http) => this.http = http;
+    public async Task<Photo?> CreateAsync(Photo photo) {
+        HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) {
+            throw new CreateUnauthorizedException<Photo>();
+        }
+        return await response.Content.ReadFromJsonAsync<Photo>();
+    }
+
+    public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+
+    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
+
+    public async Task<Photo?> RemoveAsync(int id) {
+        HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
+        return response.StatusCode switch {
+            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+            HttpStatusCode.Forbidden => throw new DeleteUnauthorizedException<Photo>(),
+            _ => throw new Exception(response.ReasonPhrase)
+        };
+    }
+
+    public async Task<Photo?> UpdateAsync(Photo photo) {
+        HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
+        return response.StatusCode switch {
+            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
+            HttpStatusCode.Forbidden => throw new EditUnauthorizedException<Photo>(),
+            _ => throw new Exception(response.ReasonPhrase)
+        };
+    }
+}
+```
+
+### CommentsRepository
+
+- Open the `CommentsRepository` class under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Client` project and replace its code with:
+
+```cs
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Exceptions;
+using PhotoSharingApplication.Shared.Interfaces;
+using System.Net;
+using System.Net.Http.Json;
+
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest;
+
+public class CommentsRepository : ICommentsRepository {
+    private readonly HttpClient http;
+
+    public CommentsRepository(HttpClient http) {
+        this.http = http;
+    }
+
+    public async Task<Comment?> CreateAsync(Comment comment) {
+        HttpResponseMessage response = await http.PostAsJsonAsync("/comments", comment);
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) {
+            throw new CreateUnauthorizedException<Comment>();
+        }
+        return await response.Content.ReadFromJsonAsync<Comment>();
+    }
+
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await http.GetFromJsonAsync<List<Comment>>($"/photos/{photoId}/comments");
+
+    public async Task<Comment?> UpdateAsync(Comment comment) {
+        HttpResponseMessage response = await http.PutAsJsonAsync($"/comments/{comment.Id}", comment);
+        return response.StatusCode switch {
+            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Comment>(),
+            HttpStatusCode.Forbidden => throw new EditUnauthorizedException<Comment>(),
+            _ => throw new Exception(response.ReasonPhrase)
+        };
+    }
+
+    public async Task<Comment?> FindAsync(int id) => await http.GetFromJsonAsync<Comment>($"/comments/{id}");
+
+    public async Task<Comment?> RemoveAsync(int id) {
+        HttpResponseMessage response = await http.DeleteAsync($"/comments/{id}");
+        return response.StatusCode switch {
+            HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Comment>(),
+            HttpStatusCode.Forbidden => throw new DeleteUnauthorizedException<Comment>(),
+            _ => throw new Exception(response.ReasonPhrase)
+        };
+    }
+}
+```
+
+## Frontend Client UI
+
+In our `PhotoSharingApplication.Frontend.BlazorComponents`, under the `Pages` folder, we have three pages where we have to update our logic for the Photo:
 
 - `UploadPhoto`
 - `UpdatePhoto`
 - `DeletePhoto`
 
 In all three we'll try to talk to the service.  
-If we catch an `Unauthorized***AttemptException`, we send our user to a new `Forbidden` page where we tell the user that nope, no can do.
+If we catch an `***UnauthorizedException`, we send our user to a new `Forbidden` page where we tell the user that nope, no can do.
 
 ### UploadPhoto.razor
 
 ```cs
-@using PhotoSharingApplication.Shared.Core.Exceptions
-@page "/photos/upload"
-@attribute [Authorize]
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
+@page "/photos/upload"
+@using PhotoSharingApplication.Shared.Exceptions
+@attribute [Authorize]
 
+<PageTitle>Upload Photo</PageTitle>
 
-<div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
+<AuthorizeView>
+  <Authorized>
+    <div class="mat-layout-grid">
+      <div class="mat-layout-grid-inner">
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-            <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+          <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
         </div>
+      </div>
     </div>
-</div>
+  </Authorized>
+  <NotAuthorized>
+    <MatButtonLink Href="bff/login">You are not authorized. Log in to upload a picture<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink>
+  </NotAuthorized>
+</AuthorizeView>
 @code {
-    Photo photo;
+  Photo photo = new Photo();
 
-    protected override void OnInitialized() {
-        photo = new Photo();
+  private async Task Upload() {
+    try {
+      await photosService.UploadAsync(photo);
+      navigationManager.NavigateTo("/photos/all");
+    } catch (CreateUnauthorizedException<Photo>) {
+      navigationManager.NavigateTo("/forbidden");
     }
-
-    private async Task Upload() {
-        try {
-            await photosService.UploadAsync(photo);
-            navigationManager.NavigateTo("/photos/all");
-        } catch (UnauthorizedCreateAttemptException<Photo>) {
-            navigationManager.NavigateTo("/forbidden");
-        }
-    }
+  }
 }
 ```
 
 ### UpdatePhoto.razor
 
 ```cs
-@using PhotoSharingApplication.Shared.Core.Exceptions
 @page "/photos/update/{id:int}"
+@using PhotoSharingApplication.Shared.Exceptions
 
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-@if (photo == null) {
-    <p>...Loading...</p>
+<PageTitle>Update Photo @photo?.Title</PageTitle>
+
+@if (photo is null) {
+  <p>...Loading...</p>
 } else {
-    <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <PhotoEditComponent Photo="photo" OnSave="Update"></PhotoEditComponent>
-            </div>
-        </div>
+  <div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+        <PhotoEditComponent Photo="photo" OnSave="Update"></PhotoEditComponent>
+      </div>
     </div>
+  </div>
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+  [Parameter]
+  public int Id { get; set; }
 
-    Photo photo;
+  Photo? photo;
 
-    protected override async Task OnInitializedAsync() {
-        photo = await photosService.FindAsync(Id);
+  protected override async Task OnInitializedAsync() {
+    photo = await photosService.FindAsync(Id);
+  }
+
+  private async Task Update() {
+    try {
+      await photosService.UpdateAsync(photo!);
+      navigationManager.NavigateTo("/photos/all");
+    } catch (EditUnauthorizedException<Photo>) {
+      navigationManager.NavigateTo("/forbidden");
     }
-
-    private async Task Update() {
-        try {
-            await photosService.UpdateAsync(photo);
-            navigationManager.NavigateTo("/photos/all");
-        } catch (UnauthorizedEditAttemptException<Photo>) {
-            navigationManager.NavigateTo("/forbidden");
-        }
-    }
+  }
 }
 ```
 
 ### DeletePhoto.razor
 
 ```cs
-@using PhotoSharingApplication.Shared.Core.Exceptions
-@page "/photos/delete/{id:int}"
-
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
+@page "/photos/delete/{id:int}"
+@using PhotoSharingApplication.Shared.Exceptions
+
+<PageTitle>Delete Photo @photo?.Title</PageTitle>
+
 <MatH3>Delete</MatH3>
 
-@if (photo == null) {
-    <p>...Loading...</p>
+@if (photo is null) {
+  <p>...Loading...</p>
 } else {
-    <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <PhotoDetailsComponent Photo="photo" DeleteConfirm OnDeleteConfirmed="Delete"></PhotoDetailsComponent>
-            </div>
-        </div>
+  <div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+        <PhotoDetailsComponent Photo="photo" DeleteConfirm OnDeleteConfirmed="Delete"></PhotoDetailsComponent>
+      </div>
     </div>
+  </div>
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+  [Parameter]
+  public int Id { get; set; }
 
-    Photo photo;
+  Photo? photo;
 
-    protected override async Task OnInitializedAsync() {
-        photo = await photosService.FindAsync(Id);
+  protected override async Task OnInitializedAsync() {
+    photo = await photosService.FindAsync(Id);
+  }
+  private async Task Delete(int id) {
+    try {
+      await photosService.RemoveAsync(id);
+      navigationManager.NavigateTo("/photos/all");
+    } catch (DeleteUnauthorizedException<Photo>) {
+      navigationManager.NavigateTo("/forbidden");
     }
-    private async Task Delete(int id) {
-        try {
-            await photosService.RemoveAsync(id);
-            navigationManager.NavigateTo("/photos/all");
-        } catch (UnauthorizedDeleteAttemptException<Photo>) {
-            navigationManager.NavigateTo("/forbidden");
-        }
-    }
+  }
 }
 ```
 
 Create a new `Forbidden.razor` file in the same folder and configure its route:
 
-```cs
+```html
 @page "/forbidden"
 
 <MatH3>Forbidden</MatH3>
 
+<p>You are not authorized to perform this operation</p>
 @code {
+
 }
 ```
 
 ### CommentsComponent
 
-For the `Comments` part, we have to use the same logic but from within the methods of the `CommentsComponent.razor` file located under the `Shared` folder of our `PhotoSharingApplication.Frontend.BlazorWebAssembly` project:
+For the `Comments` part, we have to use the same logic but from within the methods of the `CommentsComponent.razor` file located under the `Components` folder of our `PhotoSharingApplication.Frontend.BlazorComponents` project:
 
 ```cs
-@using PhotoSharingApplication.Shared.Core.Interfaces
-@using PhotoSharingApplication.Shared.Core.Entities
-
-@using PhotoSharingApplication.Shared.Core.Exceptions
-@inject NavigationManager navigationManager
+@using PhotoSharingApplication.Shared.Exceptions
 @inject ICommentsService CommentsService
+@inject NavigationManager navigationManager
 
 <MatH3>Comments</MatH3>
 
-@if (comments == null) {
+@if (comments is null) {
   <p><em>No Comments for this Photo</em></p>
 } else {
+  <div class="list-group">
     @foreach (var comment in comments) {
-      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment" OnDelete="DeleteComment"></CommentComponent>
+      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
     }
     <AuthorizeView>
-      <Authorized>
+    <Authorized>
         <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
-      </Authorized>
-      <NotAuthorized>
-        <MatButton Link="authentication/login">Log In to Comment</MatButton>
-      </NotAuthorized>
+    </Authorized>
+        <NotAuthorized><MatButtonLink Href="bff/login">Log in to add a comment<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
     </AuthorizeView>
+  </div>
 }
+
 @code {
-  [Parameter]
-  public int PhotoId { get; set; }
+    [Parameter]
+    public int PhotoId { get; set; }
 
-  private List<Comment> comments;
+    private List<Comment>? comments;
 
-  protected override async Task OnInitializedAsync() {
-    comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);
-  }
-
-  async Task CreateComment(Comment comment) {
-    try {
-      comments.Add(await CommentsService.CreateAsync(comment));
-    } catch (UnauthorizedCreateAttemptException<Comment>) {
-      navigationManager.NavigateTo("/forbidden");
+    protected override async Task OnInitializedAsync() {
+        comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);
     }
-  }
-
-  async Task UpdateComment(Comment comment) {
-    try {
-      comment = await CommentsService.UpdateAsync(comment);
-    } catch (UnauthorizedEditAttemptException<Comment>) {
-      navigationManager.NavigateTo("/forbidden");
+    async Task CreateComment(Comment comment) {
+        try {
+            comments.Add(await CommentsService.CreateAsync(comment));
+        } catch (CreateUnauthorizedException<Comment>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
     }
-  }
 
-  async Task DeleteComment(Comment comment) {
-    try {
-      await CommentsService.RemoveAsync(comment.Id);
-      comments.Remove(comment);
-    } catch (UnauthorizedDeleteAttemptException<Photo>) {
-      navigationManager.NavigateTo("/forbidden");
+    async Task UpdateComment(Comment comment) {
+        try {
+            comment = await CommentsService.UpdateAsync(comment);
+        } catch (EditUnauthorizedException<Comment>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
     }
-  }
+
+    async Task DeleteComment(Comment comment) {
+        try {
+            await CommentsService.RemoveAsync(comment.Id);
+            comments.Remove(comment);
+        } catch (DeleteUnauthorizedException<Comment>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
+    }
 }
 ```
 
@@ -742,7 +1036,9 @@ Blazor WebAssembly and ASP.NET Core have two different ways to retrieve the curr
 
 As explained in the [Retrieve the current user in an ASP.NET Core app](https://docs.microsoft.com/en-us/aspnet/core/migration/claimsprincipal-current?view=aspnetcore-6.0#retrieve-the-current-user-in-an-aspnet-core-app) documentation, we need an `HttpContext`in order to get the current user. We can register an `IHttpContextAccessor` as a service and ask it as a dependency as explained in [Use HttpContext from custom components](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-context?view=aspnetcore-6.0#use-httpcontext-from-custom-components). The `IHttpContextAccessor` can give us access to `HttpContext` which in turn can give us the `User`.
 
-- In the `Solution Explorer`, create a new folder `Identity` under the `PhotoSharingApplication.Backend.Infrastructure` project.
+### Rest
+
+- In the `Solution Explorer`, create a new folder `Identity` under the `Infrastructure` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project.
 - In the `Identity` folder, create a new class. Name the class `UserService`
 - Let the class implement our `IUserService` interface
 - Add a constructor that asks for an `IHttpContextAccessor`, saving it into a private readonly field
@@ -751,39 +1047,53 @@ As explained in the [Retrieve the current user in an ASP.NET Core app](https://d
 The code should look like this:
 
 ```cs
-using Microsoft.AspNetCore.Http;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Backend.Infrastructure.Identity {
-    public class UserService : IUserService {
-        private readonly IHttpContextAccessor accessor;
-        public UserService(IHttpContextAccessor accessor) => this.accessor = accessor;
-        public Task<ClaimsPrincipal> GetUserAsync() => Task.FromResult(accessor.HttpContext.User);
-    }
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Identity;
+
+public class UserService : IUserService {
+  private readonly IHttpContextAccessor accessor;
+
+  public UserService(IHttpContextAccessor accessor) => this.accessor = accessor;
+  public Task<ClaimsPrincipal> GetUserAsync() => Task.FromResult(accessor.HttpContext.User);
 }
 ```
 
-The `IHttpContextAccessor` interface is to be found in the `Microsoft.AspNetCore.Http` package, which you have to add as a NuGet package.
+- Open the `Program.cs` class of the `PhotoSharingApplication.WebServices.Rest.Photos` project
+- Add a call to `builder.Services.AddHttpContextAccessor();`
+- Add a call to `builder.Services.AddScoped<IUserService, UserService>();`  
 
-We also need to add the `HttpContextAccessor` in the services of our Rest and gRPC applications.
-
-### Rest
-
-- Open the `Startup` class of the `PhotoSharingApplication.WebServices.REST.Photos` project
-- Locate the `ConfigureServices` method
-- Add a call to `services.AddHttpContextAccessor();`
-- Add a call to `services.AddScoped<IUserService, UserService>();`  
-which requires a `using PhotoSharingApplication.Backend.Infrastructure.Identity;`
+which requires a `using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Identity;`
 
 ### gRPC
 
-- Open the `Startup` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
-- Locate the `ConfigureServices` method
-- Add a call to `services.AddHttpContextAccessor();`
-- Add a call to `services.AddScoped<IUserService, UserService>();`  
-which requires a `using PhotoSharingApplication.Backend.Infrastructure.Identity;`
+- In the `Solution Explorer`, create a new folder `Identity` under the `Infrastructure` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project.
+- In the `Identity` folder, create a new class. Name the class `UserService`
+- Let the class implement our `IUserService` interface
+- Add a constructor that asks for an `IHttpContextAccessor`, saving it into a private readonly field
+- Implement the `GetUserAsync` method by returning the `HttpContext.User` property of the field saved in the constructor
+
+The code should look like this:
+
+```cs
+using PhotoSharingApplication.Shared.Interfaces;
+using System.Security.Claims;
+
+namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Identity;
+
+public class UserService : IUserService {
+  private readonly IHttpContextAccessor accessor;
+
+  public UserService(IHttpContextAccessor accessor) => this.accessor = accessor;
+  public Task<ClaimsPrincipal> GetUserAsync() => Task.FromResult(accessor.HttpContext.User);
+}
+```
+
+- Open the `Program` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
+- Add a call to `builder.Services.AddHttpContextAccessor();`
+- Add a call to `builder.Services.AddScoped<IUserService, UserService>();`  
+which requires a `using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Identity;`
 
 ### Frontend
 To get the current User, Blazor WebAssembly makes use of the `AuthenticationStateProvider`, as explained in the [AuthenticationStateProvider service](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-6.0#authenticationstateprovider-service) documentation.
@@ -845,7 +1155,7 @@ We can reuse the exact same code on both our Backend and FrontEnd, so we will in
 - In the Solution Explorer, add a new project
 - As a template, select `Class Library`
 - As a name, type `PhotoSharingApplication.Shared.Authorization`
-- Add a project reference to `PhotoSharingApplication.Shared.Core`
+- Add a project reference to `PhotoSharingApplication.Shared`
 - Add a reference to the `Microsoft.AspNetCore.Authorization` NuGet Package
 
 ### PhotosAuthorizationService
@@ -864,19 +1174,20 @@ The code should look like this:
 
 ```cs
 using Microsoft.AspNetCore.Authorization;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Shared.Authorization {
-    public class PhotosAuthorizationService : IAuthorizationService<Photo> {
-        private readonly IAuthorizationService authorizationService;
-        public PhotosAuthorizationService(IAuthorizationService authorizationService) => this.authorizationService = authorizationService;
-        public async Task<bool> ItemMayBeCreatedAsync(ClaimsPrincipal User, Photo photo) => (await authorizationService.AuthorizeAsync(User, photo, Policies.CreatePhoto)).Succeeded;
-        public async Task<bool> ItemMayBeDeletedAsync(ClaimsPrincipal User, Photo photo) => (await authorizationService.AuthorizeAsync(User, photo, Policies.DeletePhoto)).Succeeded;
-        public async Task<bool> ItemMayBeUpdatedAsync(ClaimsPrincipal User, Photo photo) => (await authorizationService.AuthorizeAsync(User, photo, Policies.EditPhoto)).Succeeded;
-    }
+namespace PhotoSharingApplication.Shared.Authorization;
+
+public class PhotosAuthorizationService : IAuthorizationService<Photo> {
+  private readonly IAuthorizationService authorizationService;
+  public PhotosAuthorizationService(IAuthorizationService authorizationService) => this.authorizationService = authorizationService;
+  public async Task<bool> ItemMayBeCreatedAsync(ClaimsPrincipal User, Photo item) => (await authorizationService.AuthorizeAsync(User, item, Policies.CreatePhoto)).Succeeded;
+
+  public async Task<bool> ItemMayBeDeletedAsync(ClaimsPrincipal User, Photo item) => (await authorizationService.AuthorizeAsync(User, item, Policies.DeletePhoto)).Succeeded;
+
+  public async Task<bool> ItemMayBeUpdatedAsync(ClaimsPrincipal User, Photo item) => (await authorizationService.AuthorizeAsync(User, item, Policies.EditPhoto)).Succeeded;
 }
 ```
 
@@ -898,19 +1209,21 @@ The code should look like this:
 
 ```cs
 using Microsoft.AspNetCore.Authorization;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace PhotoSharingApplication.Shared.Authorization {
-    public class CommentsAuthorizationService : IAuthorizationService<Comment> {
-        private readonly IAuthorizationService authorizationService;
-        public CommentsAuthorizationService(IAuthorizationService authorizationService) => this.authorizationService = authorizationService;
-        public async Task<bool> ItemMayBeCreatedAsync(ClaimsPrincipal User, Comment comment) => (await authorizationService.AuthorizeAsync(User, comment, Policies.CreateComment)).Succeeded;
-        public async Task<bool> ItemMayBeDeletedAsync(ClaimsPrincipal User, Comment comment) => (await authorizationService.AuthorizeAsync(User, comment, Policies.DeleteComment)).Succeeded;
-        public async Task<bool> ItemMayBeUpdatedAsync(ClaimsPrincipal User, Comment comment) => (await authorizationService.AuthorizeAsync(User, comment, Policies.EditComment)).Succeeded;
-    }
+namespace PhotoSharingApplication.Shared.Authorization;
+
+public class CommentsAuthorizationService : IAuthorizationService<Comment> {
+  private readonly IAuthorizationService authorizationService;
+
+  public CommentsAuthorizationService(IAuthorizationService authorizationService) => this.authorizationService = authorizationService;
+  public async Task<bool> ItemMayBeCreatedAsync(ClaimsPrincipal User, Comment item) => (await authorizationService.AuthorizeAsync(User, item, Policies.CreateComment)).Succeeded;
+
+  public async Task<bool> ItemMayBeDeletedAsync(ClaimsPrincipal User, Comment item) => (await authorizationService.AuthorizeAsync(User, item, Policies.DeleteComment)).Succeeded;
+
+  public async Task<bool> ItemMayBeUpdatedAsync(ClaimsPrincipal User, Comment item) => (await authorizationService.AuthorizeAsync(User, item, Policies.EditComment)).Succeeded;
 }
 ```
 
@@ -1010,11 +1323,12 @@ Our requirement is very simple, we don't need any additional configuration for t
 - Let the class implement the `IAuthorizationRequirement` interface
 
 ```cs
-public class SameAuthorRequirement : IAuthorizationRequirement { }
-```
-which requires
-```cs
 using Microsoft.AspNetCore.Authorization;
+
+namespace PhotoSharingApplication.Shared.Authorization;
+
+public class SameAuthorRequirement : IAuthorizationRequirement {
+}
 ```
 
 ### Authorization Handlers
@@ -1028,38 +1342,34 @@ Add a `PhotoEditDeleteAuthorizationHandler` class and replace its content with t
 
 ```cs
 using Microsoft.AspNetCore.Authorization;
-using PhotoSharingApplication.Shared.Core.Entities;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Authorization {
-  public class PhotoEditDeleteAuthorizationHandler : AuthorizationHandler<SameAuthorRequirement, Photo> {
+namespace PhotoSharingApplication.Shared.Authorization;
+
+public class PhotoEditDeleteAuthorizationHandler : AuthorizationHandler<SameAuthorRequirement, Photo> {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, SameAuthorRequirement requirement, Photo photo) {
-      if (context.User.Identity?.Name == photo.UserName) {
-        context.Succeed(requirement);
-      }
-
-      return Task.CompletedTask;
+        if (context.User.Identity?.Name == photo.UserName) {
+            context.Succeed(requirement);
+        }
+        return Task.CompletedTask;
     }
-  }
 }
 ```
 
 Add a `CommentEditDeleteAuthorizationHandler` class and replace its content with the following code:
 ```cs
 using Microsoft.AspNetCore.Authorization;
-using PhotoSharingApplication.Shared.Core.Entities;
-using System.Threading.Tasks;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Authorization {
-  public class CommentEditDeleteAuthorizationHandler : AuthorizationHandler<SameAuthorRequirement, Comment> {
+namespace PhotoSharingApplication.Shared.Authorization;
+
+public class CommentEditDeleteAuthorizationHandler : AuthorizationHandler<SameAuthorRequirement, Comment> {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, SameAuthorRequirement requirement, Comment comment) {
-      if (context.User.Identity?.Name == comment.UserName) {
-        context.Succeed(requirement);
-      }
-
-      return Task.CompletedTask;
+        if (context.User.Identity?.Name == comment.UserName) {
+            context.Succeed(requirement);
+        }
+        return Task.CompletedTask;
     }
-  }
 }
 ```
 
@@ -1072,10 +1382,10 @@ Each handler is added to the services collection by using ```services.AddSinglet
 ### PhotoSharingApplication.WebServices.REST.Photos
 
 - In the `PhotoSharingApplication.WebServices.REST.Photos` project, add a project reference to the `PhotoSharingApplication.Shared.Authorization` project
-- Open the `Startup.cs` and add this line of code at the bottom of the `ConfigureServices` method:
+- Open the `Program.cs` and add this line of code before the `var app = builder.Build();` line:
 
 ```cs
-services.AddSingleton<IAuthorizationHandler, PhotoEditDeleteAuthorizationHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, PhotoEditDeleteAuthorizationHandler>();
 ```
 
 which requires
@@ -1088,10 +1398,10 @@ using PhotoSharingApplication.Shared.Authorization;
 ### PhotoSharingApplication.WebServices.Grpc.Comments
 
 - In the `PhotoSharingApplication.WebServices.Grpc.Comments` project, add a project reference to the `PhotoSharingApplication.Shared.Authorization` project
-- Open the `Startup.cs` and add this line of code at the bottom of the `ConfigureServices` method:
+- Open the `Program.cs` and add this line of code before the `var app = builder.Build();` line:
 
 ```cs
-services.AddSingleton<IAuthorizationHandler, CommentEditDeleteAuthorizationHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, CommentEditDeleteAuthorizationHandler>();
 ```
 
 which requires
@@ -1103,8 +1413,8 @@ using PhotoSharingApplication.Shared.Authorization;
 
 ### PhotoSharingApplication.Frontend.BlazorWebAssembly
 
-- In the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, a dd a project reference to the `PhotoSharingApplication.Shared.Authorization` project
-- Open the `Program.cs` and add this line of code in the `Main` method, before `await builder.Build().RunAsync();`:
+- In the `PhotoSharingApplication.Frontend.Client` project, a dd a project reference to the `PhotoSharingApplication.Shared.Authorization` project
+- Open the `Program.cs` and add this line of code before `await builder.Build().RunAsync();`:
 
 ```cs
 builder.Services.AddSingleton<IAuthorizationHandler, PhotoEditDeleteAuthorizationHandler>();
@@ -1143,60 +1453,36 @@ Now let's add this policies on the backend and on the frontend.
 
 ### PhotoSharingApplication.WebServices.REST.Photos
 
-- Open the `Startup.cs` of the `PhotoSharingApplication.WebServices.REST.Photos` project and replace this code of the `ConfigureServices` method:
-
-
-```cs
-services.AddAuthorization(options => {
-  options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy => {
-    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-    policy.RequireClaim(JwtClaimTypes.Name);
-  });
-});
-```
-
-with this code:
+- Open the `Program.cs` of the `PhotoSharingApplication.WebServices.Rest.Photos` project and add this code :
 
 ```cs
-services.AddAuthorization(options => {
-  options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy => {
-    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-    policy.RequireClaim(JwtClaimTypes.Name);
-  });
-  
+builder.Services.AddAuthorization(options => {
   options.AddPhotosPolicies();
 });
 ```
 
 ### PhotoSharingApplication.WebServices.Grpc.Comments
 
-- Open the `Startup.cs` and replace this code of the `ConfigureServices` method:
+- Open the `Program.cs` and replace this code:
 
 ```cs
-services.AddAuthorization(options => {
-  options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy => {
-    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-    policy.RequireClaim(JwtClaimTypes.Name);
-  });
-});
+builder.Services.AddAuthorization();
 ```
 with this code:
 
 ```cs
-services.AddAuthorization(options => {
-  options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy => {
-    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-    policy.RequireClaim(JwtClaimTypes.Name);
-  });
-  
-  options.AddCommentsPolicies();
-});
+builder.Services.AddAuthorization(options => options.AddCommentsPolicies());
 ```
 
-### PhotoSharingApplication.Frontend.BlazorWebAssembly
+### PhotoSharingApplication.Frontend.Client
 
-- In the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, add a project reference to `PhotoSharingApplication.Shared.Authorization`
-- Open the `Program.cs` and add this lines of code in the `Main` method
+- In the `PhotoSharingApplication.Frontend.Client` project, add a project reference to `PhotoSharingApplication.Shared.Authorization`
+- Open the `Program.cs` and replce this code:
+
+```cs
+builder.Services.AddAuthorizationCore();
+```
+With this:
 
 ```cs
 builder.Services.AddAuthorizationCore(options => {
@@ -1211,39 +1497,39 @@ using PhotoSharingApplication.Shared.Authorization;
 
 ## IAuthorizationService registration
 
-Now let's register our `Authorization` as a service in our Blazor, Rest and gRpc projects.
+Now let's register our `Authorization` as a service in our Frontend Client, Rest and gRpc projects.
 - Blazor
-  - Open the `Program` class of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
+  - Open the `Program` class of the `PhotoSharingApplication.Frontend.Client` project
   - Add a call to `builder.Services.AddScoped<IAuthorizationService<Comment>, CommentsAuthorizationService>();`
   - Add a call to `builder.Services.AddScoped<IAuthorizationService<Photo>, PhotosAuthorizationService>();`  
   - Add a `using PhotoSharingApplication.Shared.Core.Entities;`
 - REST
-  - Open the `Startup` class of the `PhotoSharingApplication.WebServices.REST.Photos` project
-  - Locate the `ConfigureServices` and add a call to the `services.AddScoped<IAuthorizationService<Comment>, CommentsAuthorizationService>();`
+  - Open the `Program` class of the `PhotoSharingApplication.WebServices.Rest.Photos` project
+  - Add a call to the `builder.Services.AddScoped<IAuthorizationService<Photo>, PhotosAuthorizationService>();`
   - Add a `using PhotoSharingApplication.Shared.Core.Entities;`
 -gRpc
   - Open the `Startup` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
-  - Locate the `ConfigureServices` and add a call to the `services.AddScoped<IAuthorizationService<Comment>, CommentsAuthorizationService>();`
+  - Add a call to the `builder.Services.AddScoped<IAuthorizationService<Comment>, CommentsAuthorizationService>();`
   - Add a `using PhotoSharingApplication.Shared.Core.Entities;`
 
-### Backend Infrastructure - PhotosRepository
+### REST Infrastructure - PhotosRepository
 
 To avoid exceptions, let's change our repositories server side to not keep track of the Photo (and Comment) when we read the data.
 
-- Under the `EntityFramework` subfolder of the `Repositories` folder of the `PhotoSharingApplication.Backend.Infrastructure` project, open the `PhotosRepository` class
+- Under the `Infrastructure/Repositories/EntityFramework` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project, open the `PhotosRepository` class
 - Modify the `FindAsync` method as follows
 
 ```cs
-public async Task<Photo> FindAsync(int id) => await context.Photos.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
+public async Task<Photo?> FindAsync(int id) => await context.Photos.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
 ```
 
-### Backend Infrastructure - CommentsRepository
+### Grpc Infrastructure - CommentsRepository
 
-- Under the `EntityFramework` subfolder of the `Repositories` folder of the `PhotoSharingApplication.Backend.Infrastructure` project, open the `CommentsRepository` class
+- Under the `Infrastructure/Repositories/EntityFramework` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project, open the `CommentsRepository` class
 - Modify the `FindAsync` method as follows
 
 ```cs
-public async Task<Comment> FindAsync(int id) => await context.Comments.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
+public async Task<Comment?> FindAsync(int id) => await context.Comments.AsNoTracking().SingleOrDefaultAsync(m => m.Id == id);
 ```
 
 If you run the application now, you should be able to create, edit and delete photos and comments only under the right conditions. You should get a `Forbidden` page whenever you try to perform and unauthorized operation.  

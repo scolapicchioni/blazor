@@ -2,10 +2,10 @@
 
 In this lab we're going connect everything together.  
 
-We're going to use a design pattern called [Backends For Frontends](https://docs.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), where the client calls our own server (*home* so to speak) and the server calls the Rest Service, basically acting like a reverse proxy.
+We're going to use a design pattern called [Backends For Frontends](https://docs.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), where the client calls our own server (*home* so to speak) and the server calls the Rest Service, using a reverse proxy.
 
 Our client will issue http requests to our server and it will handle the results to update the model. Blazor already takes care of updating the UI.  
-Our Server will forward the calls to the REST service and return the results to the client. Although we could use libraries to forward the call (such as [YARP](https://microsoft.github.io/reverse-proxy/index.html) for example), we're going to do it manually. It's a bit more work, but in our case it is going to be a copy/paste of code that we have to write anyway. Feel free to learn and use YARP if you prefer.
+Our Server will forward the calls to the REST service and return the results to the client. Since there is no point in reinventing the wheel, we're going to use [YARP](https://microsoft.github.io/reverse-proxy/index.html), a library that will forward the calls for us so that we don't have to write any service for it.
 
 Let's start by our `Frontend` project.
 
@@ -127,56 +127,56 @@ with
 builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest.PhotosRepository>();
 ```
 
-## The Backend
+## The Backend for Frontend
 
-The Client calls the Server and the Server now needs a REST service to call the REST Service.  
-- We're going to create a `Controller` just like the one we made for the `REST` project
-- The `Controller` will use a `Service`, again like the one we made for the `REST` project
-- The `Service` will use a `Repository`, which will look like the `PhotosRepository` we created in the `Client` project
+The Client calls the Server and the Server now needs to forward the call to the REST service. We need to:  
+- Add the YARN package, as described in the [Getting Started](https://microsoft.github.io/reverse-proxy/articles/getting-started.html)
+- Add the services and middleware to the pipleline
+- Configure YARN to forward the calls to the correct backend address
 
-### The Controller
-
-Copy the `PhotosController` class from the `Controllers` folder of the `REST` project and paste it under the `Controllers` folder of the `Frontend.Server` project.  
-Change the namespace to match the folder structure.
+- In the `PhotoSharingApplication.Frontend.Server` project, add a `Yarp.ReverseProxy` nuGet package
+- [Add the YARP Middleware](https://microsoft.github.io/reverse-proxy/articles/getting-started.html#add-the-yarp-middleware) by opening `Program.cs` and adding the following lines:
 
 ```cs
-namespace PhotoSharingApplication.Frontend.Server.Controllers;
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 ```
 
-### The Service
-
-Copy the `Core` folder of the `REST` project and paste it into the `Frontend.Server` project, with all its content.  
-Change the namespace of the `PhotosService` class to match the folder structure.
+Then replace 
 
 ```cs
-namespace PhotoSharingApplication.Frontend.Server.Core.Services;
+app.MapControllers();
 ```
 
-### The Repository
-
-Copy the `Infrastructure` folder of the `Frontend.Client` project and paste it into the `Frontend.Server` project, with all its content.  
-You can remove the `Memory` folder if you want to.
-Change the namespace of the `PhotosRepository` class to match the folder structure.
+with 
 
 ```cs
-namespace PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Rest;
+app.MapReverseProxy();
 ```
 
-### Dependency Injection
+- Add the [Configuration](https://microsoft.github.io/reverse-proxy/articles/getting-started.html#configuration) to the `appsettings.json` file:
 
-Open the `Program.cs` file of the `Frontend.Server` project.  Add the following lines right before the building of the app:
-
-```cs
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5003") });
-builder.Services.AddScoped<IPhotosService, PhotosService>();
-builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Server.Infrastructure.Repositories.Rest.PhotosRepository>();
-
-//add those previous lines before this one:
-var app = builder.Build();
+```json
+"ReverseProxy": {
+    "Routes": {
+        "photosrestroute": {
+            "ClusterId": "photosrestcluster",
+            "Match": {
+                "Path": "/photos/{*any}"
+            }
+        }
+    },
+    "Clusters": {
+        "photosrestcluster": {
+            "Destinations": {
+                "photosrestdestination": {
+                "Address": "https://localhost:5003/"
+                }
+            }
+        }
+    }
+}
 ```
-
-**NOTE: Your port may be diffferent. Ensure that the address you setup for the HttpClient corresponds to the one where your Rest Service is running**
-
 ## Start both projects
 
 In order to start both projects at the same time, we need to configure the Solution in Visual Studio

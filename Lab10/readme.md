@@ -15,7 +15,7 @@ Specifically, the [ASP.NET Core Identity](https://docs.duendesoftware.com/identi
 - We will configure our client (the Backend For Frontend) by:
   - [Adding an interactive client](https://docs.duendesoftware.com/identityserver/v6/quickstarts/2_interactive/)
 - We will protect our Frontend by
-  - [Using the Duende.BFF security framework](https://docs.duendesoftware.com/identityserver/v6/quickstarts/7_blazor/)
+  - [Using the Duende.BFF security framework](https://docs.duendesoftware.com/identityserver/v6/quickstarts/7_blazor/), specifically integrating it with YARP
 
 ## The Authentication Server
 
@@ -201,12 +201,10 @@ Open your `Program.cs`, add the following code before building the app:
 
 ```cs
 builder.Services.AddAuthentication("Bearer")
-.AddJwtBearer("Bearer", options =>
-{
+.AddJwtBearer("Bearer", options => {
     options.Authority = "https://localhost:5007";
 
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
+    options.TokenValidationParameters = new TokenValidationParameters {
         ValidateAudience = false
     };
 });
@@ -234,7 +232,7 @@ Open your `PhotosController` class, locate the `CreateAsync` method and add the 
 [HttpPost]
 public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
     Photo? p = await service.UploadAsync(photo);
-    return CreatedAtRoute("Find", photo, new { id = photo.Id });
+    return CreatedAtRoute("Find", new { id = p.Id }, p);
 }
 ```
 
@@ -374,18 +372,45 @@ app.UseAuthorization();
 app.MapBffManagementEndpoints();
 ```
 
-- Mark the controllers endpoint as a BFF API endpoint by locating the `MapControllers` invocation and replacing it with
+- Since we already use YARP, we're going to follow the [documentation](https://docs.duendesoftware.com/identityserver/v5/bff/apis/remote/#use-a-fully-fledged-reverse-proxy) to configure Duende with YARP.
+
+- To enable our YARP integration, add a reference to the `Duende.BFF.Yarp` Nuget package and add the YARP and our service to DI by replcing this code:
 
 ```cs
-app.MapControllers().AsBffApiEndpoint(); 
+builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 ```
+
+with this code:
+
+```cs
+builder.Services.AddReverseProxy().AddTransforms<AccessTokenTransformProvider>().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+```
+
+which requires
+
+```cs
+using Duende.Bff.Yarp;
+```
+
+- Add the YARP endpoint to the routing table by replacing this code
+
+```cs
+app.MapReverseProxy();
+```
+
+with this code
+
+```cs
+app.MapReverseProxy().AsBffApiEndpoint();
+```
+
 
 ### The Frontend.Client
 
 Now let's add authentication and authorization to our WebAssembly project, the `Fontend.Client`
 
-- Add the `Microsoft.AspNetCore.Components.WebAssembly.Authentication` authentication/authorization related package to both the `Fontend.Client` and the `BlazorComponents` projects
-- Add a using statement to `_Imports.razor` to bring the above package in scope in both the `Fontend.Client` and the `BlazorComponents` projects
+- Add the `Microsoft.AspNetCore.Components.WebAssembly.Authentication` authentication/authorization related package to both the `Frontend.Client` and the `BlazorComponents` projects
+- Add a using statement to `_Imports.razor` to bring the above package in scope in both the `Frontend.Client` and the `BlazorComponents` projects
 
 ```cs
 @using Microsoft.AspNetCore.Components.Authorization
@@ -415,7 +440,7 @@ Now let's add authentication and authorization to our WebAssembly project, the `
     <MatNavItem Href="/photos/all">All Photos <MatIcon Icon="@MatIconNames.List"></MatIcon></MatNavItem>
     <AuthorizeView>
         <Authorized>
-            <strong>Hello, @context.User.Identity.Name!</strong>
+            <MatHeadline6>Hello, @context.User.Identity.Name!</MatHeadline6>
             <MatNavItem Href="/photos/upload">Upload Photo <MatIcon Icon="@MatIconNames.Add"></MatIcon></MatNavItem>
             <MatNavItem Href="@context.User.FindFirst("bff:logout_url")?.Value">Log out <MatIcon Icon="@MatIconNames.Exit_to_app"></MatIcon></MatNavItem>
         </Authorized>
@@ -510,7 +535,7 @@ public class BffAuthenticationStateProvider : AuthenticationStateProvider {
 }
 ```
 
-and register it in the client’s Program.cs:
+and register it in the client's `Program.cs` file:
 
 ```cs
 builder.Services.AddAuthorizationCore();
@@ -534,6 +559,8 @@ This can be easily accomplished by a delegating handler that can be plugged into
 namespace PhotoSharingApplication.Frontend.Client.DuendeAuth;
 
 public class AntiforgeryHandler : DelegatingHandler {
+    public AntiforgeryHandler() { }
+    public AntiforgeryHandler(HttpClientHandler innerHandler) : base(innerHandler) { }
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         request.Headers.Add("X-CSRF", "1");
         return base.SendAsync(request, cancellationToken);
@@ -541,12 +568,12 @@ public class AntiforgeryHandler : DelegatingHandler {
 }
 ```
 
-and register it in the client's Program.cs (overriding the standard HTTP client configuration), which means remove this line:
+and register it in the client's `Program.cs` by replacing this line:
 
 ```cs
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 ```
-and replace it with
+with
 
 ```cs
 builder.Services.AddTransient<AntiforgeryHandler>();
@@ -554,6 +581,30 @@ builder.Services.AddTransient<AntiforgeryHandler>();
 builder.Services.AddHttpClient("backend", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
     .AddHttpMessageHandler<AntiforgeryHandler>();
 builder.Services.AddTransient(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("backend"));
+```
+
+and replacing this code:
+
+```cs
+builder.Services.AddSingleton(services => {
+    var backendUrl = new Uri(builder.HostEnvironment.BaseAddress);
+    var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions {
+        HttpHandler = new GrpcWebHandler(new HttpClientHandler())
+    });
+    return new Commenter.CommenterClient(channel);
+});
+```
+
+with this:
+
+```cs
+builder.Services.AddSingleton(services => {
+    var backendUrl = new Uri(builder.HostEnvironment.BaseAddress);
+    var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions {
+        HttpHandler = new GrpcWebHandler(new AntiforgeryHandler(new HttpClientHandler())),
+    });
+    return new Commenter.CommenterClient(channel);
+});
 ```
 
 Which requires you to install the `Microsoft.Extensions.Http` NuGet Package.
@@ -606,71 +657,54 @@ If you run the application now, you should be able to login whenever you try to 
 
 ## Retrieving the Access Token
 
-As explained in the [ASP.NET Core and API access](https://docs.duendesoftware.com/identityserver/v6/quickstarts/3_api_access/) tutorial, we need to:
-- Retrieve the access token from the session using the `GetTokenAsync` method from `Microsoft.AspNetCore.Authentication`
-- Set the token in an `Authentication: Bearer` HTTP header 
+As explained in the [Duende](https://docs.duendesoftware.com/identityserver/v5/bff/apis/remote/#configuring-yarp) tutorial, we need to add an entry to YARP’s metadata dictionary to instruct our plumbing to forward the current user access token for the route:
+- Open the `appsettings.json` file in the `PhotoSharingApplication.Frontend.Server` project
+- Replace this code
 
-To retrieve the token, we need access to the `HttpContextAccessor`, which we can get if we follow the [documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-context?view=aspnetcore-6.0#use-httpcontext-from-custom-components).
-
-- Open the `PhotosRepository` class under the `Infrastructure/Repositories/Rest` folder of the `PhotoSharingApplication.Frontend.Server` project.
-- Add a dependency on an `iHttpContextAccessor` in the constructor
-- Save the dependency in a private readonly field
-
-```cs
-private readonly IHttpContextAccessor httpContextAccessor;
-
-public PhotosRepository(HttpClient http, IHttpContextAccessor httpContextAccessor) => (this.http, this.httpContextAccessor) = (http, httpContextAccessor);
+```json
+"Routes": {
+    "photosrestroute": {
+        "ClusterId": "photosrestcluster",
+        "Match": {
+            "Path": "/photos/{*any}"
+        }
+    },
+    "commentsgrpcroute": {
+        "ClusterId": "commentsgrpccluster",
+        "Match": {
+            "Path": "/comments.Commenter/{*any}"
+        }
+    }
+}
 ```
 
-The `CreateAsync` can now become:
+with this:
 
-```cs
-public async Task<Photo?> CreateAsync(Photo photo) {
-    var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-    http.SetBearerToken(token);
-    HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
-    return await response.Content.ReadFromJsonAsync<Photo>();
+```json
+"Routes": {
+    "photosrestroute": {
+        "ClusterId": "photosrestcluster",
+        "Match": {
+            "Path": "/photos/{*any}"
+        },
+        "Metadata": {
+            "Duende.Bff.Yarp.TokenType": "User"
+        }
+    },
+    "commentsgrpcroute": {
+        "ClusterId": "commentsgrpccluster",
+        "Match": {
+            "Path": "/comments.Commenter/{*any}"
+        },
+        "Metadata": {
+            "Duende.Bff.Yarp.TokenType": "User"
+        }
+    }
 }
 ```
 ### Try it
 
-If you run the application now, after loggin (*alice* / *Pass123$*)in you should be able to upload a photo again.
-
-## Configuring the gRpc client
-
-For the gRpc client, we're going to use more or less the same strategy.   
-We can modify the Repository to let it use the HttpContextAccessor to retrieve the token, then add it to the request header.  
-- Open the `CommentsRepository` class located in the `Infrastructure/Repositories/Grpc` folder of the `PhotoSharingApplication.Frontend.Server` project
-- Modify the constructor to accept an instance of `IHttpContextAccessor`, saving it in a private readonly field
-
-```cs
-private readonly IHttpContextAccessor httpContextAccessor;
-
-public CommentsRepository(Commenter.CommenterClient gRpcClient, IHttpContextAccessor httpContextAccessor) => (this.gRpcClient, this.httpContextAccessor) = (gRpcClient, httpContextAccessor);
-```
-
-- Modify the `CreateAsync` method to make use of the `GetUserAccessTokenAsync`
-
-```cs
-public async Task<Comment?> CreateAsync(Comment comment) {
-    var headers = new Metadata();
-    var token = await httpContextAccessor.HttpContext.GetUserAccessTokenAsync();
-    headers.Add("Authorization", $"Bearer {token}");
-
-    CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
-    CreateReply c = await gRpcClient.CreateAsync(createRequest,headers);
-    return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
-}
-```
-
-## Try it
-
-- Start your 4 projects
-- Login to Duende
-- Go to the Details of a Photo
-- Add a new Comment
-
-You should see that the new comment appears under the details of the Photo.
+If you run the application now, after loggin (*alice* / *Pass123$*)in you should be able to upload a photo and add a comment again.
 If you don't log on first, you should see an error.
 
 ## UI
@@ -683,6 +717,12 @@ Let's use an `<AuthorizeView>` component and display
   - The Link to the `Upload` route if the user is authorized
   - The link to the `Login` route if the user is not authorized
 
+- Open the `AllPhoto.razor` file under the `Pages` folder of the `PhotoSharing.Frontend.BlazorComponents` project and replace this code
+
+```html
+<MatButton Link="photos/upload">Upload new Photo</MatButton>
+```
+with this
 
 ```html
 <AuthorizeView>
@@ -713,9 +753,7 @@ Once again,  we're going to use an `<AuthorizedView>` component.
       <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
     }
     <AuthorizeView>
-    <Authorized>
-        <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
-    </Authorized>
+        <Authorized><CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent></Authorized>
         <NotAuthorized><MatButtonLink Href="bff/login">Log in to add a comment<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
     </AuthorizeView>
   </div>
@@ -726,7 +764,7 @@ Now if you run the application you'll see the form to post a comment only if you
 
 ## Adding the User.Name to Photos and Comments
 
-So now we need to get the user name on the server, on both the Rest API, so that we can add it to a new Photo, and the gRpc service, so that we can add it to a new comment.
+So now we need to get the user name on the server, on both the Rest API and the gRpc service, so that we can add it to a new Photo and Comment.
 
 ### The REST API
 

@@ -1,0 +1,35 @@
+﻿@page "/photos/all"
+@inject IPhotosService photosService
+
+<PageTitle>All Photos</PageTitle>
+
+<MatH3>All Photos</MatH3>
+
+<AuthorizeView>
+    <Authorized><MatButton Link="photos/upload">Upload new Photo</MatButton></Authorized>
+    <NotAuthorized><MatButtonLink Href="bff/login">Log in to upload a photo<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
+</AuthorizeView>
+
+
+@if (photos is null) {
+    <p>...Loading...</p>
+} else {
+    <div class="mat-layout-grid">
+        <div class="mat-layout-grid-inner">
+            @foreach (var photo in photos) {
+                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
+                    <PhotoDetailsComponent Photo="photo" Edit Delete Details></PhotoDetailsComponent>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    List<Photo>? photos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        photos = await photosService.GetPhotosAsync();
+    }
+}

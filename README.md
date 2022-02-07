@@ -1,4 +1,4 @@
-# Building a PhotoSharing Application with Blazor Web Assembly, Web API, gRPC and Identity Server
+# Building a PhotoSharing Application with Blazor Web Assembly Hosted, Web API, gRPC and Duende Identity Server
 
 We're going to build a simple web site where people can post pictures and comments.
 - Everyone can browse existing pictures and comments.
@@ -6,32 +6,41 @@ We're going to build a simple web site where people can post pictures and commen
 - Only a picture owner can edit or delete a picture.
 - Only a comment owner can delete or update a comment.
 
+![Application Architecture](ApplicationArchitecture.drawio.svg)
+
 We are going to build 3 parts. 
-- The *FrontEnd*, a **Blazor Client** Web Application
+- The *FrontEnd*, a **Blazor Client** Web Application paired with its own **ASP.NET Core Web Host**.
 - The *Backend*, built with .NET 6.0, will consist of 
     - A **REST** service for the managing of the pictures
     - A **gRPC** service for the comments
-- The *Identity Provider* will be our own **Identity Server 4**.
+- The *Identity Provider* will be our own **Duende** project.
 
-1 - FrontEnd
+1.1 - FrontEnd Client
    - Blazor Client
    - HTML 5
    - CSS 3
    - Open Id Connect Client
 
-This project will interact with the user through a browser by dinamically constructing an HTML user interface and will talk to the server by using **gRPC Web** and **HttpClient**.
+This project will interact with the user through a browser by dinamically constructing an HTML user interface and will talk its own server by using **gRPC Web** and **HttpClient**.
+
+1.2 - Backend For Frontend (BFF)
+   - ASP.Net Core Web Host
+   - YARP
+   - Duende.Bff.Yarp
+
+This project hosts and serves the Blazor Client application. It also acts as a reverse proxy to forward the calls to the REST and gRpc backends.
 
 2.1  - Photos REST Service 
    - .NET 6 Web API Controller
    - Entity Framework Core 6.0
    - Sql Server Database
-   - Identity Server Client Authentication
+   - Duende Client Authentication
 
 2.2  - Comments gRPC Service 
    - .NET 6 gRPC Service
    - Entity Framework Core 6.0
    - Sql Server Database
-   - Identity Server Client Authentication
+   - Duende Client Authentication
 
 These projects will be responsible to store the data on the server and respond to the client requests through http, json and protobuf.
 
@@ -55,6 +64,7 @@ This project will take care of the authentication part. It will issue JWT tokens
 - Entity Framework Core 6.0
 - Swagger / OpenAPI
 - CORS
+- YARP
 - Authentication and Authorization
 - OAuth 2 and Open Id Connect
 - Identity Server 4 (Duende)

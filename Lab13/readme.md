@@ -3,9 +3,9 @@
 In this lab we're going to talk about validating our data.  
 
 Our goal is to 
-- prevent having the wrong data in our database
-- reject invalid data
-- show error messages explaining the rules, so that the user can correct the mistakes
+- Prevent having the wrong data in our database
+- Reject invalid data
+- Show error messages explaining the rules, so that the user can correct the mistakes
 
 .NET core has some builtin ways to validate data, for example [Data Annotations](https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations?view=net-6.0) are a set of attributes used behind the scene by both [Asp.net Core](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/validation?view=aspnetcore-6.0) and [Entity Framework](https://docs.microsoft.com/en-us/ef/ef6/modeling/code-first/data-annotations).
 
@@ -31,7 +31,6 @@ We can also use Fluent Validation at an *Application* level:
 
 FluentValidations are in fact also supported by
 - ASP.NET Core, by including the [FluentValidation.AspNetCore](https://docs.fluentvalidation.net/en/latest/aspnet.html#asp-net-core)  Package
-- gRpc, by including [gRpc Asp Net Core Validator](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator) Package
 - Blazor, by including the [Blazored FluentValidation](https://github.com/Blazored/FluentValidation) Package
 
 So, as a recap.
@@ -44,7 +43,7 @@ Let's start.
 
 ## Validators and Rules
 
-- Add the `FluentValidation` NuGet Package to the `PhotoSharingApplication.Shared.Core` project.  
+- Add the `FluentValidation` NuGet Package to the `PhotoSharingApplication.Shared` project.  
 - Add a new folder `Validators`
 - In the `Validators` folder, add a new `PhotoValidator` class
 - As explained in the [documentation](https://docs.fluentvalidation.net/en/latest/start.html#creating-your-first-validator), let the class derive from `AbstractValidator<Photo>`
@@ -57,16 +56,16 @@ The code should look like this:
 
 ```cs
 using FluentValidation;
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Validators {
-    public class PhotoValidator : AbstractValidator<Photo> {
-        public PhotoValidator() {
-            RuleFor(photo => photo.Title).NotEmpty();
-            RuleFor(photo => photo.Title).MaximumLength(255);
+namespace PhotoSharingApplication.Shared.Validators;
 
-            RuleFor(photo => photo.PhotoImage).SetValidator(new PhotoImageValidator());
-        }
+public class PhotoValidator : AbstractValidator<Photo> {
+    public PhotoValidator() {
+        RuleFor(photo => photo.Title).NotEmpty();
+        RuleFor(photo => photo.Title).MaximumLength(255);
+
+        RuleFor(photo => photo.PhotoImage).SetValidator(new PhotoImageValidator());
     }
 }
 ```
@@ -82,16 +81,16 @@ The code should look like this:
 
 ```cs
 using FluentValidation;
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Validators {
-    public class PhotoImageValidator : AbstractValidator<PhotoImage>{
-        public PhotoImageValidator() {
-            RuleFor(photoImage => photoImage.ImageMimeType).NotEmpty();
-            RuleFor(photoImage => photoImage.ImageMimeType).MaximumLength(255);
+namespace PhotoSharingApplication.Shared.Validators;
 
-            RuleFor(photoImage => photoImage.PhotoFile).NotEmpty();
-        }
+public class PhotoImageValidator : AbstractValidator<PhotoImage> {
+    public PhotoImageValidator() {
+        RuleFor(photoImage => photoImage.ImageMimeType).NotEmpty();
+        RuleFor(photoImage => photoImage.ImageMimeType).MaximumLength(255);
+
+        RuleFor(photoImage => photoImage.PhotoFile).NotEmpty();
     }
 }
 ```
@@ -107,27 +106,26 @@ The code should look like this:
 
 ```cs
 using FluentValidation;
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Core.Validators {
-    public class CommentValidator : AbstractValidator<Comment> {
-        public CommentValidator() {
-            RuleFor(comment => comment.Subject).NotEmpty();
-            RuleFor(comment => comment.Subject).MaximumLength(250);
+namespace PhotoSharingApplication.Shared.Validators;
 
-            RuleFor(comment => comment.Body).NotEmpty();
-        }
+public class CommentValidator : AbstractValidator<Comment> {
+    public CommentValidator() {
+        RuleFor(comment => comment.Subject).NotEmpty();
+        RuleFor(comment => comment.Subject).MaximumLength(250);
+
+        RuleFor(comment => comment.Body).NotEmpty();
     }
 }
 ```
 
-## Validating from the *Core Layer*, Server Side
-
-- Add the `FluentValidation` NuGet Package to the `PhotoSharingApplication.Backend.Core` project.  
+## Photos Rest API
 
 ### PhotosService
 
-- Open the `PhotosService` class located under the `Services` folder of the `PhotoSharingApplication.Backend.Core` project
+- Add the `FluentValidation.AspNetCore` NuGet Package to the `PhotoSharingApplication.WebServices.Rest.Photos` project.  
+- Open the `PhotosService` class located under the `Core/Services` folder of the `PhotoSharingApplication.WebServices.Rest.Photos` project
 - Use Dependency Injection from its constructor to ask for an `IValidator<Photo>` and save it into a private readonly variable
 - In the `UpdateAsync` and `UploadAsync`, invoke the [ValidateAndThrow](https://docs.fluentvalidation.net/en/latest/start.html#throwing-exceptions) method before submitting the photo to the repository
 
@@ -137,200 +135,70 @@ The code should look like this:
 using FluentValidation;
 //(...code omitted for brevity...)
 
-namespace PhotoSharingApplication.Backend.Core.Services {
-    public class PhotosService : IPhotosService {
+namespace PhotoSharingApplication.Backend.Core.Services;
+public class PhotosService : IPhotosService {
 
-        //(...code omitted for brevity...)
-        
-        private readonly IValidator<Photo> validator;
+    //(...code omitted for brevity...)
+    
+    private readonly IValidator<Photo> validator;
 
-        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService, IValidator<Photo> validator) {
+    public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService, IValidator<Photo> validator) =>
+    (this.repository, this.photosAuthorizationService, this.userService, this.validator) = (repository, photosAuthorizationService, userService, validator);
+    
+    //(...code omitted for brevity...)
+    
+    public async Task<Photo?> UpdateAsync(Photo photo) {
+        var user = await userService.GetUserAsync();
+        if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo)) {
+            validator.ValidateAndThrow(photo);
+            return await repository.UpdateAsync(photo);
+        }
+        else throw new EditUnauthorizedException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
+    }
 
-            //(...code omitted for brevity...)
-            
-            this.validator = validator;
-        }
-        
-        //(...code omitted for brevity...)
-        
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo)) {
-                validator.ValidateAndThrow(photo);
-                return await repository.UpdateAsync(photo);
-            } else throw new UnauthorizedEditAttemptException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
-        }
-        public async Task<Photo> UploadAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
-                photo.CreatedDate = DateTime.Now;
-                photo.UserName = user.Identity.Name;
-                validator.ValidateAndThrow(photo);
-                return await repository.CreateAsync(photo);
-            } else throw new UnauthorizedCreateAttemptException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
-        }
+    public async Task<Photo?> UploadAsync(Photo photo) {
+        var user = await userService.GetUserAsync();
+        if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
+            photo.CreatedDate = DateTime.Now;
+            photo.UserName = user?.Identity?.Name;
+            validator.ValidateAndThrow(photo);
+            return await repository.CreateAsync(photo);
+        } else throw new CreateUnauthorizedException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
     }
 }
 ```
 
-### CommentsService
+In order to try if this works, we need to register the `IValidator<Photo>` in the DI Containers.
 
-- Open the `CommentsService` class located under the `Services` folder of the `PhotoSharingApplication.Backend.Core` project
-- Use Dependency Injection from its constructor to ask for an `IValidator<Comment>` and save it into a private readonly variable
-- In the `UpdateAsync` and `CreateAsync`, invoke the [ValidateAndThrow](https://docs.fluentvalidation.net/en/latest/start.html#throwing-exceptions) method before submitting the photo to the repository
+As explained in the [documentation](https://docs.fluentvalidation.net/en/latest/aspnet.html):
+
+- Open the `Program.cs` class
+- Invoke the `AddFluentValidation` extension method
+- Register the `PhotoValidator` with the services collection by calling the `AddScoped` method
 
 The code should look like this:
 
 ```cs
-using FluentValidation;
-//(...code omitted for brevity...)
-
-namespace PhotoSharingApplication.Backend.Core.Services {
-    public class CommentsService : ICommentsService {
-        //(...code omitted for brevity...)
-        private readonly IValidator<Comment> validator;
-
-        public CommentsService(ICommentsRepository repository, IAuthorizationService<Comment> commentsAuthorizationService, IUserService userService, IValidator<Comment> validator) =>
-            (this.repository, this.commentsAuthorizationService, this.userService, this.validator) = (repository, commentsAuthorizationService, userService, validator);
-
-        //(...code omitted for brevity...)
-        
-        public async Task<Comment> CreateAsync(Comment comment) {
-            var user = await userService.GetUserAsync();
-            if (await commentsAuthorizationService.ItemMayBeCreatedAsync(user, comment)) {
-                comment.SubmittedOn = DateTime.Now;
-                comment.UserName = user.Identity.Name;
-                validator.ValidateAndThrow(comment);
-                return await repository.CreateAsync(comment);
-            } else throw new UnauthorizedCreateAttemptException<Comment>($"Unauthorized Create Attempt of Comment {comment.Id}");
-        }
-
-        public async Task<Comment> UpdateAsync(Comment comment) {
-            var user = await userService.GetUserAsync();
-            Comment oldComment = await repository.FindAsync(comment.Id);
-            if (await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment)) {
-                oldComment.Subject = comment.Subject;
-                oldComment.Body = comment.Body;
-                oldComment.SubmittedOn = DateTime.Now;
-                validator.ValidateAndThrow(comment);
-                return await repository.UpdateAsync(oldComment);
-            } else throw new UnauthorizedEditAttemptException<Comment>($"Unauthorized Edit Attempt of Comment {comment.Id}");
-        }
-    }
-}
+builder.Services.AddFluentValidation();
+builder.Services.AddScoped<IValidator<Photo>, PhotoValidator>();
 ```
 
-## The Server Side *Application Layer* 
-
-In order to try if this works, we need to register the `IValidator<Photo>` and the `IValidator<Comment>` in the DI Containers.
-
-### Photos REST Service
-
-As explained in the [documentation](https://docs.fluentvalidation.net/en/latest/aspnet.html):
-
-- Add a `FluentValidation.AspNetCore` NuGet Package to the `PhotoSharingApplication.WebServices.REST.Photos` project
-- Open the `Startup` class and locate `ConfigureServices` method.
-- Invoke the `AddFluentValidation` extension method (which requires a `using FluentValidation.AspNetCore`)
-- Register the `PhotoValidator` with the services collection by calling the `AddScoped` method
-
-The code should look like this:
+which requires:
 
 ```cs
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using PhotoSharingApplication.Shared.Core.Validators;
-// (...code omitted for brevity...)
-
-namespace PhotoSharingApplication.WebServices.REST.Photos {
-    public class Startup {
-        
-        // (...code omitted for brevity...)
-        public void ConfigureServices(IServiceCollection services) {
-            services.AddControllers().AddFluentValidation();
-            // (...code omitted for brevity...)
-            services.AddScoped<IValidator<Photo>, PhotoValidator>();
-        }
-
-        // (...code omitted for brevity...)
-    }
-}
-
+using PhotoSharingApplication.Shared.Validators;
 ```
 
-### Comments gRPC Service
-
-[Anthoy Giretty](https://anthonygiretti.com/) is working to include `Fluent Validation` in gRpc.Net. Unfortunately at the moment of this writing (April 2021), his package works with .NET 3.1 but not (yet) with .Net 5.0 nor 6.0.
-So, go check his [Repo](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master) to see if he updated it to .NET 5. **IF HE DID**, you can follow his [documentation](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master#server-side-usage)
-
-We are going to just use `FluentValidation` which throws the exception.
-
-- Add a Reference to `FluentValidation` NuGetPackage on the `` project
-- In the `Startup` class, locate the `ConfigureServices` method and add the following code:
-```cs
-services.AddScoped<IValidator<Comment>, CommentValidator>();
-```
-which requires
-```cs
-using FluentValidation;
-```
-
-- Start the application now and try to upload a photo without a title.
-- Inspect the network traffic by pressing F12 on your browser and going to the `Network` tab)  
+- Try to upload a photo without a title.
+- Inspect the network traffic by pressing F12 on your browser and going to the `Network` tab    
 You'll see that the server is returning a 400 (Bad Request) containing the list of all the errors found by the validation. The Bad Request comes from the fact that Validation is performed by ASP.NET Core even before our action is invoked, which means that our *core service* has not even been bothered at all.  
-- Try to submit a comment with a title longer than 250 letters.  
-- Inspect the network traffic by pressing F12 on your browser and going to the `Network` tab)  
-You'll see that the server is returning a 500 (Internal Server Error), which means that our service threw an exception 
-
-Great, now we can never get any bad data on our server, whether we use Entity Framework or not.
-
-Now onto the Client Side.
-
-## Client Side *Core Layer*
-
-- Add the `FluentValidation` NuGet Package to the `PhotoSharingApplication.Frontend.Core` project.  
-
-### PhotosService
-
-- Open the `PhotosService` class located under the `Services` folder of the `PhotoSharingApplication.Frontend.Core` project
-- Use Dependency Injection from its constructor to ask for an `IValidator<Photo>` and save it into a private readonly variable
-- In the `UpdateAsync` and `UploadAsync`, invoke the [ValidateAndThrow](https://docs.fluentvalidation.net/en/latest/start.html#throwing-exceptions) method before submitting the photo to the repository
-
-The code should look like this:
-
-```cs
-using FluentValidation;
-//(...code omitted for brevity...)
-namespace PhotoSharingApplication.Frontend.Core.Services {
-    public class PhotosService : IPhotosService {
-        //(...code omitted for brevity...)
-        private readonly IValidator<Photo> validator;
-
-        public PhotosService(IPhotosRepository repository, IAuthorizationService<Photo> photosAuthorizationService, IUserService userService, IValidator<Photo> validator) =>
-            (this.repository, this.photosAuthorizationService, this.userService, this.validator) = (repository, photosAuthorizationService, userService, validator);
-        //(...code omitted for brevity...)
-        public async Task<Photo> UpdateAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeUpdatedAsync(user, photo)) {
-                validator.ValidateAndThrow(photo);
-                return await repository.UpdateAsync(photo);
-            } else throw new UnauthorizedEditAttemptException<Photo>($"Unauthorized Edit Attempt of Photo {photo.Id}");
-        }
-        public async Task<Photo> UploadAsync(Photo photo) {
-            var user = await userService.GetUserAsync();
-            if (await photosAuthorizationService.ItemMayBeCreatedAsync(user, photo)) {
-                photo.CreatedDate = DateTime.Now;
-                photo.UserName = user.Identity.Name;
-                validator.ValidateAndThrow(photo);
-                return await repository.CreateAsync(photo);
-            } else throw new UnauthorizedCreateAttemptException<Photo>($"Unauthorized Create Attempt of Photo {photo.Id}");
-        }
-    }
-}
-```
 
 ### CommentsService
 
-- Open the `CommentsService` class located under the `Services` folder of the `PhotoSharingApplication.Frontend.Core` project
+- Add the `FluentValidation.AspNetCore` NuGet Package to the `PhotoSharingApplication.WebServices.Grpc.Comments` project.  
+- Open the `CommentsService` class located under the `Core/Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
 - Use Dependency Injection from its constructor to ask for an `IValidator<Comment>` and save it into a private readonly variable
 - In the `UpdateAsync` and `CreateAsync`, invoke the [ValidateAndThrow](https://docs.fluentvalidation.net/en/latest/start.html#throwing-exceptions) method before submitting the photo to the repository
 
@@ -339,77 +207,198 @@ The code should look like this:
 ```cs
 using FluentValidation;
 //(...code omitted for brevity...)
-namespace PhotoSharingApplication.Frontend.Core.Services {
-    public class CommentsService : ICommentsService {
-        //(...code omitted for brevity...)
-        private readonly IValidator<Comment> validator;
 
-        public CommentsService(ICommentsRepository repository, IAuthorizationService<Comment> commentsAuthorizationService, IUserService userService, IValidator<Comment> validator) =>
-            (this.repository, this.commentsAuthorizationService, this.userService, this.validator) = (repository, commentsAuthorizationService, userService, validator);
+namespace PhotoSharingApplication.Backend.Core.Services ;
 
-        //(...code omitted for brevity...)
-        public async Task<Comment> CreateAsync(Comment comment) {
-            var user = await userService.GetUserAsync();
-            if (await commentsAuthorizationService.ItemMayBeCreatedAsync(user, comment)) {
-                comment.SubmittedOn = DateTime.Now;
-                comment.UserName = user.Identity.Name;
-                validator.ValidateAndThrow(comment);
-                return await repository.CreateAsync(comment);
-            } else throw new UnauthorizedCreateAttemptException<Comment>($"Unauthorized Create Attempt of Comment {comment.Id}");
+public class CommentsService : ICommentsService {
+    //(...code omitted for brevity...)
+    private readonly IValidator<Comment> validator;
+
+    public CommentsService(ICommentsRepository repository, IAuthorizationService<Comment> commentsAuthorizationService, IUserService userService, IValidator<Comment> validator) =>
+    (this.repository, this.commentsAuthorizationService, this.userService, this.validator) = (repository, commentsAuthorizationService, userService, validator);
+    //(...code omitted for brevity...)
+    
+    public async Task<Comment?> CreateAsync(Comment comment) {
+        var user = await userService.GetUserAsync();
+        if (await commentsAuthorizationService.ItemMayBeCreatedAsync(user, comment)) {
+            comment.SubmittedOn = DateTime.Now;
+            comment.UserName = user.Identity?.Name ?? "";
+            validator.ValidateAndThrow(comment);
+            return await repository.CreateAsync(comment);
+        } else throw new CreateUnauthorizedException<Comment>($"Unauthorized Create Attempt of Comment {comment.Id}");
+    }
+
+    public async Task<Comment?> UpdateAsync(Comment comment) {
+        var user = await userService.GetUserAsync();
+        Comment? oldComment = await repository.FindAsync(comment.Id);
+        if (oldComment is not null) {
+            if (!await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment))
+                throw new EditUnauthorizedException<Comment>($"Unauthorized Edit Attempt of Comment {comment.Id}");
+            oldComment.Subject = comment.Subject;
+            oldComment.Body = comment.Body;
+            oldComment.SubmittedOn = DateTime.Now;
+            validator.ValidateAndThrow(comment);
+            oldComment = await repository.UpdateAsync(oldComment);
         }
-
-        public async Task<Comment> UpdateAsync(Comment comment) {
-            var user = await userService.GetUserAsync();
-            Comment oldComment = await repository.FindAsync(comment.Id);
-            if (await commentsAuthorizationService.ItemMayBeUpdatedAsync(user, oldComment)) {
-                oldComment.Subject = comment.Subject;
-                oldComment.Body = comment.Body;
-                oldComment.SubmittedOn = DateTime.Now;
-                validator.ValidateAndThrow(oldComment);
-                return await repository.UpdateAsync(oldComment);
-            } else throw new UnauthorizedEditAttemptException<Comment>($"Unauthorized Edit Attempt of Comment {comment.Id}");
-        }
+        return oldComment;
     }
 }
 
 ```
 
-## The Client Side *Application Layer* 
+- In the `Program.cs` class add the following code:
+```cs
+builder.Services.AddFluentValidation();
+builder.Services.AddScoped<IValidator<Comment>, CommentValidator>();
+```
+which requires
+```cs
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using PhotoSharingApplication.Shared.Validators;
+```
 
-In order to try if this works, we need to register the `IValidator<Photo>` and `IValidator<Comment>` in the Blazor DI Container.
+## Comments gRPC Service
 
-- Add the `Blazored.FluentValidation` NuGet Package to the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
+[Anthoy Giretty](https://anthonygiretti.com/) is working to include `Fluent Validation` in gRpc.Net. Unfortunately at the moment of this writing (February 2022), his package works with .NET 3.1 but not (yet?) with .Net 5.0 nor 6.0.
+So, go check his [Repo](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master) to see if he updated it to .NET 6. **IF HE DID**, you can follow his [documentation](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master#server-side-usage)
+
+We will have to use `FluentValidation` ourselves, but since this one throws a `ValidationException` while we need to throw an `RpcException`, we will translate it back and forth so that our Services don't need to know that gRpc is involved but we can still communicate back and forth using gRpc.
+
+So the flow will be:
+1. The gRpcService passes the data to the Service 
+2. The Service validates the data but throws a `ValidationException`
+3. The gRpcService transforms the `ValidationException` into an `RpcException` and sends it to the Client, adding the ValidationError in the [`trailers`](https://docs.microsoft.com/en-us/aspnet/core/grpc/client?view=aspnetcore-6.0#access-grpc-trailers)
+4. The Client Repository receives the `RpcException` and transforms it back to a `ValidationException`
+
+We have already taken care of the service, now let's implement the gRpc service.
+
+- Open the `CommentsGrpcService` class located under the `Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
+- Locate both the `Create` and `Update` methods and add a new `catch` clause to handle a `ValidationException` and throw an `RpcException` using an extension method that we will implement later
+
+```cs
+catch (ValidationException ex) {
+    throw ex.ToRpcException();
+}
+```
+
+- Add a new folder `Validation` to the `PhotoSharingApplication.WebServices.Grpc.Comments` project
+- In the `Validation` folder, add a new `ValidationExtensions` static class
+- In the `ValidationExtensions` class, add a new `ToRpcException` extension method that takes a `ValidationException` and returns an `RpcException`
+- In the `ToRpcException` extension method, add the following code:
+
+```cs
+using Grpc.Core;
+using PhotoSharingApplication.Shared.Validators;
+using System.Text.Json;
+using FluentValidation;
+
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Validation;
+
+public static class ValidationExtensions {
+    public static RpcException ToRpcException(this ValidationException ex) {
+        var metadata = new Metadata();
+        List<ValidationTrailer> trailers = ex.Errors.Select(x => new ValidationTrailer {
+            PropertyName = x.PropertyName,
+            AttemptedValue = x.AttemptedValue?.ToString(),
+            ErrorMessage = x.ErrorMessage
+        }).ToList();
+        string json = JsonSerializer.Serialize(trailers);
+        metadata.Add(new Metadata.Entry("validation-errors-text", json));
+        return new RpcException(new Status(StatusCode.InvalidArgument, "Validation Failed"), metadata);
+    }
+}
+```
+
+`ValidationTrailer` is a class that we need to serialize and deserialize the errors as trailers in the gRpc response. Let's add it to the `Validators` folder of the `PhotoSharingApplication.Shared.Validators` project:
+
+```cs
+namespace PhotoSharingApplication.Shared.Validators;
+
+[Serializable]
+public class ValidationTrailer {
+    public string PropertyName { get; set; }
+
+    public string ErrorMessage { get; set; }
+
+    public string AttemptedValue { get; set; }
+}
+```
+
+Now let's think about the client repository.
+
+- Add a new `Validation` folder to the `PhotoSharingApplication.Frontend.Client` project
+- In the `Validation` folder, add a new `ValidationExtensions` static class
+- In the `ValidationExtensions` class, add a new `ToValidationException` extension method that takes a `RpcException` and returns a `ValidationException`
+
+```cs
+using FluentValidation;
+using FluentValidation.Results;
+using Grpc.Core;
+using PhotoSharingApplication.Shared.Validators;
+using System.Text.Json;
+
+namespace PhotoSharingApplication.Frontend.Client.Validation;
+
+public static class ValidationExtensions {
+    public static ValidationException ToValidationException(this RpcException ex) {
+        var validationTrailer = ex.Trailers.FirstOrDefault(x => x.Key == "validation-errors-text");
+
+        var trailers = JsonSerializer.Deserialize<List<ValidationTrailer>>(validationTrailer.Value);
+        List<ValidationFailure> validationFailures = trailers.Select(t => new ValidationFailure(t.PropertyName, t.ErrorMessage, t.AttemptedValue)).ToList();
+        throw new FluentValidation.ValidationException(validationFailures);
+    }
+}
+```
+
+- Open the `CommentsRepository` class under the `Infrastructure/Repositories/Grpc` folder of the `PhotoSharingApplication.Frontend.Client` project
+- Add a new `catch` clause in both the `Create` and `Update` methods that handles a `RpcException` and transforms it back to a `ValidationException`
+
+```cs
+catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument) {
+    throw ex.ToValidationException();
+} 
+```
+
+which requires
+
+```cs
+using PhotoSharingApplication.Frontend.Client.Validation;
+```
+
+Try running the application submitting a comment without any text. If you inspect the Network tab in the browser, you will see that the Response contains the following headers:
+
+```
+grpc-message: Validation Failed    
+grpc-status: 3  
+validation-errors-text: [{"PropertyName":"Subject","ErrorMessage":"\u0027Subject\u0027 must not be empty.","AttemptedValue":""},{"PropertyName":"Body","ErrorMessage":"\u0027Body\u0027 must not be empty.","AttemptedValue":""}]  
+```
+
+Great, now we can never get any bad data on our server.    
+The validation server side is complete, but if we leave the application like this, the user will have to wait for the data to reach the server and the error to come back to the client before it can see the error message. We can enhance the user experience by adding the validation even client side and the nice thing is that we can reuse the same validators we used server side.
+
+So let's add the validation to the UI Client Side.
+
+## The Client Side
+
+First, we need to register the `IValidator<Photo>` and `IValidator<Comment>` in the Blazor DI Container.
+
+- Add the `FluentValidation` NuGet Package to the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
 - In the `Program` class, locate the `Main` method
 - Register the `PhotoValidator` with the services collection by calling the `AddScoped` method
 - Register the `CommentValidator` with the services collection by calling the `AddScoped` method
 
-The code should look like this:
+```cs
+builder.Services.AddScoped<IValidator<Photo>, PhotoValidator>();
+builder.Services.AddScoped<IValidator<Comment>, CommentValidator>();
+```
+
+which requires
 
 ```cs
 using FluentValidation;
-using PhotoSharingApplication.Shared.Core.Validators;
-//(...code omitted for brevity...)
-namespace PhotoSharingApplication.Frontend.BlazorWebAssembly {
-    public class Program
-    {
-        public static async Task Main(string[] args)
-        {
-            //(...code omitted for brevity...)
-            builder.Services.AddScoped<IValidator<Photo>, PhotoValidator>();
-            builder.Services.AddScoped<IValidator<Comment>, CommentValidator>();
-
-            await builder.Build().RunAsync();
-        }
-    }
-}
+using PhotoSharingApplication.Shared.Validators;
 ```
-
-- Run the application
-- Press F12 to open the Developer Tools
-- Go to the Network Tab
-- Try to upload a Photo without a title  
-You'll see that there is no network traffic involved and that we get an exception with the list of the errors found by the validators
-- Same happens if you try to submit a comment with no title or with a title longer than 250 letters.
 
 Now let's show the error messages to the user.
 
@@ -544,4 +533,3 @@ Our Application shows friendly error messages, by using the exact same validatio
 ---
 
 In the next lab, we're going to explore Unit Testing of Blazor Components.
-

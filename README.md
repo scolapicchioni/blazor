@@ -108,12 +108,6 @@ What you have to do is to open a `Start` folder corresponding to the lab you wan
 
 # If you want to see the final application
 
-## Build the Identity Server DataBase
-
-- Open a command prompt under the `Lab12\Solution\blazor\PhotoSharingApplication\PhotoSharingApplication.IdentityServer` folder
-- Type `dotnet run /seed`
-
-
 ## Create the Photos REST Service DataBase
 
 - Open `Lab12\Solution\blazor\PhotoSharingApplication\PhotoSharingApplication.sln` in Visual Studio
@@ -143,12 +137,12 @@ Start the application
 ## To Logon
 
 - Username: alice
-- Password: alice
+- Password: Pass123$
 
 Or
 
 - Username: bob
-- Password: bob
+- Password: Pass123$
 
 ## One last note before we begin
 
@@ -197,6 +191,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - DeleteAsync
    - ReadFromJsonAsync
    - CORS
+   - YARP
 - Lab 07 - Frontend: Comments
    - More CLEAN architecture
    - More Components
@@ -210,13 +205,14 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - gRPC Client Web in .NET Core
    - Configuration
    - CORS
+   - YARP
 - Lab 10 - Security: Authentication and Authorization
-   - Identity Server 4 (Duende)
+   - Duende Identity Server
    - Configuring the REST Service for JWT Bearer Authentication
    - Configuring the gRPC Service for JWT Bearer Authentication
    - Configuring the Blazor Client for JWT Bearer Authentication
    - Simple Authorization with the Authorize Attribute
-   - Retrieving and passing JWT Bearer Tokens
+   - Retrieving and passing JWT Bearer Tokens by using the `Duende.Bff.Yarp` framework
 - Lab 11 - Security: Resource Based Authorization
    - AuthorizationService
    - Policies

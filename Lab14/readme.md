@@ -43,7 +43,7 @@ We're going to follow the [documentation](https://bunit.egilhansen.com/docs/gett
     - Leave the rest unchanged. Save and close the `.csproj` file.
 - Add a project reference to the `PhotoSharingApplication.Frontend.BlazorComponents` project
 
-We can start to [Create our tests in a .razor file](https://bunit.egilhansen.com/docs/getting-started/writing-tests.html#creating-basic-tests-in-razor-files).  
+We can start to [Create our tests in a .razor file](https://bunit.dev/docs/getting-started/writing-tests.html#creating-basic-tests-in-razor-files).  
 
 > - Add an `_Imports.razor` file to the test project. It serves the same purpose as `_Imports.razor` files in regular Blazor projects. These using statements are useful to add right away:
 ```cs
@@ -57,16 +57,22 @@ We can start to [Create our tests in a .razor file](https://bunit.egilhansen.com
 @using Xunit
 @using Moq
 @using PhotoSharingApplication.Frontend.BlazorComponents
+@using PhotoSharingApplication.Frontend.BlazorComponents.Components
+@using PhotoSharingApplication.Frontend.BlazorComponents.Pages
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
+@using MatBlazor
 ```
 
 The first scenario that we want to test, checks that our component correctly renders a `MatHeader6` with a `Photo.Id` and a `Photo.Title` in the correct format.  
-- Add a new `Razor Component`
+- Add a new `Components` folder to the `PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests` project
+- Under the `Components` folder, add a new `Razor Component`
 - Name the component `PhotoDetailsComponentTests.razor`
 - In the `code` section, create an `xUnit` test by adding a `[Fact]` attribute to a new `ShouldRenderH6WithPhotoIdAndTitle` method
 - Create a new instance of the disposable bUnit [TestContext](https://bunit.egilhansen.com/api/Bunit.TestContext.html), and assign it to ctx the variable.
 - Create a [Mock](https://github.com/Moq/moq4/wiki/Quickstart) of the `IUserService` and `IAuthorizationService<Photo>` services
 - [Inject the services into the component](https://bunit.egilhansen.com/docs/providing-input/inject-services-into-components.html)
-- Render the `<PhotoDetailsComponent>` component using `TestContext`, which is done through the [Render(RenderFragment)](https://bunit.egilhansen.com/api/Bunit.TestContext.html#Bunit_TestContext_Render_Microsoft_AspNetCore_Components_RenderFragment_) method, using [inline razor syntax](https://bunit.egilhansen.com/docs/getting-started/writing-tests.html?tabs=xunit#secret-sauce-of-razor-files-tests). 
+- Render the `<PhotoDetailsComponent>` component using `TestContext`, which is done through the [Render(RenderFragment)](https://bunit.dev/api/Bunit.TestContext.html#Bunit_TestContext_Render_RenderFragment_) method, using [inline razor syntax](https://bunit.egilhansen.com/docs/getting-started/writing-tests.html?tabs=xunit#secret-sauce-of-razor-files-tests). 
 - [Pass a `Photo` parameter to the component](https://bunit.egilhansen.com/docs/providing-input/passing-parameters-to-components.html)
 - [Find](https://bunit.egilhansen.com/docs/verification/verify-component-state.html#finding-components-in-the-render-tree) the `MatHeader6` component
 - [Find](https://bunit.egilhansen.com/docs/verification/verify-markup.html#finding-nodes-with-the-find-and-findall-methods) the TextContent of the `h6` node
@@ -75,9 +81,6 @@ The first scenario that we want to test, checks that our component correctly ren
 Your code should look something like this:
 
 ```cs
-@using PhotoSharingApplication.Shared.Core.Interfaces
-@using PhotoSharingApplication.Shared.Core.Entities
-
 @code {
     [Fact]
     public void ShouldRenderH6WithPhotoIdAndTitle() {
@@ -99,7 +102,7 @@ Your code should look something like this:
 }
 ```
 
-[Run the test with the Test Explorer](https://docs.microsoft.com/en-us/visualstudio/test/run-unit-tests-with-test-explorer?view=vs-2019). The test should pass.
+[Run the test with the Test Explorer](https://docs.microsoft.com/en-us/visualstudio/test/run-unit-tests-with-test-explorer?view=vs-2022). The test should pass.
 
 In our second test, we want to make sure that the `Photo` property of the `PhotoPictureComponent` is set properly.  
 As you can imagine, the Arrange phase is pretty much the same, so it would be nice to refactor it into a common initialization.  
@@ -124,23 +127,23 @@ The code of the `PhotoDetailsComponentTestsBase.cs` file should look like this:
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests {
-    public class PhotoDetailsComponentTestsBase : TestContext {
-        protected Mock<IUserService> userServiceMock;
-        protected Mock<IAuthorizationService<Photo>> authorizationServiceMock;
-        protected Photo photo;
-        public PhotoDetailsComponentTestsBase() {
-            userServiceMock = new Mock<IUserService>();
-            authorizationServiceMock = new Mock<IAuthorizationService<Photo>>();
+namespace PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests.Components;
 
-            Services.AddSingleton<IUserService>(userServiceMock.Object);
-            Services.AddSingleton<IAuthorizationService<Photo>>(authorizationServiceMock.Object);
+public class PhotoDetailsComponentTestsBase : TestContext {
+    protected Mock<IUserService> userServiceMock;
+    protected Mock<IAuthorizationService<Photo>> authorizationServiceMock;
+    protected Photo photo;
+    public PhotoDetailsComponentTestsBase() {
+        userServiceMock = new Mock<IUserService>();
+        authorizationServiceMock = new Mock<IAuthorizationService<Photo>>();
 
-            photo = new Photo();
-        }
+        Services.AddSingleton<IUserService>(userServiceMock.Object);
+        Services.AddSingleton<IAuthorizationService<Photo>>(authorizationServiceMock.Object);
+
+        photo = new Photo();
     }
 }
 ```
@@ -150,13 +153,20 @@ The code of the `PhotoDetailsComponentTests.razor` file should look like this:
 ```cs
 @inherits PhotoDetailsComponentTestsBase
 
+<h3>PhotoDetailsComponentTests</h3>
+
 @code {
-    [Fact]
+[Fact]
     public void ShouldRenderH6WithPhotoIdAndTitle() {
+        // Arrange
         photo.Id = 1;
         photo.Title = "Photo Title";
-        var cut = Render(@<PhotoDetailsComponent Photo="photo"></PhotoDetailsComponent>);
+
+        // Act
+        var cut = Render(@<PhotoDetailsComponent Photo="photo" />);
         var h6 = cut.FindComponent<MatHeadline6>().Find("h6").TextContent;
+
+        //Assert
         h6.MarkupMatches("1 - Photo Title");
     }
 }
@@ -167,7 +177,7 @@ The code of the `PhotoDetailsComponentTests.razor` file should look like this:
 Now we're ready to write the second test where we make sure that the `Photo` property of the `PhotoPictureComponent` is properly set.
 
 - In the `code` section, create an `xUnit` test by adding a `[Fact]` attribute to a new `ShouldSetPhotoOfPhotoPicture` method
-- Render the `<PhotoDetailsComponent>` component by invoking the [Render(RenderFragment)](https://bunit.egilhansen.com/api/Bunit.TestContext.html#Bunit_TestContext_Render_Microsoft_AspNetCore_Components_RenderFragment_) method, using [inline razor syntax](https://bunit.egilhansen.com/docs/getting-started/writing-tests.html?tabs=xunit#secret-sauce-of-razor-files-tests). 
+- Render the `<PhotoDetailsComponent>` component by invoking the [Render(RenderFragment)](https://bunit.dev/api/Bunit.TestContext.html#Bunit_TestContext_Render_RenderFragment_) method, using [inline razor syntax](https://bunit.egilhansen.com/docs/getting-started/writing-tests.html?tabs=xunit#secret-sauce-of-razor-files-tests). 
 - [Pass the `Photo` parameter to the component](https://bunit.egilhansen.com/docs/providing-input/passing-parameters-to-components.html)
 - [Find](https://bunit.egilhansen.com/docs/verification/verify-component-state.html#finding-components-in-the-render-tree) the `PhotoPictureComponent` component
 - [Inspect the Instance](https://bunit.egilhansen.com/docs/verification/verify-component-state.html#inspecting-the-component-under-test)
@@ -329,9 +339,8 @@ which require the following using:
 ```cs
 using Bunit;
 using FluentValidation;
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using PhotoSharingApplication.Shared.Core.Entities;
+using PhotoSharingApplication.Shared.Entities;
 using System;
 ```
 - Add a constructor
@@ -351,6 +360,13 @@ public CommentCreateComponentTestsBase() {
     Services.AddSingleton<IValidator<Comment>>(validationMock.Object);
 }
 ```
+
+which requires
+
+```cs
+using Microsoft.Extensions.DependencyInjection;
+```
+
 - Add a new `CommentCreateComponentTests.razor` component
 - Let the component inherit from `CommentCreateComponentTestBase`
 - Add a new `ShouldInvokeSaveOnSubmit_WhenModelIsValid` test
@@ -378,6 +394,13 @@ public void ShouldInvokeSaveOnSubmit_WhenModelIsValid() {
     Assert.True(saveInvoked);
     Assert.Equal(comment, actual);
 }
+```
+
+which requires
+
+```cs
+@using FluentValidation
+@using FluentValidation.Results
 ```
 
 In order to test what happens when there are errors, we need to setup the ValidateAsync with a list of errors:
@@ -457,18 +480,18 @@ Your code should look as follows:
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using PhotoSharingApplication.Shared.Core.Entities;
-using PhotoSharingApplication.Shared.Core.Interfaces;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
 using System.Collections.Generic;
 
-namespace PhotoSharingApplication.Frontend.BlazorWebAssembly.BUnitTests.Shared {
-    public class CommentsComponentTestsBase : TestContext {
-        public CommentsComponentTestsBase() {
-            Mock<ICommentsService> commentsServiceMock = new Mock<ICommentsService>();
-            commentsServiceMock.Setup(cs => cs.GetCommentsForPhotoAsync(1)).ReturnsAsync(new List<Comment>());
-            Services.AddSingleton<ICommentsService>(commentsServiceMock.Object);
-            JSInterop.Mode = JSRuntimeMode.Loose;
-        }
+namespace PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests.Components;
+
+public class CommentsComponentTestsBase : TestContext {
+    public CommentsComponentTestsBase() {
+        Mock<ICommentsService> commentsServiceMock = new Mock<ICommentsService>();
+        commentsServiceMock.Setup(cs => cs.GetCommentsForPhotoAsync(1)).ReturnsAsync(new List<Comment>());
+        Services.AddSingleton<ICommentsService>(commentsServiceMock.Object);
+        JSInterop.Mode = JSRuntimeMode.Loose;
     }
 }
 ```

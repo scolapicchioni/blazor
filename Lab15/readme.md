@@ -9,44 +9,72 @@ Since Leaflet is a javascript library, we need to learn not only how to use Leaf
 
 Let's start with a simple example, just to understand the steps to interoperate with javascript.  
 After we are sure that we have everything setup, we'll include Leaflet.
-For now, we'll start by adding a new `Map.razor` component, where we will invoke a simple `showMap` javascript function at the click of a button, just to see if we can do it.  
+For now, we'll start by adding a new `Map.razor` component.  
+Our component will make use of a [separate class](https://docs.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/call-javascript-from-dotnet?view=aspnetcore-6.0#class-cs-example-invokeasync) of ours named `MapJsInterop.cs` where we will concentrate all the interactions between C# and javascript. This way, the razor component won't even know that it's interacting with javascript. We will receive the class as a dependency, that's why we will have to register our own class in the DI container.     
+In our separate class, we'll load a separate javascript `map.js` file as a [module](https://docs.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/call-javascript-from-dotnet?view=aspnetcore-6.0#javascript-isolation-in-javascript-modules).  
+Our cs class will also contain methods to [invoke javascript functions](https://docs.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/call-javascript-from-dotnet?view=aspnetcore-6.0#invoke-javascript-functions-without-reading-a-returned-value-invokevoidasync).  
 We will write the `showMap` javascript function in a separate `map.js` file. This function for now just uses the `alert` function, so that we can easily see if it works. We'll change it later to actually show a map.  
-So, as a recap: the click handler of the button invokes a `ShowMap` C# function of ours, the `ShowMap` invokes `showMap` javascript function of ours, the `showMap` javascript function invokes the `alert` native javascript function.  
+So, as a recap: the click handler of the button invokes a `ShowMap` C# function of a separate class of ours, the `ShowMap` invokes `showMap` javascript function of ours, the `showMap` javascript function invokes the `alert` native javascript function.  
 I promise, it sounds more complicated than it actually is.   
 
 ## Creating a Map.razor component
 
-- In your `PhotoSharingApplication.Frontend.BlazorComponents` project, add a `Map.razor` razor component
-- Add a `button` and handle the `click` event by invoking an `async` `ShowMap` method
+- In your `PhotoSharingApplication.Frontend.BlazorComponents` project, under the `Components` folder, add a `Map.razor` razor component
+- Add a dependency to MapJsInterop (the class that we will write later)
+- Add a `button` and handle the `click` event by invoking a `ShowMap` method
 
 ```html
-<button @onclick="@(async ()=>await ShowMap())">Click here to show the map</button>
+<button @onclick="ShowMap">Click here to show the map</button>
 ```
-
-We want to [call a JavaScript function from our .NET `ShowMap` method](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-javascript-from-dotnet?view=aspnetcore-6.0) so we need to inject the [IJSRuntime](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-javascript-from-dotnet?view=aspnetcore-6.0#ijsruntime).
+Finally, we can invoke the method of our class:
 
 ```cs
-@using Microsoft.JSInterop
-@inject IJSRuntime js
+public async Task ShowMap() {
+    await mapInterop.ShowMap();
+}
 ```
 
-Now we can [call a void function](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-javascript-from-dotnet?view=aspnetcore-6.0#call-a-void-javascript-function) with the following code:
+## Creating MapJsInterop.cs
 
+- Add a new class and name it `MapJsInterop.cs`. Let the class implement the `IAsyncDisposable` interface
+- Add a private readonly field of type `Lazy<Task<IJSObjectReference>>` named `moduleTask`
+- Add a constructor that takes a `IJSRuntime` as a parameter
+- In the constructor, initialize the `moduleTask` field with a `Lazy<Task<IJSObjectReference>>` that creates a `Task<IJSObjectReference>` that loads the `map.js` module.
+
+```cs
+public class MapJsInterop : IAsyncDisposable {
+    private readonly Lazy<Task<IJSObjectReference>> moduleTask;
+
+    public MapJsInterop(IJSRuntime jsRuntime) {
+        moduleTask = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
+            "import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/map.js").AsTask());
+    }
+}
+```
+
+- Add a method named `ShowMap` that takes no parameters and returns a `ValueTask`
+- In the `ShowMap` method, call the `InvokeVoidAsync` method of the `moduleTask` field to [invoke](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-javascript-from-dotnet?view=aspnetcore-6.0#call-a-void-javascript-function) the `showMap` function.
+
+The code should look like this:
 ```cs
 public async ValueTask ShowMap() {
+    var module = await moduleTask.Value;
     await module.InvokeVoidAsync("showMap");
 }
 ```
 
-Who's `module`? That is a [reference](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-javascript-from-dotnet?view=aspnetcore-6.0#blazor-javascript-isolation-and-object-references) to a [javascript module](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) that will contain our function. Let's declare it and initialize it:
+- Dispose of the module when the class is disposed
 
 ```cs
-IJSObjectReference module;
-protected override async Task OnInitializedAsync() {
-    module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/map.js");
+public async ValueTask DisposeAsync() {
+    if (moduleTask.IsValueCreated) {
+        var module = await moduleTask.Value;
+        await module.DisposeAsync();
+    }
 }
 ```
 
+What's `module`? That is a [reference](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-javascript-from-dotnet?view=aspnetcore-6.0#blazor-javascript-isolation-and-object-references) to a [javascript module](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) that will contain our function.  
 Now it's time to write our javascript function.
 
 ## Map.js
@@ -56,7 +84,7 @@ Now it's time to write our javascript function.
 
 ```js
 export function showMap() {
-    alert('here is your map! (well, sort of....)');
+   alert(`here's your map! (well, not yet but we're working on it)`);
 }
 ```
 
@@ -69,13 +97,26 @@ export function showMap() {
 <Map></Map>
 ```
 
-One last step, described in the [Create an RCL with static assets](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/class-libraries?view=aspnetcore-6.0&tabs=visual-studio#create-an-rcl-with-static-assets) document, is:
+The next step, described in the [Create an RCL with static assets](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/class-libraries?view=aspnetcore-6.0&tabs=visual-studio#create-an-rcl-with-static-assets) document, is:
 
-- In the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, open the `index.html` page located under the `wwwroot` folder
+- In the `PhotoSharingApplication.Frontend.Client` project, open the `index.html` page located under the `wwwroot` folder
 - Add the reference to the static assets with the following path in the app: `_content/{LIBRARY NAME}/{ASSET FILE NAME}`
 
 ```html
 <script src="_content/PhotoSharingApplication.Frontend.BlazorComponents/map.js"></script>
+```
+
+Last but not least, let's register our `MapJsInterop` class as a service in the DI container.  
+- In the `PhotoSharingApplication.Frontend.Client` project, open the `Program.cs` file and add the following code:
+
+```cs
+builder.Services.AddScoped<MapJsInterop>();
+```
+
+which requires
+
+```cs
+using PhotoSharingApplication.Frontend.BlazorComponents;
 ```
 
 ## Try it out
@@ -88,14 +129,14 @@ We just learned how to invoke a javascript function form Blazor. Now it's time t
 
 Before writing any code for the map, you need to do the following preparation steps on your `index.html` page:
 
-Include Leaflet CSS file in the head section of your document:
+Include Leaflet CSS file in the head section of your document, as described in the [Leaflet Quickstart](https://leafletjs.com/examples/quick-start/):
 
 ```html
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
    crossorigin=""/>
 ```
-Include Leaflet JavaScript file after Leaflet’s CSS:
+Include Leaflet JavaScript file after Leaflet's CSS:
 
 ```html
  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
@@ -103,13 +144,13 @@ Include Leaflet JavaScript file after Leaflet’s CSS:
    crossorigin=""></script>
 ```
 
-- In the `` component, add a div element with a `map` id
+- In the `Map.razor` component, add a div element with a `map` id
 
 ```html
  <div id="map"></div>
 ```
 
-Make sure the map container has a defined height, setting it in an new [isolated CSS](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/css-isolation?view=aspnetcore-6.0) named `Map.razor.css`, located in the `PhotoSharingApplication.Frontend.BlazorComponents` project:
+Make sure the map container has a defined height, setting it in an new [isolated CSS](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/css-isolation?view=aspnetcore-6.0) named `Map.razor.css`, to be added in the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project:
 
 ```css
 #map { 
@@ -120,7 +161,7 @@ Make sure the map container has a defined height, setting it in an new [isolated
 
 Now you’re ready to initialize the map and do some stuff with it.
 
-- Open the `` file, located in the `` project, under the `` folder
+- Open the `map.js` file, located in the `PhotoSharingApplication.Frontend.BlazorComponents` project, under the `wwwroot` folder
 - Locate the `showMap` function and replace its code
 - Here we create a map in the 'map' div, add tiles of our choice, and then add a marker with some text in a popup:
 
@@ -140,7 +181,7 @@ export function showMap() {
 
 ## Try it out
 
-Run the application, go to the `Details` of a photo and click on the button. You should see the map showing up, with a marker and a popup.
+Run the application, go to the `Details` of a photo and click on the button. You should see the map showing up, with a marker and a popup. If it doesn't, you may need to empty the cache of your browser and reload the page.
 
 We just learned how to talk to `Leaflet` to show a map.  
 
@@ -169,8 +210,8 @@ export function showMap(lat, lon, msg) {
 }
 ```
 
-- In the `PhotoSharingApplication.Frontend.BlazorComponents` project, open the `Map.razor` component
-- Use the [overload](https://docs.microsoft.com/en-us/dotnet/api/microsoft.jsinterop.jsruntimeextensions.invokevoidasync?view=dotnet-plat-ext-6.0#Microsoft_JSInterop_JSRuntimeExtensions_InvokeVoidAsync_Microsoft_JSInterop_IJSRuntime_System_String_System_Object___) to pass the arguments
+- In the `PhotoSharingApplication.Frontend.BlazorComponents` project, open the `MapJsInterop.cs` class under the `wwwroot` folder  
+- Use the [overload](https://docs.microsoft.com/en-us/dotnet/api/microsoft.jsinterop.jsruntimeextensions.invokevoidasync?view=aspnetcore-6.0#microsoft-jsinterop-jsruntimeextensions-invokevoidasync(microsoft-jsinterop-ijsruntime-system-string-system-object())) to pass the arguments
 
 ```cs
 public async ValueTask ShowMap() {
@@ -180,7 +221,7 @@ public async ValueTask ShowMap() {
 
 ## Try it out
 
-Run the application, go to the `Details` of a photo and click on the button. You should see the map showing up, with the same marker and popup.
+Run the application, go to the `Details` of a photo and click on the button. You should see the map showing up, with the same marker and popup (again, make sure to empty the browser cache and reload all the scripts).
 
 ## Reading the data from the Photo
 
@@ -204,7 +245,7 @@ public async ValueTask ShowMap() {
 
 Let's add the `Latitude` and `Longitude` properties to the `Photo` table in our database
 
-- In the `PhotoSharingApplication.Shared.Core` project, under the `Entities` folder, open the `Photo` class
+- In the `PhotoSharingApplication.Shared` project, under the `Entities` folder, open the `Photo` class
 - Add a `Latitude` and a `Longitude` property of type `double`
 
 ```cs
@@ -215,14 +256,14 @@ public double Longitude { get; set; }
 - Add a `LatLon` migration, like we did in [Lab 5](https://github.com/scolapicchioni/blazor/tree/master/Lab05#generate-migrations-and-database)
 
 ```
-Add-Migration LatLon -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.REST.Photos
+Add-Migration LatLon -Project PhotoSharingApplication.WebServices.Rest.Photos -StartupProject PhotoSharingApplication.WebServices.Rest.Photos
 ```
 There should be a new file in the `Migrations` folder of the `PhotoSharingApplication.Backend.Infrastructure` project.
 
 - Update the Database
 
 ```
-Update-Database -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.REST.Photos
+Update-Database -Project PhotoSharingApplication.WebServices.Rest.Photos -StartupProject PhotoSharingApplication.WebServices.Rest.Photos
 ```
 
 Your db should now have two new columns. If you have photos in your table, they should all have `0`,`0` as values.  
@@ -232,7 +273,7 @@ If you write random values, remember that `Latitude` should be between -90 and 9
 ### Use Latitude and Longitude for the Map
 
 - In the `PhotoSharingApplication.Frontend.BlazorComponents` project, open the `Map.razor` component
-- Pass the `Photo.Latitude` and the `Photo.Longitude` to the `showMap` function
+- Pass the `Photo.Latitude`, `Photo.Longitude` and `Photo.Title` to the `ShowMap` function
 
 ```cs
 [Parameter]
@@ -243,6 +284,20 @@ public async ValueTask ShowMap() {
 }
 ```
 
+- In the `MapJsInterop` class of the `PhotoSharingApplication.Frontend.BlazorComponents` project, modify the `ShowMap` method to accept three parameters and pass them to the module:
+
+```cs
+public async ValueTask ShowMap(double latitude, double longitude, string popupText) {
+    var module = await moduleTask.Value;
+    await module.InvokeVoidAsync("showMap", latitude, longitude, popupText);
+}
+```
+
+- Open the `PhotoDetails.razor` file located under the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project and pass the photo to the `Map` component:
+
+```html
+<Map Photo="photo"></Map>
+```
 ### Try it out
 If you run the application now and go to the details of a photo with `0`,`0`, you should see the marker on the Equator, at the Greenwitch parallel.
 
@@ -255,7 +310,7 @@ We're going to try to reproduce this [example](https://awik.io/extract-gps-locat
 
 Our first step is to add exif.js to our `index.html` page.
 
-- In the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, open the `index.html` page located under the `wwwroot` folder
+- In the `PhotoSharingApplication.Frontend.Client` project, open the `index.html` page located under the `wwwroot` folder
 - Add the reference to the minified version of exif.js hosted on jsDelivr
 
 ```html
@@ -292,37 +347,26 @@ export function extractCoords(img) {
 
 If we check the [source code of exif](https://github.com/exif-js/exif-js/blob/53b0c7c1951a23d255e37ed0a883462218a71b6f/exif.js#L368), we can see that one of the parameters it can expect is an object with a `src` property in a [Data URI](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) format. So when a user selects an image, we're going to construct such an object and pass it to the javascript  function we wrote.  
 
-For now, just to see if it works, let's write this code on the `PhotoEditComponent`, where the user selects a file from her device.
+- Open the `MapJsInterop.cs` class
+- Add a new `ExtractCoords` method accepting an array of byte and a string as parameters
+- Construct a string in the DataUri format
+- Invoke `extractCoords` javascript function passing an object with a `src` property containing the string as parameter
+
+```cs
+public async ValueTask ExtractCoords(byte[]? photoFile, string mimeType) {
+    string dataUri = photoFile is null ? "" : $"data:{mimeType};base64,{Convert.ToBase64String(photoFile)}";
+    var module = await moduleTask.Value;
+    await module.InvokeVoidAsync("extractCoords", new {src = dataUri});
+}
+```
+
+Now let's use this method from within the `PhotoEditComponent`, where the user selects a file from her device.
 - In the `PhotoSharingApplication.Frontend.BlazorComponents` project, open the `PhotoEditComponent.razor` component
-- Inject the `IJSRuntime`
+- Inject the `MapJsInterop` class 
 
 ```cs
-@using Microsoft.JSInterop
-@inject IJSRuntime js
+@inject MapJsInterop mapInterop
 ```
-
-- Initialize a `module`, like we did previously (you may have to change the `OnInitialized` to `OnInitializedAsync`)
-
-```cs
-IJSObjectReference module;
-protected override async Task OnInitializedAsync() {
-    if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
-    module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/map.js");
-}
-```
-
-- Write a `ExtractCoords` function, passing a new object with a `src` property constructed as a `Data URI`
-
-```cs
-public async ValueTask ExtractCoords() {
-    await module.InvokeVoidAsync("extractCoords",
-        new {
-            src = Photo.PhotoImage?.PhotoFile is null ? "" :
-            $"data:{Photo.PhotoImage.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoImage.PhotoFile)}"
-        });
-}
-```
-
 At the end of `HandleMatFileSelected`, invoke `ExtractCoords`
 
 ```cs
@@ -337,7 +381,7 @@ async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
         await file.WriteToStreamAsync(stream);
         Photo.PhotoImage.PhotoFile = stream.ToArray();
     }
-    await ExtractCoords();
+    await mapInterop.ExtractCoords(Photo.PhotoImage.PhotoFile, Photo.PhotoImage.ImageMimeType);
 }
 ```
 
@@ -373,18 +417,19 @@ function latlon(myData) {
     const latMinute = myData.exifdata.GPSLatitude?.[1] ?? 0;
     const latSecond = myData.exifdata.GPSLatitude?.[2] ?? 0;
     const latDirection = myData.exifdata.GPSLatitudeRef ?? "N";
-    
-    const latFinal = ConvertDMSToDD(latDegree, latMinute, latSecond, latDirection);
-    console.log("Latitude", latFinal);
+
+    const latitude = ConvertDMSToDD(latDegree, latMinute, latSecond, latDirection);
+    console.log("Latitude", latitude);
 
     // Calculate longitude decimal
     const lonDegree = myData.exifdata.GPSLongitude?.[0] ?? 0;
     const lonMinute = myData.exifdata.GPSLongitude?.[1] ?? 0;
     const lonSecond = myData.exifdata.GPSLongitude?.[2] ?? 0;
     const lonDirection = myData.exifdata.GPSLongitudeRef ?? "E";
-    
-    const lonFinal = ConvertDMSToDD(lonDegree, lonMinute, lonSecond, lonDirection);
-    console.log("Longitude", lonFinal);
+
+    const longitude = ConvertDMSToDD(lonDegree, lonMinute, lonSecond, lonDirection);
+    console.log("Longitude", longitude);
+    return { latitude, longitude };
 }
 ```
 
@@ -401,7 +446,8 @@ export function extractCoords(img) {
         var allMetaData = EXIF.getAllTags(this);
         console.log(JSON.stringify(allMetaData, null, "\t"));
 
-        latlon(myData);
+        let { latitude, longitude } = latlon(myData);
+        console.log(`extractCoords has gotten the values lat: ${latitude} and lon: ${longitude}`);
     });
 }
 ```
@@ -413,18 +459,63 @@ Run the application, go to the page to upload a photo, select a file with gps da
 ## Pass the results back to Blazor
 
 Now we  need to take our two results and pass them back to Blazor.  
+Sadly, we can't just return the values from our `ExtractCoords` function, because the `EXIF.getData` that we're calling is extracting the coordinates in a callback. So in order to send the result back to Blazor, we need a C# callback to invoke when we're done in javascript.  
 We need to learn how to [call .NET methods from JavaScript functions in ASP.NET Core Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-dotnet-from-javascript?view=aspnetcore-6.0).
 
-As described in the [docs](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-dotnet-from-javascript?view=aspnetcore-6.0#component-instance-method-call)
+As described in the [docs](https://docs.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/call-dotnet-from-javascript?view=aspnetcore-6.0#invoke-an-instance-net-method)
 
-> To invoke a static .NET method from JavaScript, use the `DotNet.invokeMethod` or `DotNet.invokeMethodAsync` functions. Pass in the identifier of the static method you wish to call, the name of the assembly containing the function, and any arguments. The asynchronous version is preferred to support Blazor Server scenarios. The .NET method must be public, static, and have the `[JSInvokable]` attribute. 
->
-> To invoke a component's .NET methods:
->
-> Use the `invokeMethod` or `invokeMethodAsync` function to make a static method call to the component.
-> The component's static method wraps the call to its instance method as an invoked `Action`.
+> To invoke an instance .NET method from JavaScript (JS):
+>  
+> Pass the .NET instance by reference to JS by wrapping the instance in a `DotNetObjectReference` and calling `Create` on it.  
+> Invoke a .NET instance method from JS using `invokeMethod` or `invokeMethodAsync` from the passed `DotNetObjectReference`. The .NET instance can also be passed as an argument when invoking other .NET methods from JS.  
+> Dispose of the `DotNetObjectReference`.
 
-Our ultimate goal is to invoke something like this:
+Our `ExtractCoords` c# function needs to be changed like this:
+
+```cs
+public async ValueTask ExtractCoords(byte[]? photoFile, string mimeType) {
+    string dataUri = photoFile is null ? "" : $"data:{mimeType};base64,{Convert.ToBase64String(photoFile)}";
+    var module = await moduleTask.Value;
+
+    DotNetObjectReference<MapJsInterop>? objRef = DotNetObjectReference.Create(this);
+    await module.InvokeVoidAsync("extractCoords", objRef, new { src = dataUri });
+}
+```
+
+Which means that the `exctractCoords` javascript function has to accept a new parameter and use it to invoke a callback:
+
+```js
+export function extractCoords(dotNetHelper, img) {
+    console.log(`extractCoords invoked with: ${img}`);
+    EXIF.getData(img, function () {
+        console.log(`innerfunction invoked with: ${this}`);
+        const myData = this;
+
+        console.log(myData.exifdata);
+
+        let allMetaData = EXIF.getAllTags(this);
+        console.log(JSON.stringify(allMetaData, null, "\t"));
+
+        let { latitude, longitude } = latlon(myData);
+        console.log(`extractCoords has gotten the values lat: ${latitude} and lon: ${longitude}`);
+        dotNetHelper.invokeMethodAsync('GetLatitudeLongitude', latitude, longitude);
+    });
+}
+```
+
+The `GetLatitudeLongitude` is a c# method that we can write in the `MapJsInterop` class. It has to be marked with a `[JSInvokable]` attribute in order to be called by javascript.
+
+```cs
+[JSInvokable]
+public void GetLatitudeLongitude(double Latitude, double Longitude) {
+
+}
+```
+
+What should we do in this method? We need to pass the values back to our Blazor component.  
+One technique that we can use is to get an `Action` from the Blazor component as a parameter and call it with the values.
+
+Our `PhotoEditComponent` gets a new method:
 
 ```cs
 public void UpdatePhotoCoords(double latitude, double longitude) {
@@ -433,139 +524,27 @@ public void UpdatePhotoCoords(double latitude, double longitude) {
 }
 ```
 
-But it would be too easy if we could do this directly. Instead, from javascript we can only invoke a static function, like this one:
+In the `HandleMatFileSelected`, when we invoke the `mapInterop.ExtractCoords`, let's pass this method as a parameter:
+
+```cs
+await mapInterop.ExtractCoords(Photo.PhotoImage.PhotoFile, Photo.PhotoImage.ImageMimeType, UpdatePhotoCoords);
+```
+
+In the `MapInterop`, let's save the Action in a private field, for future use:
+
+```cs
+private Action<double, double> callback;
+public async ValueTask ExtractCoords(byte[]? photoFile, string mimeType, Action<double, double> callback) {
+    this.callback = callback;
+    // ...
+}
+```
+
+Now we can use the callback in the `GetLatitudeLongitude` method:
 
 ```cs
 [JSInvokable]
-public static Task UpdatePhotoCoordinates(double latitude, double longitude) {
-
-}
-```
-
-In javascript we would invoke it like this:
-
-```js
-DotNet.invokeMethodAsync('PhotoSharingApplication.Frontend.BlazorComponents', 'UpdatePhotoCoordinates', latitude, longitude);
-```
-
-So, what should our static `UpdatePhotoCoordinates` do?  
-It should use an `Action` to invoke our `UpdatePhotoCoords`.  
-We need to 
-- declare a `static Action<double, double>`, 
-- connect the `Action` with our `UpdatePhotoCoords`
-- Invoke the Action from the static `UpdatePhotoCoordinates`
-
-- In the `PhotoSharingApplication.Frontend.BlazorComponents` project, the `PhotoEditComponent.razor` component now has
-
-
-```cs
-@code {
-    [Parameter]
-    public Photo Photo { get; set; }
-
-    [Parameter]
-    public EventCallback<Photo> OnSave { get; set; }
-
-    async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-        IMatFileUploadEntry file = files.FirstOrDefault();
-        if (file == null) {
-            return;
-        }
-        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
-        Photo.PhotoImage.ImageMimeType = file.Type;
-        using (var stream = new System.IO.MemoryStream()) {
-            await file.WriteToStreamAsync(stream);
-            Photo.PhotoImage.PhotoFile = stream.ToArray();
-        }
-
-        await ExtractCoords();
-    }
-
-    IJSObjectReference module;
-    protected override async Task OnInitializedAsync() {
-        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
-
-        action = UpdatePhotoCoords;
-
-        module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/map.js");
-    }
-
-    public async ValueTask ExtractCoords() {
-        await module.InvokeVoidAsync("extractCoords",
-            new {
-                src = Photo.PhotoImage?.PhotoFile is null ? "" :
-                $"data:{Photo.PhotoImage.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoImage.PhotoFile)}"
-            });
-    }
-
-    private static Action<double, double> action;
-
-    [JSInvokable]
-    public static Task UpdatePhotoCoordinates(double latitude, double longitude) {
-        action.Invoke(latitude,longitude);
-        return Task.CompletedTask;
-    }
-
-    public void UpdatePhotoCoords(double latitude, double longitude) {
-        Photo.Latitude = latitude;
-        Photo.Longitude = longitude;
-    }
-}
-```
-
-while the `map.js` can become
-
-```js
-// This is a JavaScript module that is loaded on demand. It can export any number of
-// functions, and may import other JavaScript modules if required.
-
-export function showMap(lat, lon, msg) {
-    const map = L.map('map').setView([lat, lon], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    L.marker([lat, lon]).addTo(map)
-        .bindPopup(msg)
-        .openPopup();
-}
-
-export function extractCoords(img) {
-    EXIF.getData(img, function () {
-        latlon(this);
-    });
-}
-
-function ConvertDMSToDD(degrees, minutes, seconds, direction) {
-    let dd = degrees + (minutes / 60) + (seconds / 3600);
-
-    if (direction == "S" || direction == "W") {
-        dd = dd * -1;
-    }
-
-    return dd;
-}
-
-function latlon(myData) {
-    // Calculate latitude decimal
-    const latDegree = myData.exifdata.GPSLatitude?.[0] ?? 0;
-    const latMinute = myData.exifdata.GPSLatitude?.[1] ?? 0;
-    const latSecond = myData.exifdata.GPSLatitude?.[2] ?? 0;
-    const latDirection = myData.exifdata.GPSLatitudeRef ?? 'N';
-    
-    const latFinal = ConvertDMSToDD(latDegree, latMinute, latSecond, latDirection);
-
-    // Calculate longitude decimal
-    const lonDegree = myData.exifdata.GPSLongitude?.[0] ?? 0;
-    const lonMinute = myData.exifdata.GPSLongitude?.[1] ?? 0;
-    const lonSecond = myData.exifdata.GPSLongitude?.[2] ?? 0;
-    const lonDirection = myData.exifdata.GPSLongitudeRef ?? 'E';
-    
-    const lonFinal = ConvertDMSToDD(lonDegree, lonMinute, lonSecond, lonDirection);
-
-    DotNet.invokeMethodAsync('PhotoSharingApplication.Frontend.BlazorComponents', 'UpdatePhotoCoordinates', latFinal, lonFinal);
-}
+public void GetLatitudeLongitude(double Latitude, double Longitude) => callback(Latitude, Longitude);
 ```
 
 ### Try it out

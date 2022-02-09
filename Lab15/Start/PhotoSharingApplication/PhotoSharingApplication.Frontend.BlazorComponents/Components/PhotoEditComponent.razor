@@ -1,0 +1,50 @@
+﻿<MatCard>
+    <MatH3>Upload Photo</MatH3>
+    <MatCardContent>
+        <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
+            <FluentValidationValidator/>
+            <p>
+                <MatTextField @bind-Value="Photo.Title" Label="Title" FullWidth ></MatTextField> 
+                <ValidationMessage For="@(() => Photo.Title)" />
+            </p>
+            <p>
+                <MatTextField @bind-Value="Photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
+                <ValidationMessage For="@(() => Photo.Description)" />
+            </p>
+            <p>
+                <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
+                <ValidationMessage For="@(() => Photo.PhotoImage.PhotoFile)" />
+            </p>
+            <p>
+                <MatButton Type="Submit">Upload</MatButton>
+            </p>
+        </EditForm>
+        <PhotoPictureComponent Photo="Photo" IsLocal></PhotoPictureComponent>
+    </MatCardContent>
+</MatCard>
+
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+
+    [Parameter]
+    public EventCallback<Photo> OnSave { get; set; }
+
+    protected override void OnInitialized() {
+        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage(); 
+    }
+
+    private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
+        IMatFileUploadEntry? file = files.FirstOrDefault();
+        if(file is null){
+            return;
+        }
+        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
+        Photo.PhotoImage.ImageMimeType = file.Type;
+
+        using (var stream = new System.IO.MemoryStream()) {
+            await file.WriteToStreamAsync(stream);
+            Photo.PhotoImage.PhotoFile = stream.ToArray();
+        }
+    }
+}

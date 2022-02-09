@@ -1,0 +1,16 @@
+﻿@inject MapJsInterop mapInterop
+
+<h3>Map</h3>
+
+<div id="map"></div>
+
+<button @onclick="ShowMap">Click here to show the map</button>
+
+@code {
+    [Parameter]
+    public Photo Photo { get; set; }
+
+    public async Task ShowMap() {
+        await mapInterop.ShowMap(Photo.Latitude, Photo.Longitude, Photo.Title);
+    }
+}

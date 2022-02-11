@@ -9,7 +9,7 @@
     <PackageReference Include="BlazorInputFile" Version="0.2.0" />
     <PackageReference Include="Blazorise.Bootstrap" Version="0.9.0.3" />
     <PackageReference Include="Blazorise.Icons.FontAwesome" Version="0.9.0.3" />
-    <PackageReference Include="Google.Protobuf" Version="3.12.2" />
+    <PackageReference Include="Google.Protobuf" Version="3.15.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.29.0" />
     <PackageReference Include="Grpc.Net.Client.Web" Version="2.29.0" />
     <PackageReference Include="Grpc.Tools" Version="2.29.0">

@@ -110,27 +110,13 @@ What you have to do is to open a `Start` folder corresponding to the lab you wan
 
 ## Create the Photos REST Service DataBase
 
-- Open `Lab12\Solution\blazor\PhotoSharingApplication\PhotoSharingApplication.sln` in Visual Studio
+- Open `Lab15\Solution\blazor\PhotoSharingApplication\PhotoSharingApplication.sln` in Visual Studio
 - Build the Solution
-- Open the `Package Manager Console` and type the following command:
-
-```
-Update-Database -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.REST.Photos
-```
-
-## Create Comments gRPC Service DataBase
-
-- Open the `Package Manager Console` and type the following command
-
-```
-Update-Database -Project PhotoSharingApplication.Backend.Infrastructure -StartupProject PhotoSharingApplication.WebServices.Grpc.Comments
-```
-
 - Ensure that you have multiple startup projects:
    - IdentityServer
    - Rest
    - gRPC
-   - Blazor WebAssembly
+   - Frontend.Server
 
 Start the application
 

@@ -75,7 +75,7 @@ In the `PhotoSharingApplication.WebServices.Grpc.Comments` project we need to
 
 - On the `Solution Explorer`, create a new `Infrastructure` folder
 - Add the following NuGet packages (make sure to install the latest prerelease version):
-    - `Microsoft.EntityFrameworkCore.SqlServer`
+    - `Microsoft.EntityFrameworkCore.Sqlite`
     - `Microsoft.EntityFrameworkCore.Design`
     - `Microsoft.EntityFrameworkCore.Tools`
 
@@ -156,7 +156,7 @@ Add a `CommentsDbContext` connection string to [configure](https://docs.microsof
 
 ```json
 "ConnectionStrings": {
-    "CommentsDbContext": "Server=(localdb)\\mssqllocaldb;Database=CommentsDbContextBlazorLabs;Trusted_Connection=True;MultipleActiveResultSets=true"
+    "CommentsDbContext": "Data Source=Comments.db;"
   }
 ```
 
@@ -199,7 +199,8 @@ Next, apply the migration to the database to create the schema.
 Update-Database -Project PhotoSharingApplication.WebServices.Grpc.Comments -StartupProject PhotoSharingApplication.WebServices.Grpc.Comments
 ```
 
-You should now have a new SQL Server database called `CommentsDbContextBlazorLabs` with one empty `Comments` table.
+You should now have a new SQL Lite database called `Comments.db` with one empty `Comments` table.  
+If you want to inspect its contents, you can use the `SQLite / Sql Server Compact Toolbox` extension for Visual Studio.
 
 ### The Repository
 

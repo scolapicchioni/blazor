@@ -1,22 +1,73 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using PhotoSharingApplication.Shared.Authorization;
+using PhotoSharingApplication.Shared.Entities;
+using PhotoSharingApplication.Shared.Interfaces;
+using PhotoSharingApplication.Shared.Validators;
+using PhotoSharingApplication.WebServices.Rest.Photos.Core.Services;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Identity;
+using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Repositories.EntityFramework;
 
-namespace PhotoSharingApplication.WebServices.REST.Photos {
-    public class Program {
-        public static void Main(string[] args) {
-            CreateHostBuilder(args).Build().Run();
-        }
+var builder = WebApplication.CreateBuilder(args);
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder => {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<PhotosDbContext>(options =>
+        options.UseSqlite(builder.Configuration.GetConnectionString("PhotosDbContext")));
+
+builder.Services.AddScoped<IPhotosService, PhotosService>();
+builder.Services.AddScoped<IPhotosRepository, PhotosRepository>();
+
+builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder => {
+    builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+}));
+
+builder.Services.AddAuthentication("Bearer")
+.AddJwtBearer("Bearer", options => {
+    options.Authority = "https://localhost:5007";
+
+    options.TokenValidationParameters = new TokenValidationParameters {
+        ValidateAudience = false
+    };
+});
+builder.Services.AddAuthorization(options => {
+    options.AddPhotosPolicies();
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IAuthorizationHandler, PhotoEditDeleteAuthorizationHandler>();
+builder.Services.AddScoped<IAuthorizationService<Photo>, PhotosAuthorizationService>();
+
+builder.Services.AddFluentValidation();
+builder.Services.AddScoped<IValidator<Photo>, PhotoValidator>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment()) {
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

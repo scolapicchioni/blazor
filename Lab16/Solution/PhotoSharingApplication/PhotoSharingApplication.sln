@@ -1,31 +1,27 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30028.174
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.BlazorWebAssembly", "PhotoSharingApplication.Frontend.BlazorWebAssembly\PhotoSharingApplication.Frontend.BlazorWebAssembly.csproj", "{5D050B77-E999-4843-83F3-A19CDE76F746}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.Server", "PhotoSharingApplication.Frontend\Server\PhotoSharingApplication.Frontend.Server.csproj", "{9A8C1053-F5AE-45EC-B4C5-A7E73EE56A22}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.Core", "PhotoSharingApplication.Frontend.Core\PhotoSharingApplication.Frontend.Core.csproj", "{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.Client", "PhotoSharingApplication.Frontend\Client\PhotoSharingApplication.Frontend.Client.csproj", "{F57F12C1-3653-4F54-9397-2C75593C87FE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.Infrastructure", "PhotoSharingApplication.Frontend.Infrastructure\PhotoSharingApplication.Frontend.Infrastructure.csproj", "{44C9719F-AF92-4E65-8779-210CFA799BA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Shared", "PhotoSharingApplication.Shared\PhotoSharingApplication.Shared.csproj", "{2F499F6E-C368-4D58-A55A-14EC92ED6D1D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.BlazorComponents", "PhotoSharingApplication.Frontend.BlazorComponents\PhotoSharingApplication.Frontend.BlazorComponents.csproj", "{5926CFA9-B3F3-4836-8A9F-727DBA6A77D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.BlazorComponents", "PhotoSharingApplication.Frontend.BlazorComponents\PhotoSharingApplication.Frontend.BlazorComponents.csproj", "{E2AF3F05-5EAE-4666-9B55-1F55E66BCDD5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Backend.Core", "PhotoSharingApplication.Backend.Core\PhotoSharingApplication.Backend.Core.csproj", "{B02341F6-96DD-453F-ABBD-ACFDB30BBB23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.WebServices.Rest.Photos", "PhotoSharingApplication.WebServices.Rest.Photos\PhotoSharingApplication.WebServices.Rest.Photos.csproj", "{ADC2F07B-BD99-4BDB-84C1-8BC490F5613A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Shared.Core", "PhotoSharingApplication.Shared.Core\PhotoSharingApplication.Shared.Core.csproj", "{153E88F2-292C-4A52-9BD6-8572DEA245E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.WebServices.Grpc.Comments", "PhotoSharingApplication.WebServices.Grpc.Comments\PhotoSharingApplication.WebServices.Grpc.Comments.csproj", "{848CE094-D6A8-40C4-9E78-B368173C733F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Backend.Infrastructure", "PhotoSharingApplication.Backend.Infrastructure\PhotoSharingApplication.Backend.Infrastructure.csproj", "{32081A8F-7C15-4E38-93C2-1FD205759E90}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.IdentityProvider", "PhotoSharingApplication.IdentityProvider\PhotoSharingApplication.IdentityProvider.csproj", "{FCE3B245-1069-4318-8C45-7D8ECD7036A9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.WebServices.REST.Photos", "PhotoSharingApplication.WebServices.REST.Photos\PhotoSharingApplication.WebServices.REST.Photos.csproj", "{8C2AB843-BB2A-4689-B2CB-DCAC58AABA85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Shared.Authorization", "PhotoSharingApplication.Shared.Authorization\PhotoSharingApplication.Shared.Authorization.csproj", "{82505745-1294-4755-AB10-38E4B22E98B3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.WebServices.Grpc.Comments", "PhotoSharingApplication.WebServices.Grpc.Comments\PhotoSharingApplication.WebServices.Grpc.Comments.csproj", "{CB0E958F-F369-4161-8EA3-777E4604B06E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests", "PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests\PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests.csproj", "{A041068B-D3DC-4688-A973-3E87DF53BB87}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.IdentityServer", "PhotoSharingApplication.IdentityServer\PhotoSharingApplication.IdentityServer.csproj", "{2FABACFA-7FEC-49F9-B933-88C76202E7DB}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoSharingApplication.Shared.Authorization", "PhotoSharingApplication.Shared.Authorization\PhotoSharingApplication.Shared.Authorization.csproj", "{BF16F935-1D1C-49D4-958D-F27289B063F6}"
-EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{988D210A-60DA-43CC-AD83-9B927AB9711A}"
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{906F93AD-3BDA-47A1-A164-C225B386CDAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,59 +29,51 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5D050B77-E999-4843-83F3-A19CDE76F746}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5D050B77-E999-4843-83F3-A19CDE76F746}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5D050B77-E999-4843-83F3-A19CDE76F746}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5D050B77-E999-4843-83F3-A19CDE76F746}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CA8DCE05-4367-41E0-BCAE-9FCC8D8C6035}.Release|Any CPU.Build.0 = Release|Any CPU
-		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{44C9719F-AF92-4E65-8779-210CFA799BA3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5926CFA9-B3F3-4836-8A9F-727DBA6A77D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5926CFA9-B3F3-4836-8A9F-727DBA6A77D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5926CFA9-B3F3-4836-8A9F-727DBA6A77D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5926CFA9-B3F3-4836-8A9F-727DBA6A77D1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B02341F6-96DD-453F-ABBD-ACFDB30BBB23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B02341F6-96DD-453F-ABBD-ACFDB30BBB23}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B02341F6-96DD-453F-ABBD-ACFDB30BBB23}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B02341F6-96DD-453F-ABBD-ACFDB30BBB23}.Release|Any CPU.Build.0 = Release|Any CPU
-		{153E88F2-292C-4A52-9BD6-8572DEA245E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{153E88F2-292C-4A52-9BD6-8572DEA245E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{153E88F2-292C-4A52-9BD6-8572DEA245E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{153E88F2-292C-4A52-9BD6-8572DEA245E9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{32081A8F-7C15-4E38-93C2-1FD205759E90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{32081A8F-7C15-4E38-93C2-1FD205759E90}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{32081A8F-7C15-4E38-93C2-1FD205759E90}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{32081A8F-7C15-4E38-93C2-1FD205759E90}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8C2AB843-BB2A-4689-B2CB-DCAC58AABA85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8C2AB843-BB2A-4689-B2CB-DCAC58AABA85}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8C2AB843-BB2A-4689-B2CB-DCAC58AABA85}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8C2AB843-BB2A-4689-B2CB-DCAC58AABA85}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CB0E958F-F369-4161-8EA3-777E4604B06E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CB0E958F-F369-4161-8EA3-777E4604B06E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CB0E958F-F369-4161-8EA3-777E4604B06E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CB0E958F-F369-4161-8EA3-777E4604B06E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2FABACFA-7FEC-49F9-B933-88C76202E7DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2FABACFA-7FEC-49F9-B933-88C76202E7DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2FABACFA-7FEC-49F9-B933-88C76202E7DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2FABACFA-7FEC-49F9-B933-88C76202E7DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BF16F935-1D1C-49D4-958D-F27289B063F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BF16F935-1D1C-49D4-958D-F27289B063F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BF16F935-1D1C-49D4-958D-F27289B063F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BF16F935-1D1C-49D4-958D-F27289B063F6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{988D210A-60DA-43CC-AD83-9B927AB9711A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{988D210A-60DA-43CC-AD83-9B927AB9711A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{988D210A-60DA-43CC-AD83-9B927AB9711A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{988D210A-60DA-43CC-AD83-9B927AB9711A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A8C1053-F5AE-45EC-B4C5-A7E73EE56A22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A8C1053-F5AE-45EC-B4C5-A7E73EE56A22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A8C1053-F5AE-45EC-B4C5-A7E73EE56A22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A8C1053-F5AE-45EC-B4C5-A7E73EE56A22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F57F12C1-3653-4F54-9397-2C75593C87FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F57F12C1-3653-4F54-9397-2C75593C87FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F57F12C1-3653-4F54-9397-2C75593C87FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F57F12C1-3653-4F54-9397-2C75593C87FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F499F6E-C368-4D58-A55A-14EC92ED6D1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F499F6E-C368-4D58-A55A-14EC92ED6D1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F499F6E-C368-4D58-A55A-14EC92ED6D1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F499F6E-C368-4D58-A55A-14EC92ED6D1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2AF3F05-5EAE-4666-9B55-1F55E66BCDD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2AF3F05-5EAE-4666-9B55-1F55E66BCDD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2AF3F05-5EAE-4666-9B55-1F55E66BCDD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2AF3F05-5EAE-4666-9B55-1F55E66BCDD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADC2F07B-BD99-4BDB-84C1-8BC490F5613A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADC2F07B-BD99-4BDB-84C1-8BC490F5613A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADC2F07B-BD99-4BDB-84C1-8BC490F5613A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADC2F07B-BD99-4BDB-84C1-8BC490F5613A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{848CE094-D6A8-40C4-9E78-B368173C733F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{848CE094-D6A8-40C4-9E78-B368173C733F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{848CE094-D6A8-40C4-9E78-B368173C733F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{848CE094-D6A8-40C4-9E78-B368173C733F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCE3B245-1069-4318-8C45-7D8ECD7036A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCE3B245-1069-4318-8C45-7D8ECD7036A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCE3B245-1069-4318-8C45-7D8ECD7036A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCE3B245-1069-4318-8C45-7D8ECD7036A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82505745-1294-4755-AB10-38E4B22E98B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82505745-1294-4755-AB10-38E4B22E98B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82505745-1294-4755-AB10-38E4B22E98B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82505745-1294-4755-AB10-38E4B22E98B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A041068B-D3DC-4688-A973-3E87DF53BB87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A041068B-D3DC-4688-A973-3E87DF53BB87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A041068B-D3DC-4688-A973-3E87DF53BB87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A041068B-D3DC-4688-A973-3E87DF53BB87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{906F93AD-3BDA-47A1-A164-C225B386CDAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{906F93AD-3BDA-47A1-A164-C225B386CDAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{906F93AD-3BDA-47A1-A164-C225B386CDAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{906F93AD-3BDA-47A1-A164-C225B386CDAC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {6E8619DF-9C8D-4E46-B021-2BC87BDF2FC7}
+		SolutionGuid = {2883DF84-A362-4797-88C0-C674B6522C62}
 	EndGlobalSection
 EndGlobal

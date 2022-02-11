@@ -14,7 +14,7 @@ public class PhotosController : ControllerBase {
     public PhotosController(IPhotosService service) => this.service = service;
 
     [HttpGet("{startIndex}/{amount}")]
-    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos(int startIndex, int amount, CancellationToken cancellationToken) => (await service.GetPhotosAsync(startIndex,amount,cancellationToken)).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id })}).ToList();
+    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos(int startIndex, int amount, CancellationToken cancellationToken) => (await service.GetPhotosAsync(startIndex,amount,cancellationToken)).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Action(nameof(GetImage), new { id = p.Id })}).ToList();
 
     [HttpGet("count")]
     public async Task<ActionResult<int>> GetPhotosCount() => await service.GetPhotosCountAsync();
@@ -23,7 +23,7 @@ public class PhotosController : ControllerBase {
     public async Task<ActionResult<Photo>> Find(int id) {
         Photo? ph = await service.FindAsync(id);
         if (ph is null) return NotFound();
-        ph.ImageUrl = Url.Link(nameof(GetImage), new { id = ph.Id });
+        ph.ImageUrl = Url.Action(nameof(GetImage), new { id = ph.Id });
         return ph;
     }
 

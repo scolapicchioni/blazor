@@ -24,7 +24,7 @@ I promise, it sounds more complicated than it actually is.
 - Add a `button` and handle the `click` event by invoking a `ShowMap` method
 
 ```html
-<button @onclick="ShowMap">Click here to show the map</button>
+<MatButton @onclick="ShowMap">Click here to show the map</MatButton>
 ```
 Finally, we can invoke the method of our class:
 

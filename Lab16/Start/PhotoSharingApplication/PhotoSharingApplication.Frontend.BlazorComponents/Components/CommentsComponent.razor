@@ -1,0 +1,58 @@
+﻿@using PhotoSharingApplication.Shared.Exceptions
+@inject ICommentsService CommentsService
+@inject NavigationManager navigationManager
+
+<MatH3>Comments</MatH3>
+
+@if (comments is null) {
+  <p><em>No Comments for this Photo</em></p>
+} else {
+  <div class="list-group">
+    @foreach (var comment in comments) {
+      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
+    }
+    <AuthorizeView>
+    <Authorized>
+        <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
+    </Authorized>
+        <NotAuthorized><MatButtonLink Href="bff/login">Log in to add a comment<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
+    </AuthorizeView>
+  </div>
+}
+
+@code {
+    [Parameter]
+    public int PhotoId { get; set; }
+
+    private List<Comment>? comments;
+
+    protected override async Task OnInitializedAsync() {
+        comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);
+    }
+    async Task CreateComment(Comment comment) {
+        try {
+            comments.Add(await CommentsService.CreateAsync(comment));
+        } catch (CreateUnauthorizedException<Comment>) {
+            navigationManager.NavigateTo("/forbidden");
+        } catch (FluentValidation.ValidationException ex) {
+            
+        }
+    }
+
+    async Task UpdateComment(Comment comment) {
+        try {
+            comment = await CommentsService.UpdateAsync(comment);
+        } catch (EditUnauthorizedException<Comment>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
+    }
+
+    async Task DeleteComment(Comment comment) {
+        try {
+            await CommentsService.RemoveAsync(comment.Id);
+            comments.Remove(comment);
+        } catch (DeleteUnauthorizedException<Comment>) {
+            navigationManager.NavigateTo("/forbidden");
+        }
+    }
+}

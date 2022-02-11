@@ -22,7 +22,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<PhotosDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotosDbContext")));
+        options.UseSqlite(builder.Configuration.GetConnectionString("PhotosDbContext")));
 
 builder.Services.AddScoped<IPhotosService, PhotosService>();
 builder.Services.AddScoped<IPhotosRepository, PhotosRepository>();

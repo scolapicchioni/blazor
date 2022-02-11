@@ -59,7 +59,7 @@ Now, it's true that this class looks like the one we have for the frontend, so w
 
 - On the `Solution Explorer`, create a new `Infrastructure` folder
 - Add the following NuGet packages (make sure to install the latest prerelease version):
-    - `Microsoft.EntityFrameworkCore.SqlServer`
+    - `Microsoft.EntityFrameworkCore.Sqlite`
     - `Microsoft.EntityFrameworkCore.Tools`
 
 ### The DbContext
@@ -122,7 +122,7 @@ Open the [`Program.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamental
 
 ```cs
 builder.Services.AddDbContext<PhotosDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("PhotosDbContext")));
+        options.UseSqlite(builder.Configuration.GetConnectionString("PhotosDbContext")));
 
 var app = builder.Build();
 ```
@@ -138,7 +138,7 @@ Add a `PhotosDbContext` connection string to [configure](https://docs.microsoft.
 
 ```json
 "ConnectionStrings": {
-    "PhotosDbContext": "Server=(localdb)\\mssqllocaldb;Database=PhotosDbContextBlazorLabs;Trusted_Connection=True;MultipleActiveResultSets=true"
+    "PhotosDbContext": "Data Source=Photos.db;"
   }
 ```
 
@@ -185,7 +185,10 @@ Next, apply the migration to the database to create the schema.
 Update-Database -Project PhotoSharingApplication.WebServices.Rest.Photos -StartupProject PhotoSharingApplication.WebServices.Rest.Photos
 ```
 
-You should now have a new SQL Server database called `PhotosDbContextBlazorLabs` with one empty `Photos` table.
+You should now have a new SQL Lite database called `Photos.db` with one empty `Photos` table.  
+The file should be located under the root of your project.  
+If you want to see the schema, you can install the `SQLite/ Sql Server Compact Toolbox` Extension for Visual Studio and open the `Photos.db` file.  
+
 
 ## The Repository
 

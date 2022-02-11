@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddGrpc();
 
 builder.Services.AddDbContext<CommentsDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("CommentsDbContext")));
+        options.UseSqlite(builder.Configuration.GetConnectionString("CommentsDbContext")));
 builder.Services.AddScoped<ICommentsService, CommentsService>();
 builder.Services.AddScoped<ICommentsRepository, CommentsRepository>();
 

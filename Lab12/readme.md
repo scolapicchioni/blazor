@@ -295,14 +295,14 @@ public async Task<IActionResult> GetImage(int id) {
 }
 ```
 
-- Change the `FindImage` to include the `ImageUrl` address, as explained in the [article](https://odetocode.com/blogs/scott/archive/2013/03/27/webapi-tip-5-generating-links.aspx) of the late Scott Allen:
+- Change the `FindImage` to include the `ImageUrl` address:
 
 ```cs
 [HttpGet("{id:int}", Name = "Find")]
 public async Task<ActionResult<Photo>> Find(int id) {
     Photo? ph = await service.FindAsync(id);
     if (ph is null) return NotFound();
-    ph.ImageUrl = Url.Link(nameof(GetImage), new { id = ph.Id });
+    ph.ImageUrl = Url.Action(nameof(GetImage), new { id = ph.Id });
     return ph;
 }
 ```
@@ -311,7 +311,7 @@ public async Task<ActionResult<Photo>> Find(int id) {
 
 ```cs
 [HttpGet]
-    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => (await service.GetPhotosAsync()).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id })}).ToList();
+    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => (await service.GetPhotosAsync()).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Action(nameof(GetImage), new { id = p.Id })}).ToList();
 ```
 
 The final code should look like this:
@@ -333,13 +333,13 @@ public class PhotosController : ControllerBase {
     public PhotosController(IPhotosService service) => this.service = service;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => (await service.GetPhotosAsync()).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Link(nameof(GetImage), new { id = p.Id })}).ToList();
+    public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => (await service.GetPhotosAsync()).Select(p=> new Photo { Id=p.Id, CreatedDate = p.CreatedDate, Description = p.Description, PhotoImage = p.PhotoImage, Title = p.Title, UserName = p.UserName, ImageUrl = p.ImageUrl = Url.Action(nameof(GetImage), new { id = p.Id })}).ToList();
 
     [HttpGet("{id:int}", Name = "Find")]
     public async Task<ActionResult<Photo>> Find(int id) {
         Photo? ph = await service.FindAsync(id);
         if (ph is null) return NotFound();
-        ph.ImageUrl = Url.Link(nameof(GetImage), new { id = ph.Id });
+        ph.ImageUrl = Url.Action(nameof(GetImage), new { id = ph.Id });
         return ph;
     }
 

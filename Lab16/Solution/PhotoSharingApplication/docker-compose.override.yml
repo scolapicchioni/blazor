@@ -1,45 +1,55 @@
 version: '3.4'
 
 services:
-  photosharingapplication.identityserver:
+  photosharingapplication.frontend.server:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/PhotoSharingApplication.IdentityServer.pfx
     ports:
-      - "5030:80"
-      - "5031:443"
+      - "80"
+      - "443"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
-
-  photosharingapplication.webservices.rest.photos:
+      - ~/.aspnet/https:/certs:ro
+  photosharingapplication.identityprovider:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/PhotoSharingApplication.WebServices.REST.Photos.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=password
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/certs/photosharingapplication.identityprovider.pfx
     ports:
-      - "5010:80"
-      - "5011:443"
+      - "80"
+      - "443"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      - ~/.aspnet/https:/certs:ro
 
   photosharingapplication.webservices.grpc.comments:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/PhotoSharingApplication.WebServices.Grpc.Comments.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=password
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/certs/photosharingapplication.webservices.grpc.comments.pfx
     ports:
-      - "5020:80"
-      - "5021:443"
+      - "80"
+      - "443"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      - ~/.aspnet/https:/certs:ro
 
-  photosharingapplication.frontend.blazorwebassembly:
+  photosharingapplication.webservices.rest.photos:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=password
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/certs/photosharingapplication.webservices.rest.photos.pfx
     ports:
-      - "5000:80"
-      - "5001:443"
+      - "80"
+      - "443"
     volumes:
-      - ${APPDATA}/nginx_certs:/etc/nginx/certs
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      - ~/.aspnet/https:/certs:ro

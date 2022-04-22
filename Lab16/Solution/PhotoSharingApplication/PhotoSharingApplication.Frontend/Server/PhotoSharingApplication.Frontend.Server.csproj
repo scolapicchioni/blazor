@@ -22,7 +22,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.2" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
-    <PackageReference Include="Yarp.ReverseProxy" Version="1.0.0" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="1.0.1" />
   </ItemGroup>
 
   <ItemGroup>

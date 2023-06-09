@@ -10,7 +10,7 @@ We're going to build a simple web site where people can post pictures and commen
 
 We are going to build 3 parts. 
 - The *FrontEnd*, a **Blazor Client** Web Application paired with its own **ASP.NET Core Web Host**.
-- The *Backend*, built with .NET 6.0, will consist of 
+- The *Backend*, built with .NET 7.0, will consist of 
     - A **REST** service for the managing of the pictures
     - A **gRPC** service for the comments
 - The *Identity Provider* will be our own **Duende** project.
@@ -31,15 +31,15 @@ This project will interact with the user through a browser by dinamically constr
 This project hosts and serves the Blazor Client application. It also acts as a reverse proxy to forward the calls to the REST and gRpc backends.
 
 2.1  - Photos REST Service 
-   - .NET 6 Web API Controller
-   - Entity Framework Core 6.0
-   - Sql Server Database
+   - .NET 7 Web API Controller
+   - Entity Framework Core 7.0
+   - SqLite Database
    - Duende Client Authentication
 
 2.2  - Comments gRPC Service 
-   - .NET 6 gRPC Service
-   - Entity Framework Core 6.0
-   - Sql Server Database
+   - .NET 7 gRPC Service
+   - Entity Framework Core 7.0
+   - SqLite Database
    - Duende Client Authentication
 
 These projects will be responsible to store the data on the server and respond to the client requests through http, json and protobuf.
@@ -59,9 +59,9 @@ This project will take care of the authentication part. It will issue JWT tokens
 - REST
 - gRPC
 - Blazor
-- ASP.NET Core 6.0 Web API Controller
-- ASP.NET Core 6.0 gRPC Service
-- Entity Framework Core 6.0
+- ASP.NET Core 7.0 Web API Controller
+- ASP.NET Core 7.0 gRPC Service
+- Entity Framework Core 7.0
 - Swagger / OpenAPI
 - CORS
 - YARP
@@ -76,12 +76,12 @@ This project will take care of the authentication part. It will issue JWT tokens
 
 ## Before you begin
 
-At the time of the writing of this tutorial, .NET Core 6.0 can be used only with Visual Studio 2022. It is recommended that you install the latest version of Visual Studio 2022 in order to work with .NET Core 6.0.
+At the time of the writing of this tutorial, .NET Core 7.0 can be used only with Visual Studio 2022. It is recommended that you install the latest version of Visual Studio 2022 in order to work with .NET Core 7.0.
 
 - Install the latest version of [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) with the **ASP.NET and web development** workload  
-- Install .NET Core 6.0 by downloading the [.NET Core 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+- Install .NET Core 7.0 by downloading the [.NET Core 7.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
 
-You may want to go to the [getting started](https://dotnet.microsoft.com/learn/aspnet/blazor-tutorial/install) documentation for an updated set of instructions.
+You may want to go to the [getting started](https://dotnet.microsoft.com/en-us/learn/aspnet/blazor-tutorial/install) documentation for an updated set of instructions.
 
 ---
 
@@ -158,7 +158,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
    - Parent and Child Components
    - Properties
    - EventCallbacks
-- Lab 05 - Backend: Web API with ASP.NET Core 6.0 and Visual Studio 2022
+- Lab 05 - Backend: Web API with ASP.NET Core 7.0 and Visual Studio 2022
    - REST Protocol
    - Asp.NET Core Web Api
    - Controllers
@@ -181,7 +181,7 @@ I am going to link a ton of documentation about web concepts and technologies, s
 - Lab 07 - Frontend: Comments
    - More CLEAN architecture
    - More Components
-- Lab 08 - Backend: gRPC with ASP.NET Core 6.0 and Visual Studio 2022
+- Lab 08 - Backend: gRPC with ASP.NET Core 7.0 and Visual Studio 2022
    - More CLEAN architecture
    - gRPC
    - protobuf

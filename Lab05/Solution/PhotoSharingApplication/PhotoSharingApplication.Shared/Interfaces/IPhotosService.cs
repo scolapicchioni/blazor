@@ -1,7 +1,6 @@
 ﻿using PhotoSharingApplication.Shared.Entities;
 
 namespace PhotoSharingApplication.Shared.Interfaces;
-
 public interface IPhotosService {
     Task<Photo?> UploadAsync(Photo photo);
     Task<Photo?> UpdateAsync(Photo photo);

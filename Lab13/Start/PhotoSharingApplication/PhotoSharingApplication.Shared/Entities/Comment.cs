@@ -1,5 +1,4 @@
-﻿namespace PhotoSharingApplication.Shared.Entities;
-
+﻿namespace PhotoSharingApplication.Shared.Entities; 
 public class Comment {
     public int Id { get; set; }
     public int PhotoId { get; set; }

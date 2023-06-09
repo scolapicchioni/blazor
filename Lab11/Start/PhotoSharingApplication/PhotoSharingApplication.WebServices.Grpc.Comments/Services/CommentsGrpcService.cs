@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Authorization;
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services;
-
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Services; 
 public class CommentsGrpcService : Commenter.CommenterBase {
     private readonly ICommentsService commentsService;
 
-    public CommentsGrpcService(ICommentsService commentsService) {
+    public CommentsGrpcService(ICommentsService commentsService)
+    {
         this.commentsService = commentsService;
     }
     public override async Task<GetCommentsForPhotosReply> GetCommentsForPhoto(GetCommentsForPhotosRequest request, ServerCallContext context) {
@@ -18,7 +18,6 @@ public class CommentsGrpcService : Commenter.CommenterBase {
         r.Comments.AddRange(replyItems);
         return r;
     }
-
     public override async Task<FindReply> Find(FindRequest request, ServerCallContext context) {
         Comment c = await commentsService.FindAsync(request.Id);
         if (c is null) {
@@ -26,7 +25,6 @@ public class CommentsGrpcService : Commenter.CommenterBase {
         }
         return new FindReply() { Id = c.Id, PhotoId = c.PhotoId, Subject = c.Subject, UserName = c.UserName, Body = c.Body, SubmittedOn = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(c.SubmittedOn.ToUniversalTime()) };
     }
-
     [Authorize]
     public override async Task<CreateReply> Create(CreateRequest request, ServerCallContext context) {
         try {
@@ -37,7 +35,6 @@ public class CommentsGrpcService : Commenter.CommenterBase {
             throw new RpcException(new Status(StatusCode.Internal, ex.Message));
         }
     }
-
     public override async Task<UpdateReply> Update(UpdateRequest request, ServerCallContext context) {
         try {
             Comment c = await commentsService.UpdateAsync(new Comment { Id = request.Id, Subject = request.Subject, Body = request.Body });
@@ -46,7 +43,6 @@ public class CommentsGrpcService : Commenter.CommenterBase {
             throw new RpcException(new Status(StatusCode.Internal, ex.Message));
         }
     }
-
     public override async Task<RemoveReply> Remove(RemoveRequest request, ServerCallContext context) {
         try {
             Comment c = await commentsService.RemoveAsync(request.Id);

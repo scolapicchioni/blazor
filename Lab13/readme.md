@@ -7,7 +7,7 @@ Our goal is to
 - Reject invalid data
 - Show error messages explaining the rules, so that the user can correct the mistakes
 
-.NET core has some builtin ways to validate data, for example [Data Annotations](https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations?view=net-6.0) are a set of attributes used behind the scene by both [Asp.net Core](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/validation?view=aspnetcore-6.0) and [Entity Framework](https://docs.microsoft.com/en-us/ef/ef6/modeling/code-first/data-annotations).
+.NET core has some builtin ways to validate data, for example [Data Annotations](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations?view=net-7.0) are a set of attributes used behind the scene by both [Asp.net Core](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/validation?view=aspnetcore-7.0) and [Entity Framework](https://learn.microsoft.com/en-us/ef/core/modeling/#use-data-annotations-to-configure-a-model).
 
 We could use those, but there are a couple of considerations we have to make first.  
 
@@ -31,7 +31,7 @@ We can also use Fluent Validation at an *Application* level:
 
 FluentValidations are in fact also supported by
 - ASP.NET Core, by including the [FluentValidation.AspNetCore](https://docs.fluentvalidation.net/en/latest/aspnet.html#asp-net-core)  Package
-- Blazor, by including the [Blazored FluentValidation](https://github.com/Blazored/FluentValidation) Package
+- Blazor, by including the [MudBlazor](https://mudblazor.com/components/form#using-fluent-validation)
 
 So, as a recap.
 
@@ -49,7 +49,8 @@ Let's start.
 - As explained in the [documentation](https://docs.fluentvalidation.net/en/latest/start.html#creating-your-first-validator), let the class derive from `AbstractValidator<Photo>`
 - In the constructor, define rules by using the [builtin validators](https://docs.fluentvalidation.net/en/latest/built-in-validators.html)
     - Ensure that the `Title` is [not empty](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#notempty-validator)
-    - Ensure that the `Title` has a [maximum length](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#maxlength-validator) of 255 characters
+    - Ensure that the `Title` has a [maximum length](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#maxlength-validator) of 100 characters
+    - Ensure that the `Description` has a [maximum length](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#maxlength-validator) of 255 characters
     - Ensure that the `PhotoImage` [complex property](https://docs.fluentvalidation.net/en/latest/start.html#complex-properties) is also validated
 
 The code should look like this:
@@ -63,8 +64,10 @@ namespace PhotoSharingApplication.Shared.Validators;
 public class PhotoValidator : AbstractValidator<Photo> {
     public PhotoValidator() {
         RuleFor(photo => photo.Title).NotEmpty();
-        RuleFor(photo => photo.Title).MaximumLength(255);
+        RuleFor(photo => photo.Title).MaximumLength(100);
 
+        RuleFor(photo => photo.Description).MaximumLength(255);
+        
         RuleFor(photo => photo.PhotoImage).SetValidator(new PhotoImageValidator());
     }
 }
@@ -99,8 +102,9 @@ public class PhotoImageValidator : AbstractValidator<PhotoImage> {
 - Let the class derive from `AbstractValidator<Comment>`
 - In the constructor, define rules by using the [builtin validators](https://docs.fluentvalidation.net/en/latest/built-in-validators.html)
     - Ensure that the `Subject` is [not empty](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#notempty-validator)
-    - Ensure that the `Subject` has a [maximum length](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#maxlength-validator) of 250 characters
+    - Ensure that the `Subject` has a [maximum length](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#maxlength-validator) of 100 characters
     - Ensure that the `Body` is [not empty](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#notempty-validator)
+    - Ensure that the `Body` has a [maximum length](https://docs.fluentvalidation.net/en/latest/built-in-validators.html#maxlength-validator) of 250 characters
 
 The code should look like this:
 
@@ -113,14 +117,214 @@ namespace PhotoSharingApplication.Shared.Validators;
 public class CommentValidator : AbstractValidator<Comment> {
     public CommentValidator() {
         RuleFor(comment => comment.Subject).NotEmpty();
-        RuleFor(comment => comment.Subject).MaximumLength(250);
+        RuleFor(comment => comment.Subject).MaximumLength(100);
 
         RuleFor(comment => comment.Body).NotEmpty();
+        RuleFor(comment => comment.Body).MaximumLength(250);
     }
 }
 ```
 
+## Blazor
+
+In order for a `MudBlazor Form` to use `FluentValidation`, we need to add a new method to each validator. This method will be invoked by the form to display each error next to the field where it belongs.
+
+- In the `Validators` folder, open the `PhotoValidator` class
+- Add the following function
+
+```cs
+public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) => {
+    var result = await ValidateAsync(ValidationContext<Photo>.CreateWithOptions((Photo)model, x => x.IncludeProperties(propertyName)));
+    if (result.IsValid)
+        return Array.Empty<string>();
+    return result.Errors.Select(e => e.ErrorMessage);
+};
+```
+
+- In the `Validators` folder, open the `PhotoImageValidator` class
+- Add the following function
+
+```cs
+public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) => {
+    var result = await ValidateAsync(ValidationContext<PhotoImage>.CreateWithOptions((PhotoImage)model, x => x.IncludeProperties(propertyName)));
+    if (result.IsValid)
+        return Array.Empty<string>();
+    return result.Errors.Select(e => e.ErrorMessage);
+};
+```
+
+- In the `Validators` folder, open the `PhotoImageValidator` class
+- Add the following function
+
+```cs
+public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) => {
+    var result = await ValidateAsync(ValidationContext<Comment>.CreateWithOptions((Comment)model, x => x.IncludeProperties(propertyName)));
+    if (result.IsValid)
+        return Array.Empty<string>();
+    return result.Errors.Select(e => e.ErrorMessage);
+};
+```
+
+Now open the `PhotoEditComponent.razor` component under the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project.  
+- in the `@code` section, add:
+  - a `private` variable of type `MudForm` called `form`
+  - a `private` variable of type `PhotoValidator` called `photoValidator`, set to a new instance of a `PhotoValidator`
+  - a method `async Task ValidateAndSubmit` which:
+    - invokes `form.Validate()`
+    - checks if `form.isValid` and if so, invokes the `OnSave` `EventCallback`
+The code becomes:
+
+```cs
+@code {
+    [Parameter, EditorRequired]
+    public Photo Photo { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<Photo> OnSave { get; set; }
+
+    private MudForm form;
+    private readonly PhotoValidator photoValidator = new PhotoValidator();
+
+    private async Task HandleFileSelected(IBrowserFile args) {
+        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
+        Photo.PhotoImage.ImageMimeType = args.ContentType;
+
+        using (var streamReader = new System.IO.MemoryStream()) {
+            await args.OpenReadStream().CopyToAsync(streamReader);
+            Photo.PhotoImage.PhotoFile = streamReader.ToArray();
+        }
+    }
+
+    private async Task ValidateAndSubmit() {
+        await form.Validate();
+        if(form.IsValid) {
+            await OnSave.InvokeAsync(Photo);
+        }
+    }
+}
+```
+
+Then, we need to change the `MudForm` to reference the `form` variable we declared and to invoke the `photoValidator.ValidateValue` upon `Validation`:
+
+```html
+<MudForm Model="Photo" @ref="@form" Validation="@(photoValidator.ValidateValue)">
+```
+
+Lastly, we need to invoke our `ValidateAndSubmit` method when our `MudIconButton` at the bottom of our form is clicked:
+
+```html
+<MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.FileUpload" OnClick="ValidateAndSubmit">Upload</MudIconButton>
+```
+
+If you try to add a photo without a title or with fields that are too long, you should see an error message and the form should not be submitted.
+
+Let's repeat this for the `CommentEditComponent.razor`
+
+Now open the `CommentEditComponent.razor` component under the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project.  
+- in the `@code` section, add:
+  - a `private` variable of type `MudForm` called `form`
+  - a `private` variable of type `CommentValidator` called `commentValidator`, set to a new instance of a `CommentValidator`
+  - a method `async Task ValidateAndSubmit` which:
+    - invokes `form.Validate()`
+    - checks if `form.isValid` and if so, invokes the `OnSave` `EventCallback`
+The code becomes:
+
+```cs
+@code {
+    [Parameter]
+    public Comment CommentItem { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<Comment> OnSave { get; set; }
+
+    private Comment originalComment = default!;
+
+    private MudForm form;
+    private readonly CommentValidator commentValidator = new CommentValidator();
+
+    protected override void OnInitialized() {
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+    }
+
+    private async Task ValidateAndSubmit() {
+        await form.Validate();
+        if (form.IsValid) {
+            await OnSave.InvokeAsync(originalComment);
+        }
+    }
+}
+```
+
+Then, we need to change the `MudForm` to reference the `form` variable we declared and to invoke the `commentValidator.ValidateValue` upon `Validation`:
+
+```html
+<MudForm Model="originalComment" @ref="@form" Validation="@(commentValidator.ValidateValue)">
+```
+
+Lastly, we need to invoke our `ValidateAndSubmit` method when our `MudIconButton` at the bottom of our form is clicked:
+
+```html
+<MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.Check" OnClick="ValidateAndSubmit">Update</MudIconButton>
+```
+
+If you try to modify a comment without a title or with fields that are too long, you should see an error message and the form should not be submitted.
+
+Let's repeat this for the `CommentCreateComponent.razor`
+
+Now open the `CommentEditComponent.razor` component under the `Components` folder of the `PhotoSharingApplication.Frontend.BlazorComponents` project.  
+- in the `@code` section, add:
+  - a `private` variable of type `MudForm` called `form`
+  - a `private` variable of type `CommentValidator` called `commentValidator`, set to a new instance of a `CommentValidator`
+- Modify the `RaiseCreate` to:
+    - invoke `form.Validate()`
+    - checks if `form.isValid` and if so, invoke the `OnSave` `EventCallback` and reset the `originalComment`
+The code becomes:
+
+```cs
+@code {
+    [Parameter]
+    public Comment CommentItem { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<Comment> OnSave { get; set; }
+
+    private Comment originalComment = default!;
+
+    protected override void OnInitialized() {
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+    }
+
+    async Task RaiseCreate(MouseEventArgs args) {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            await OnSave.InvokeAsync(originalComment);
+            originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+        }
+    }
+
+    private MudForm form;
+    private readonly CommentValidator commentValidator = new CommentValidator();
+}
+```
+
+Then, we need to change the `MudForm` to reference the `form` variable we declared and to invoke the `commentValidator.ValidateValue` upon `Validation`:
+
+```html
+<MudForm Model="originalComment" @ref="@form" Validation="@(commentValidator.ValidateValue)">
+```
+If you try add a comment without a title or with fields that are too long, you should see an error message and the form should not be submitted.
+
 ## Photos Rest API
+
+So far, we prevented inserting incorrect data into the form client side. This is a nice experience for the user, but if a malicious user would use a tool such as PostMan, the data would still be accepted since it is not validated server side.
+Let's fix that.
 
 ### PhotosService
 
@@ -135,7 +339,7 @@ The code should look like this:
 using FluentValidation;
 //(...code omitted for brevity...)
 
-namespace PhotoSharingApplication.Backend.Core.Services;
+namespace PhotoSharingApplication.WebServices.REST.Photos.Services;
 public class PhotosService : IPhotosService {
 
     //(...code omitted for brevity...)
@@ -191,8 +395,7 @@ using FluentValidation.AspNetCore;
 using PhotoSharingApplication.Shared.Validators;
 ```
 
-- Try to upload a photo without a title.
-- Inspect the network traffic by pressing F12 on your browser and going to the `Network` tab    
+Try to upload a photo without a title, by using PostMan (you can just comment out the `[Authorize] attribute in order to be able to invoke the action without having to add an authentication token).  
 You'll see that the server is returning a 400 (Bad Request) containing the list of all the errors found by the validation. The Bad Request comes from the fact that Validation is performed by ASP.NET Core even before our action is invoked, which means that our *core service* has not even been bothered at all.  
 
 ### CommentsService
@@ -260,270 +463,251 @@ using PhotoSharingApplication.Shared.Validators;
 
 ## Comments gRPC Service
 
-[Anthoy Giretty](https://anthonygiretti.com/) is working to include `Fluent Validation` in gRpc.Net. Unfortunately at the moment of this writing (February 2022), his package works with .NET 3.1 but not (yet?) with .Net 5.0 nor 6.0.
-So, go check his [Repo](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master) to see if he updated it to .NET 6. **IF HE DID**, you can follow his [documentation](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master#server-side-usage)
+[Anthoy Giretty](https://anthonygiretti.com/) created a very nice package to automatically include `Fluent Validation` in gRpc.Net.  
+His [Repo](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master) has been recently updated so we can follow his [documentation](https://github.com/AnthonyGiretti/grpc-aspnetcore-validator/tree/master#server-side-usage)
 
-We will have to use `FluentValidation` ourselves, but since this one throws a `ValidationException` while we need to throw an `RpcException`, we will translate it back and forth so that our Services don't need to know that gRpc is involved but we can still communicate back and forth using gRpc.
+### Server side
 
-So the flow will be:
-1. The gRpcService passes the data to the Service 
-2. The Service validates the data but throws a `ValidationException`
-3. The gRpcService transforms the `ValidationException` into an `RpcException` and sends it to the Client, adding the ValidationError in the [`trailers`](https://docs.microsoft.com/en-us/aspnet/core/grpc/client?view=aspnetcore-6.0#access-grpc-trailers)
-4. The Client Repository receives the `RpcException` and transforms it back to a `ValidationException`
+- Add the `Calzolari.Grpc.AspNetCore.Validation` NuGet package to the `PhotoSharingApplication.WebServices.Grpc.Comments` project.  
 
-We have already taken care of the service, now let's implement the gRpc service.
+We do have a validator for a `Comment`, but remember that in gRpc what we get from the client is not a `Comment` but a `CreateRequest` and an `UpdateRequest`. We need to validate those. Fortunately we can use the same `Rules` we established for the `Comment`.
 
-- Open the `CommentsGrpcService` class located under the `Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
-- Locate both the `Create` and `Update` methods and add a new `catch` clause to handle a `ValidationException` and throw an `RpcException` using an extension method that we will implement later
+- Add a `Validators` folder to the `PhotoSharingApplication.WebServices.Grpc.Comments` project.
+- Under that folder, add a `CreateRequestValidator`, let it derive from `AbstractValidator<CreateRequest>` and create the same rules we had written for the `CommentValidator`. The code becomes:
 
 ```cs
-catch (ValidationException ex) {
-    throw ex.ToRpcException();
-}
-```
-
-- Add a new folder `Validation` to the `PhotoSharingApplication.WebServices.Grpc.Comments` project
-- In the `Validation` folder, add a new `ValidationExtensions` static class
-- In the `ValidationExtensions` class, add a new `ToRpcException` extension method that takes a `ValidationException` and returns an `RpcException`
-- In the `ToRpcException` extension method, add the following code:
-
-```cs
-using Grpc.Core;
-using PhotoSharingApplication.Shared.Validators;
-using System.Text.Json;
 using FluentValidation;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Validation;
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Validators;
+public class CreateRequestValidator : AbstractValidator<CreateRequest> {
+    public CreateRequestValidator() {
+        RuleFor(comment => comment.Subject).NotEmpty();
+        RuleFor(comment => comment.Subject).MaximumLength(100);
 
-public static class ValidationExtensions {
-    public static RpcException ToRpcException(this ValidationException ex) {
-        var metadata = new Metadata();
-        List<ValidationTrailer> trailers = ex.Errors.Select(x => new ValidationTrailer {
-            PropertyName = x.PropertyName,
-            AttemptedValue = x.AttemptedValue?.ToString(),
-            ErrorMessage = x.ErrorMessage
-        }).ToList();
-        string json = JsonSerializer.Serialize(trailers);
-        metadata.Add(new Metadata.Entry("validation-errors-text", json));
-        return new RpcException(new Status(StatusCode.InvalidArgument, "Validation Failed"), metadata);
+        RuleFor(comment => comment.Body).NotEmpty();
+        RuleFor(comment => comment.Body).MaximumLength(250);
     }
 }
 ```
 
-`ValidationTrailer` is a class that we need to serialize and deserialize the errors as trailers in the gRpc response. Let's add it to the `Validators` folder of the `PhotoSharingApplication.Shared.Validators` project:
-
-```cs
-namespace PhotoSharingApplication.Shared.Validators;
-
-[Serializable]
-public class ValidationTrailer {
-    public string PropertyName { get; set; }
-
-    public string ErrorMessage { get; set; }
-
-    public string AttemptedValue { get; set; }
-}
-```
-
-Now let's think about the client repository.
-
-- Add a new `Validation` folder to the `PhotoSharingApplication.Frontend.Client` project
-- In the `Validation` folder, add a new `ValidationExtensions` static class
-- In the `ValidationExtensions` class, add a new `ToValidationException` extension method that takes a `RpcException` and returns a `ValidationException`
+- Create an `UpdateRequestValidator` using the same rules
 
 ```cs
 using FluentValidation;
-using FluentValidation.Results;
-using Grpc.Core;
-using PhotoSharingApplication.Shared.Validators;
-using System.Text.Json;
 
-namespace PhotoSharingApplication.Frontend.Client.Validation;
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Validators; 
+public class UpdateRequestValidator : AbstractValidator<UpdateRequest> {
+    public UpdateRequestValidator() {
+        RuleFor(updateRequest => updateRequest.Subject).NotEmpty();
+        RuleFor(updateRequest => updateRequest.Subject).MaximumLength(100);
 
-public static class ValidationExtensions {
-    public static ValidationException ToValidationException(this RpcException ex) {
-        var validationTrailer = ex.Trailers.FirstOrDefault(x => x.Key == "validation-errors-text");
-
-        var trailers = JsonSerializer.Deserialize<List<ValidationTrailer>>(validationTrailer.Value);
-        List<ValidationFailure> validationFailures = trailers.Select(t => new ValidationFailure(t.PropertyName, t.ErrorMessage, t.AttemptedValue)).ToList();
-        throw new FluentValidation.ValidationException(validationFailures);
+        RuleFor(updateRequest => updateRequest.Body).NotEmpty();
+        RuleFor(updateRequest => updateRequest.Body).MaximumLength(250);
     }
 }
 ```
 
-- Open the `CommentsRepository` class under the `Infrastructure/Repositories/Grpc` folder of the `PhotoSharingApplication.Frontend.Client` project
-- Add a new `catch` clause in both the `Create` and `Update` methods that handles a `RpcException` and transforms it back to a `ValidationException`
+- Open `Program.cs` and replace
 
 ```cs
-catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument) {
-    throw ex.ToValidationException();
-} 
+builder.Services.AddGrpc();
 ```
 
-which requires
+with
 
 ```cs
-using PhotoSharingApplication.Frontend.Client.Validation;
+builder.Services.AddGrpc(options => options.EnableMessageValidation());
 ```
 
-Try running the application submitting a comment without any text. If you inspect the Network tab in the browser, you will see that the Response contains the following headers:
+Then add
 
-```
-grpc-message: Validation Failed    
-grpc-status: 3  
-validation-errors-text: [{"PropertyName":"Subject","ErrorMessage":"\u0027Subject\u0027 must not be empty.","AttemptedValue":""},{"PropertyName":"Body","ErrorMessage":"\u0027Body\u0027 must not be empty.","AttemptedValue":""}]  
+```cs
+builder.Services.AddValidator<CreateRequestValidator>();
+builder.Services.AddValidator<UpdateRequestValidator>();
+builder.Services.AddGrpcValidation();
 ```
 
 Great, now we can never get any bad data on our server.    
-The validation server side is complete, but if we leave the application like this, the user will have to wait for the data to reach the server and the error to come back to the client before it can see the error message. We can enhance the user experience by adding the validation even client side and the nice thing is that we can reuse the same validators we used server side.
+The validation server side is complete.  
+Considering that the rules are the same on the client and on the server, in theory the client should never get the errors from the server, but let's prepare our client to handle and show the exceptions anyway, so that if ever someone updates the rules on the gRpc side without updating the client, we can still fail gracefully.
 
-So let's add the validation to the UI Client Side.
+### Client Side
 
-## The Client Side
+- Add the `Calzolari.Grpc.Net.Client.Validation` NuGetPackage to the `PhotoSharingApplication.Frontend.Client` project
+- Open the `PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc.CommentsRepository` class
+- Add a catch block in both the `CreateAsync` and `UpdateAsync` methods to
+  - Catch an `RpcException` when the `StatusCode` is `InvalidArgument`
+  - Get all the errors by invoking the `GetValidationErrors` extension method
+  - throwing a new `ValidationException` filled up with a `ValidationFailures` list
 
-First, we need to register the `IValidator<Photo>` and `IValidator<Comment>` in the Blazor DI Container.
-
-- Add the `FluentValidation` NuGet Package to the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
-- In the `Program` class, locate the `Main` method
-- Register the `PhotoValidator` with the services collection by calling the `AddScoped` method
-- Register the `CommentValidator` with the services collection by calling the `AddScoped` method
-
-```cs
-builder.Services.AddScoped<IValidator<Photo>, PhotoValidator>();
-builder.Services.AddScoped<IValidator<Comment>, CommentValidator>();
-```
-
-which requires
+The code becomes:
 
 ```cs
-using FluentValidation;
-using PhotoSharingApplication.Shared.Validators;
-```
-
-Now let's show the error messages to the user.
-
-## Show Validation Errors in Blazor Components
-
-- Add the `Blazored.FluentValidation` NuGet Package to the `PhotoSharingApplication.Frontend.BlazorComponents` project
-- As explained in the [documentation](https://github.com/Blazored/FluentValidation#basic-usage), add the following using statement to your root `_Imports.razor`
-
-```cs
-@using Blazored.FluentValidation
-```
-
-### PhotoEditComponent.razor
-
-- Open the `PhotoEditComponent.razor` file 
-- Add a `<FluentValidationValidator />` component right under the `<EditForm>` Tag
-- Add a `<ValidationMessage For="@(() => Photo.Title)" />` tag under the `MatTextField` for the `Photo.Title`
-- Add a `<ValidationMessage For="@(() => Photo.PhotoImage.PhotoFile)" />` tag under the `MatFileUpload` for the `Photo.PhotoImage.PhotoFile`
-- Make sure that the `PhotoImage` property is not null when the component is initialized
-
-The template should look like this
-
-```html
-<MatCard>
-    <MatH3>Upload Photo</MatH3>
-    <MatCardContent>
-        <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
-            <FluentValidationValidator />
-            <p>
-                <MatTextField @bind-Value="@Photo.Title" Label="Title" FullWidth></MatTextField>
-                <ValidationMessage For="@(() => Photo.Title)" />
-            </p>
-            <p>
-                <MatTextField @bind-Value="@Photo.Description" Label="Description" TextArea FullWidth></MatTextField>
-            </p>
-            <p>
-                <MatFileUpload OnChange="@HandleMatFileSelected"></MatFileUpload>
-                <ValidationMessage For="@(() => Photo.PhotoImage.PhotoFile)" />
-            </p>
-            <p>
-                <MatButton Type="submit">Upload</MatButton>
-            </p>
-        </EditForm>
-        <PhotoPictureComponent Photo="Photo" IsLocal="true"></PhotoPictureComponent>
-    </MatCardContent>
-</MatCard>
-```
-
-In the `code` section, you should add
-
-```cs
-protected override void OnInitialized() {
-    if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage(); 
+public async Task<Comment?> CreateAsync(Comment comment) {
+    CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
+    try {
+        CreateReply c = await gRpcClient.CreateAsync(createRequest);
+        return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+        throw new CreateUnauthorizedException<Comment>(ex.Message);
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument) {
+        throw new FluentValidation.ValidationException(ex.GetValidationErrors().Select(t => new ValidationFailure(t.PropertyName, t.ErrorMessage, t.AttemptedValue)).ToList());
+    } catch (RpcException ex) {
+        throw new Exception(ex.Message);
+    }
 }
 ```
 
+And
+
+```cs
+public async Task<Comment?> UpdateAsync(Comment comment) {
+    try {
+        UpdateReply c = await gRpcClient.UpdateAsync(new UpdateRequest { Id = comment.Id, Subject = comment.Subject, Body = comment.Body });
+        return new Comment { Id = c.Id, PhotoId = c.PhotoId, UserName = c.UserName, Subject = c.Subject, Body = c.Body, SubmittedOn = c.SubmittedOn.ToDateTime() };
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) {
+        return null;
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
+        throw new EditUnauthorizedException<Comment>(ex.Message);
+    } catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument) {
+        throw new FluentValidation.ValidationException(ex.GetValidationErrors().Select(t => new ValidationFailure(t.PropertyName, t.ErrorMessage, t.AttemptedValue)).ToList());
+    } catch (RpcException ex) {
+        throw new Exception(ex.Message);
+    }
+}
+```
+
+## The UI
+
+## Show Validation Errors in Blazor Components
+
 ### CommentCreateComponent.razor
 
-- Open the `CommentCreateComponent.razor` file 
-- Add a `<FluentValidationValidator />` component right under the `<EditForm>` Tag
-- Add a `<ValidationMessage For="@(() => CommentItem.Subject)" />` tag under the `MatTextField` for the `CommentItem.Subject`
-- Add a `<ValidationMessage For="@(() => CommentItem.Body)" />` tag under the `MatTextField` for the `CommentItem.Body`
+- Open the `CommentCreateComponent.razor` file of the  `PhotoSharingApplication.Frontend.Client` project
+- Add a `private string message` variable
+- During the `RaisCreate` method, try to await on the OnSave EventCallback, catch an `ValidationException` and set the `message` value to the `Message` property of the caught exception
+- Show the `message` using a `MudText`
 
-The template should look like this (the `code` section does not change)
+The `CommentCreate.razor` component becomes:
 
-```html
-<MatCardContent>
-    <EditForm Model="@CommentItem" OnValidSubmit="HandleValidSubmit">
-        <FluentValidationValidator />
-        <p>
-            <MatTextField @bind-Value="@CommentItem.Subject" Label="Subject" FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Subject)" />
-        </p>
-        <p>
-            <MatTextField @bind-Value="@CommentItem.Body" Label="Description" TextArea FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Body)" />
-        </p>
-        <p>
-            <MatButton Type="submit">Submit</MatButton>
-        </p>
-    </EditForm>
-</MatCardContent>
+```
+@using PhotoSharingApplication.Shared.Validators;
+<MudCard>
+    <MudForm Model="originalComment" @ref="@form" Validation="@(commentValidator.ValidateValue)">
+        <MudCardContent>
+            <MudTextField @bind-Value="originalComment.Subject"
+                          For="@(() => originalComment.Subject)"
+                          Label="Title" />
+            <MudTextField @bind-Value="originalComment.Body"
+                          Lines="3"
+                          For="@(() => originalComment.Body)"
+                          Label="Description" />
+            <MudText Typo="Typo.caption" Color="Color.Error">@message</MudText>
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.Check" OnClick="RaiseCreate">Create</MudIconButton>
+    </MudCardActions>    
+</MudCard>
+
+
+@code {
+    [Parameter]
+    public Comment CommentItem { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<Comment> OnSave { get; set; }
+
+    private Comment originalComment = default!;
+
+    private string message;
+    protected override void OnInitialized() {
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+    }
+
+    async Task RaiseCreate(MouseEventArgs args) {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            try
+            {
+                message = string.Empty;
+                await OnSave.InvokeAsync(originalComment);
+                originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+            }
+            catch (FluentValidation.ValidationException ex) {
+                message = ex.Message;
+            }
+        }
+    }
+
+    private MudForm form;
+    private readonly CommentValidator commentValidator = new CommentValidator();
+}
 ```
 
-### CommentEditComponent.razor
+Repeat the process for the `CommentEditComponent.razor`, which becomes:
 
-- Open the `CommentEditComponent.razor` file 
-- Add a `<FluentValidationValidator />` component right under the `<EditForm>` Tag
-- Add a `<ValidationMessage For="@(() => CommentItem.Subject)" />` tag under the `MatTextField` for the `CommentItem.Subject`
-- Add a `<ValidationMessage For="@(() => CommentItem.Body)" />` tag under the `MatTextField` for the `CommentItem.Body`
+```
+@using PhotoSharingApplication.Shared.Validators;
+<MudCard>
+    <MudForm Model="originalComment" @ref="@form" Validation="@(commentValidator.ValidateValue)">
+        <MudCardContent>
+            <MudTextField @bind-Value="originalComment.Subject"
+                          For="@(() => originalComment.Subject)"
+                          Label="Title" />
+            <MudTextField @bind-Value="originalComment.Body"
+                          Lines="3"
+                          For="@(() => originalComment.Body)"
+                          Label="Description" />
+            <MudText Typo="Typo.caption" Color="Color.Error">@message</MudText>
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="@(async ()=> await OnCancel.InvokeAsync(originalComment))">Cancel</MudIconButton>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.Check" OnClick="ValidateAndSubmit">Update</MudIconButton>
+    </MudCardActions>
+</MudCard>
 
-The template should look like this (the `code` section does not change)
+@code {
+    [Parameter]
+    public Comment CommentItem { get; set; } = default!;
 
-```html
-<MatCardContent>
-    <EditForm Model="@CommentItem" OnValidSubmit="HandleValidSubmit">
-        <FluentValidationValidator />
-        <p>
-            <MatTextField @bind-Value="@CommentItem.Subject" Label="Subject" FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Subject)" />
-        </p>
-        <p>
-            <MatTextField @bind-Value="@CommentItem.Body" Label="Description" TextArea FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Body)" />
-        </p>
-        <p>
-            <MatButton Type="submit">Submit</MatButton>
-        </p>
-    </EditForm>
-</MatCardContent>
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<Comment> OnSave { get; set; }
+
+    private Comment originalComment = default!;
+
+    private MudForm form;
+    private readonly CommentValidator commentValidator = new CommentValidator();
+
+    private string message;
+
+    protected override void OnInitialized() {
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+    }
+
+    private async Task ValidateAndSubmit() {
+        await form.Validate();
+        if (form.IsValid) {
+            try {
+                message = string.Empty;
+                await OnSave.InvokeAsync(originalComment);
+            } catch (FluentValidation.ValidationException ex) {
+                message = ex.Message;
+            }
+        }
+    }
+}
 ```
 
-- Run the application
-- Try to upload a Photo without a title  
-You'll see an error message stating that the Title field cannot be empty.
-- Try to write a Title longer than 255 characters
-You'll see an error message stating that the Title field cannot be longer than 255 characters.
-- Try to upload a Photo without a Picture  
-You'll see an error message stating that the `Photo File` field cannot be empty.
-- Try to submit a Comment without a title  
-You'll see an error message stating that the Title field cannot be empty.
-- Try to write a Title longer than 255 characters
-You'll see an error message stating that the Title field cannot be longer than 255 characters.
-
-Also, there is no network traffic involved.
+If you want to test what happens, change the rules on the gRpc validators. For example, have the Title rule ensure that it cannot be longer than 5 letters. You should see the errors coming from the server. Don't forget to put the rules back to match the ones on the client when you're done!
 
 And we're done!
 

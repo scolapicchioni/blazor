@@ -1,7 +1,6 @@
 ﻿using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.Shared.Interfaces;
-
+namespace PhotoSharingApplication.Shared.Interfaces; 
 public interface IPhotosRepository {
     Task<Photo?> UpdateAsync(Photo photo);
     Task<Photo?> FindAsync(int id);

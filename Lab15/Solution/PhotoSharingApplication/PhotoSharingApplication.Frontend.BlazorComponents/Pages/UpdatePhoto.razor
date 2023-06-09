@@ -1,21 +1,17 @@
 ﻿@page "/photos/update/{id:int}"
-@using PhotoSharingApplication.Shared.Exceptions
 
+@using PhotoSharingApplication.Shared.Exceptions;
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
 <PageTitle>Update Photo @photo?.Title</PageTitle>
 
 @if (photo is null) {
-    <p>...Loading...</p>
+    <MudText Typo="Typo.caption">...Loading...</MudText>
 } else {
-    <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <PhotoEditComponent Photo="photo" OnSave="Update"></PhotoEditComponent>
-            </div>
-        </div>
-    </div>
+    <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
 }
 
 @code {
@@ -28,7 +24,7 @@
         photo = await photosService.FindWithImageAsync(Id);
     }
 
-    private async Task Update() {
+    private async Task Upload() {
         try {
             await photosService.UpdateAsync(photo!);
             navigationManager.NavigateTo("/photos/all");

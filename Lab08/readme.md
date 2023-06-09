@@ -1,12 +1,12 @@
-# Backend: gRpc with ASP.NET 6 and Visual Studio 2022
+# Backend: gRpc with ASP.NET 7 and Visual Studio 2022
 
 In this lab we're going to take care of our Backend.
 
 We're going to stick to the same [CLEAN architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) that we already have:
 
 - The *Core* defines the business logic. There's going to be a `CommentsService` 
-- The *Infrastructure* will contain the `CommentsRepository` where read and save the data with [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/) on a SQL Server DataBase.
-- An *Application* project, which in this case consists of a [gRpc](https://grpc.io/) service using [ASP.NET Core 6.0 gRpc](https://docs.microsoft.com/en-gb/aspnet/core/grpc/?view=aspnetcore-6.0).
+- The *Infrastructure* will contain the `CommentsRepository` where read and save the data with [Entity Framework Core](https://learn.microsoft.com/en-gb/ef/core/) on a SQL Server DataBase.
+- An *Application* project, which in this case consists of a [gRpc](https://grpc.io/) service using [ASP.NET Core 6.0 gRpc](https://learn.microsoft.com/en-gb/aspnet/core/grpc/?view=aspnetcore-7.0).
 
 Both the `Service` and the `Repository` will implement the interfaces and make use of the `Comment` entity that we have already defined on the `Shared` project
 
@@ -16,7 +16,9 @@ Both the `Service` and the `Repository` will implement the interfaces and make u
 - In the `Create a new project` dialog, select `ASP.NET Core gRPC Service` and select `Next`
 - Name the project `PhotoSharingApplication.WebServices.Grpc.Comments`. It's important to name the project `PhotoSharingApplication.WebServices.Grpc.Comments` so the namespaces will match when you copy and paste code.
 - Leave the `Enable Docker` checkbox unchecked
-- Ensure to select the latest .NET Core version (6.0) and select `Create`
+- Ensure to select the latest .NET Core version (7.0) 
+- Unselect `Do not use top-level statements`
+- Click on `Create`
 - Add a project reference to the `PhotoSharingApplication.Shared` project.
 
 ## The Backend Core
@@ -96,20 +98,20 @@ public class CommentsDbContext : DbContext {
 
 ```
 
-Because we're going to use this `DbContext` from an ASP.NET Core project, we are going to use the [constructor accepting the DbOptions](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/connection-strings#aspnet-core)
+Because we're going to use this `DbContext` from an ASP.NET Core project, we are going to use the [constructor accepting the DbOptions](https://learn.microsoft.com/en-gb/ef/core/miscellaneous/connection-strings#aspnet-core)
 
 ```cs
 public CommentsDbContext(DbContextOptions<CommentsDbContext> options)  : base(options) {}
 ```
 
-We want to give our model some configurations and restrictions, so we're going to use [Fluent API](https://docs.microsoft.com/en-gb/ef/core/modeling/#use-fluent-api-to-configure-a-model) to do that:
+We want to give our model some configurations and restrictions, so we're going to use [Fluent API](https://learn.microsoft.com/en-gb/ef/core/modeling/#use-fluent-api-to-configure-a-model) to do that:
 
 ```cs
 protected override void OnModelCreating(ModelBuilder modelBuilder) {
     modelBuilder.Entity<Comment>(ConfigureComments);  
 }
 
-private void ConfigurePhoto(EntityTypeBuilder<Photo> builder) {
+private void ConfigureComments(EntityTypeBuilder<Comment> builder) {
     builder.ToTable("Comments");
 
     builder.Property(comment => comment.Subject)
@@ -133,13 +135,13 @@ using PhotoSharingApplication.Shared.Entities;
 
 ### Configuring the DbContext
 
-The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
+The context has to be configured and added as a Service using the [Dependency Injection](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-7.0) features of `ASP.NET Core`.
 
-Open the [`Program.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, and add the configuration for the `DbContext` before building the app:
+Open the [`Program.cs`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-7.0) file, and add the configuration for the `DbContext` before building the app:
 
 ```cs
 builder.Services.AddDbContext<CommentsDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("CommentsDbContext")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("CommentsDbContext")));
 
 var app = builder.Build();
 ```
@@ -152,7 +154,7 @@ using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
 using PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 ```
 
-Add a `CommentsDbContext` connection string to [configure](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0) it in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-configuration):
+Add a `CommentsDbContext` connection string to [configure](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-7.0) it in the `appsettings.json` file, as per [Default](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-7.0#default-application-configuration-sources):
 
 ```json
 "ConnectionStrings": {
@@ -162,9 +164,9 @@ Add a `CommentsDbContext` connection string to [configure](https://docs.microsof
 
 ### Generate migrations and database
 
-The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
+The database has not been created. We're going to use [Migrations](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://learn.microsoft.com/en-us/ef/core/cli/powershell).
 
-First, as per the [documentation](https://docs.microsoft.com/en-us/ef/core/cli/powershell):
+First, as per the [documentation](https://learn.microsoft.com/en-us/ef/core/cli/powershell#using-the-tools):
 
 > Before using the tools:
 > 
@@ -217,10 +219,13 @@ using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Repositories.EntityFramework;
-
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Repositories; 
 public class CommentsRepository : ICommentsRepository {
-    
+    private readonly CommentsDbContext context;
+
+    public CommentsRepository(CommentsDbContext context) {
+        this.context = context;
+    }
     public async Task<Comment?> CreateAsync(Comment comment) {
         context.Add(comment);
         await context.SaveChangesAsync();
@@ -250,7 +255,7 @@ public class CommentsRepository : ICommentsRepository {
 
 It's time to create a [gRpc](https://grpc.io/) Service.
 
-To create a [gRpc Service in .NET 6](https://docs.microsoft.com/en-us/aspnet/core/grpc/?view=aspnetcore-6.0) using the *proto first* approach, we're going to build an [ASP.NET Core site](https://docs.microsoft.com/en-us/aspnet/core/grpc/aspnetcore?view=aspnetcore-6.0&tabs=visual-studio) 
+To create a [gRpc Service in .NET 6](https://learn.microsoft.com/en-us/aspnet/core/grpc/?view=aspnetcore-7.0) using the *proto first* approach, we're going to build an [ASP.NET Core site](https://learn.microsoft.com/en-us/aspnet/core/grpc/aspnetcore?view=aspnetcore-7.0&tabs=visual-studio) 
 
 ### The gRpc Service
 
@@ -324,9 +329,9 @@ Many messages look the same, but we want to keep the definitions separated so th
 
 GrpcGreeter project files:
 
-- `greet.proto` – The Protos/greet.proto file defines the Greeter gRPC and is used to generate the gRPC server assets. For more information, see [Introduction to gRPC](https://docs.microsoft.com/en-us/aspnet/core/grpc/?view=aspnetcore-6.0).
+- `greet.proto` – The Protos/greet.proto file defines the Greeter gRPC and is used to generate the gRPC server assets. For more information, see [Introduction to gRPC](https://learn.microsoft.com/en-us/aspnet/core/grpc/?view=aspnetcore-7.0).
 - `Services` folder: Contains the implementation of the Greeter service.
-- `appSettings.json` – Contains configuration data, such as protocol used by Kestrel. For more information, see [Configuration in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0).
+- `appSettings.json` – Contains configuration data, such as protocol used by Kestrel. For more information, see [Configuration in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-7.0).
 - `Program.cs` – Contains the entry point for the gRPC service and code that configures app behavior.
 
 ### Add the .proto file
@@ -334,10 +339,10 @@ GrpcGreeter project files:
 - In the `Protos` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project, add a new `Protocol Buffer File` 
 - Name the file `comments.proto`
 
-As explained in the [Microsoft Documentation](https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/protobuf-data-types): 
+As explained in the [Microsoft Documentation](https://learn.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/protobuf-data-types): 
 - the C# `int` is translated into the `int32` type 
 - the C# `DateTime` is translated into the `google.protobuf.Timestamp` type 
-- the C# `List` is achieved through the [`repeated`](https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/protobuf-repeated) keyword
+- the C# `List` is achieved through the [`repeated`](https://learn.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/protobuf-repeated) keyword
 
 This means that the content of the `comments.proto` file becomes
 
@@ -613,7 +618,6 @@ using PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 ## Mapping the service as an EndPoint
 
 In the `Program.cs` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project, find the `app.MapGrpcService<GreeterService>();` and replace it with
-- Inside the `UseEndPoints` method, add the following code:
 
 ```cs
 app.MapGrpcService<CommentsGrpcService>();
@@ -623,11 +627,20 @@ Our service is ready. In the next lab we will setup the client side.
 
 ## Optional
 
-If you want to try your gRpc service without writing a client first, you can use different tools, one of which is [BloomRPC](https://github.com/uw-labs/bloomrpc).  
-You can follow the [instructions](https://github.com/uw-labs/bloomrpc#installation) to install it (for example by installing [Chocolatey](https://chocolatey.org/install) first).  
-Then start your project and check on which port number it runs.  
-On BloomRPC, import the proto file and as an address type `localhost:{PORT NUMBER}` (replacing `{PORT NUMBER}` with your port, which may very well be 5000).  
-Try the different actions. You should see the results in BloomRPC.
+If you want to try your gRpc service without writing a client first, you can use different [tools](https://learn.microsoft.com/en-us/aspnet/core/grpc/test-tools?view=aspnetcore-7.0)
+- [Postman](https://www.postman.com/)
+- [grpcUrl](https://github.com/fullstorydev/grpcurl)
+- [grpcUi](https://github.com/fullstorydev/grpcui)
+- [BloomRPC](https://github.com/uw-labs/bloomrpc).  
+
+For the first three, you can find detailed instructions on [the microsoft documentation](https://learn.microsoft.com/en-us/aspnet/core/grpc/test-tools?view=aspnetcore-7.0)  
+
+For BloomRPC:
+  - You can follow the [instructions](https://github.com/uw-labs/bloomrpc#installation) to install it (for example by installing [Chocolatey](https://chocolatey.org/install) first).  
+  - Then start your project and check on which port number it runs.  
+  - On BloomRPC, import the proto file and as an address type `localhost:{PORT NUMBER}` (replacing `{PORT NUMBER}` with your port, which may very well be 5000).  
+  - Try the different actions. You should see the results in BloomRPC.
+-
 
 --- 
 

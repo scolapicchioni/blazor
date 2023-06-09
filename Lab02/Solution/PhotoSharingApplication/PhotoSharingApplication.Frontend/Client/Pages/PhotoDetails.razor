@@ -1,8 +1,8 @@
-﻿@using PhotoSharingApplication.Shared.Interfaces
+﻿@page "/photos/details/{id:int}"
+
+@using PhotoSharingApplication.Shared.Interfaces
 @using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
-
-@page "/photos/details/{id:int}"
 
 <PageTitle>Photo Details - @photo?.Title</PageTitle>
 

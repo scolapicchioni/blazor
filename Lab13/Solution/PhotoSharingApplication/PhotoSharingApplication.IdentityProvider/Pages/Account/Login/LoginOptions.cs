@@ -1,5 +1,3 @@
-using System;
-
 namespace PhotoSharingApplication.IdentityProvider.Pages.Login;
 
 public class LoginOptions

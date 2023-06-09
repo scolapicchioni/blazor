@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace PhotoSharingApplication.IdentityProvider.Pages.Device;
 
 public class ViewModel

@@ -2,7 +2,7 @@
 
 In this lab we're going connect our FrontEnd to the BackEnd.  
 
-Once again, since we have a [BFF](https://docs.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), our client will just call our own *home*. YARP will forward the call to the gRpc service in the backend return the results to the client.
+Once again, since we have a [BFF](https://learn.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), our client will just call our own *home*. YARP will forward the call to the gRpc service in the backend return the results to the client.
 
 Our client will issue requests to our server and it will handle the results to update the model. Blazor already takes care of updating the UI.
 
@@ -24,7 +24,7 @@ Let's start by our `Frontend.Server` project, where we need to configure YARP to
       "photosrestcluster": {
         "Destinations": {
           "photosrestdestination": {
-            "Address": "https://localhost:5003/"
+            "Address": "https://localhost:5003/api"
           }
         }
       }
@@ -54,7 +54,7 @@ with
       "photosrestcluster": {
         "Destinations": {
           "photosrestdestination": {
-            "Address": "https://localhost:5003/"
+            "Address": "https://localhost:5003/api"
           }
         }
       },
@@ -68,6 +68,8 @@ with
     }
   }
 ```
+
+**NOTE: either ensure that your gRpc service runs on port 5005 or update your YARP configuration to forward the calls to your port**
 
 ## The Frontend.Client
 
@@ -89,7 +91,7 @@ To use gRPC-Client in the `PhotoSharingApplication.Frontend.Client` project:
 - Build the application
 
 ## The Repository 
-We're going create a Repository that uses `gRPC Client` as described in [the Microsoft Documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/client?view=aspnetcore-6.0).
+We're going create a Repository that uses `gRPC Client` as described in [the Microsoft Documentation](https://learn.microsoft.com/en-us/aspnet/core/grpc/client?view=aspnetcore-7.0).
 
 - In the `Grpc` folder, add a `CommentsRepository` class
 - Let the `CommentsRepository` class implement the `ICommentsRepository` interface
@@ -229,11 +231,9 @@ using PhotoSharingApplication.Frontend.Client.Core.Services;
 using PhotoSharingApplication.WebServices.Grpc.Comments;
 ```
 
-**NOTE: Your port may be different, make sure the number after localhost matches the one of your gRPC endpoint**
-
 ## Start 3 projects
 
-In order to start both projects at the same time, we need to configure the Solution in Visual Studio
+In order to start all projects at the same time, we need to configure the Solution in Visual Studio
 
 - In the `Solution Explorer`, right click on the Solution, select `Set Startup Projects`
 - Click on `Multiple Startup Projects`
@@ -251,22 +251,23 @@ You will notice an error in the browser console:
 Failed to fetch
 ```
 
-This happens because our server does not allow [Cross Origin Requests (CORS)](https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0). Let's proceed to modify our server project, as explained in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-5.0#configure-grpc-web-in-aspnet-core).
+This happens because our server does not allow [Cross Origin Requests (CORS)](https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-7.0). Let's proceed to modify our server project, as explained in the [documentation](https://learn.microsoft.com/en-us/aspnet/core/grpc/grpcweb?view=aspnetcore-7.0#grpc-web-and-cors).
 
 ### Configure CORS
-In the ``PhotoSharingApplication.WebServices.Grpc.Comments`` project:
+In the `PhotoSharingApplication.WebServices.Grpc.Comments` project:
 
-As explained in the [documentation](https://docs.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-6.0#grpc-web-and-cors)
+As explained in the [documentation](https://learn.microsoft.com/en-us/aspnet/core/grpc/grpcweb?view=aspnetcore-7.0#grpc-web-and-cors)
 
 - In `Program.cs`, before the building of the app, add the following code:
 
 ```cs
-builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder => {
-    builder.AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
-}));
+    builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
+    }));
 
 //add the previous statement before this line:
 var app = builder.Build();

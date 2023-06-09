@@ -2,12 +2,12 @@
 using PhotoSharingApplication.Shared.Interfaces;
 using PhotoSharingApplication.WebServices.Grpc.Comments;
 
-namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc;
-
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc; 
 public class CommentsRepository : ICommentsRepository {
     private readonly Commenter.CommenterClient gRpcClient;
 
     public CommentsRepository(Commenter.CommenterClient gRpcClient) => this.gRpcClient = gRpcClient;
+
     public async Task<Comment?> CreateAsync(Comment comment) {
         CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
         CreateReply c = await gRpcClient.CreateAsync(createRequest);

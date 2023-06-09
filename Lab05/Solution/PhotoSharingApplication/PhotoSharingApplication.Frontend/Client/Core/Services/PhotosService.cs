@@ -2,7 +2,6 @@
 using PhotoSharingApplication.Shared.Interfaces;
 
 namespace PhotoSharingApplication.Frontend.Client.Core.Services;
-
 public class PhotosService : IPhotosService {
     private readonly IPhotosRepository repository;
     public PhotosService(IPhotosRepository repository) => this.repository = repository;

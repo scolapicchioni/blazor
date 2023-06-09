@@ -1,18 +1,18 @@
-﻿using Grpc.Core;
-using PhotoSharingApplication.Frontend.Client.Validation;
+﻿using Calzolari.Grpc.Net.Client.Validation;
+using FluentValidation.Results;
+using Grpc.Core;
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Exceptions;
 using PhotoSharingApplication.Shared.Interfaces;
 using PhotoSharingApplication.WebServices.Grpc.Comments;
 
-namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc;
-
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc; 
 public class CommentsRepository : ICommentsRepository {
     private readonly Commenter.CommenterClient gRpcClient;
 
     public CommentsRepository(Commenter.CommenterClient gRpcClient) => this.gRpcClient = gRpcClient;
-    public async Task<Comment?> CreateAsync(Comment comment) {
 
+    public async Task<Comment?> CreateAsync(Comment comment) {
         CreateRequest createRequest = new CreateRequest() { PhotoId = comment.PhotoId, Subject = comment.Subject, Body = comment.Body };
         try {
             CreateReply c = await gRpcClient.CreateAsync(createRequest);
@@ -20,7 +20,7 @@ public class CommentsRepository : ICommentsRepository {
         } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
             throw new CreateUnauthorizedException<Comment>(ex.Message);
         } catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument) {
-            throw ex.ToValidationException();
+            throw new FluentValidation.ValidationException(ex.GetValidationErrors().Select(t => new ValidationFailure(t.PropertyName, t.ErrorMessage, t.AttemptedValue)).ToList());
         } catch (RpcException ex) {
             throw new Exception(ex.Message);
         }
@@ -58,7 +58,7 @@ public class CommentsRepository : ICommentsRepository {
         } catch (RpcException ex) when (ex.StatusCode == StatusCode.PermissionDenied) {
             throw new EditUnauthorizedException<Comment>(ex.Message);
         } catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument) {
-            throw ex.ToValidationException();
+            throw new FluentValidation.ValidationException(ex.GetValidationErrors().Select(t => new ValidationFailure(t.PropertyName, t.ErrorMessage, t.AttemptedValue)).ToList());
         } catch (RpcException ex) {
             throw new Exception(ex.Message);
         }

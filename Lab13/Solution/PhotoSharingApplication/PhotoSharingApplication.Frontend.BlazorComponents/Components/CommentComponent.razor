@@ -1,64 +1,46 @@
-﻿<MatH4>Comment</MatH4>
-<MatCard>
-@if (ViewMode == ViewModes.Read) {
-  <CommentReadComponent CommentItem="CommentItem" OnEdit="SwitchToEditMode" OnDelete="SwitchToDeleteMode"></CommentReadComponent>
+﻿@if (ViewMode == ViewModes.Read) {
+  <CommentReadComponent CommentItem="CommentItem" OnEdit="SwitchToEditMode" OnDelete="SwitchToDeleteMode"/>
 } else if (ViewMode == ViewModes.Edit) {
-  <CommentEditComponent CommentItem="CommentItem" OnSave="ConfirmUpdate" OnCancel="CancelUpdate"></CommentEditComponent>
+    <CommentEditComponent CommentItem="CommentItem" OnSave="ConfirmUpdate" OnCancel="SwitchToReadMode" />
 } else if (ViewMode == ViewModes.Delete) {
-  <CommentDeleteComponent CommentItem="CommentItem" OnDelete="ConfirmDelete" OnCancel="SwitchToReadMode"></CommentDeleteComponent>
+  <CommentDeleteComponent CommentItem="CommentItem" OnDelete="ConfirmDelete" OnCancel="SwitchToReadMode"/>
 } else if (ViewMode == ViewModes.Create) {
-  <CommentCreateComponent CommentItem="CommentItem" OnSave="ConfirmCreate"></CommentCreateComponent>
+  <CommentCreateComponent CommentItem="CommentItem" OnSave="ConfirmCreate"/>
 }
-</MatCard>
 
 @code {
-    private Comment originalComment;
+    [Parameter, EditorRequired]
+    public Comment CommentItem { get; set; } = default!;
 
     [Parameter]
-    public Comment CommentItem { get; set; }
-  
-    [Parameter]
-    public ViewModes ViewMode { get; set; }
+    public ViewModes ViewMode { get; set; } = ViewModes.Read;
 
     [Parameter]
     public EventCallback<Comment> OnUpdate { get; set; }
-
     [Parameter]
-    public EventCallback<Comment> OnDelete{ get; set; }
-
+    public EventCallback<Comment> OnDelete { get; set; }
     [Parameter]
     public EventCallback<Comment> OnCreate { get; set; }
 
-    protected override void OnInitialized() {
-        originalComment = new Comment { Subject = CommentItem.Subject, Body = CommentItem.Body };
-    }
+    private void SwitchToReadMode() => ViewMode = ViewModes.Read;
+    private void SwitchToEditMode() => ViewMode = ViewModes.Edit;
+    private void SwitchToDeleteMode() => ViewMode = ViewModes.Delete;
 
-    void SwitchToReadMode() => ViewMode = ViewModes.Read;
-    void SwitchToEditMode() => ViewMode = ViewModes.Edit;
-    void SwitchToDeleteMode() => ViewMode = ViewModes.Delete;
-
-    async Task ConfirmUpdate() {
-        await OnUpdate.InvokeAsync(CommentItem);
+    private async Task ConfirmUpdate(Comment comment) {
+        await OnUpdate.InvokeAsync(comment);
         SwitchToReadMode();
     }
-
-    public void CancelUpdate() {
-        CommentItem.Subject = originalComment.Subject;
-        CommentItem.Body = originalComment.Body;
-
+    
+    private async Task ConfirmDelete(Comment comment) {
+        await OnDelete.InvokeAsync(comment);
         SwitchToReadMode();
     }
-
-    async Task ConfirmDelete() {
-        await OnDelete.InvokeAsync(CommentItem);
-        SwitchToReadMode();
+    
+    private async Task ConfirmCreate(Comment comment) {
+        await OnCreate.InvokeAsync(comment);
     }
 
-    async Task ConfirmCreate() {
-        await OnCreate.InvokeAsync(CommentItem);
-        CommentItem = new Comment() { PhotoId = CommentItem.PhotoId, UserName = CommentItem.UserName };
-    }
-    public enum ViewModes { 
+    public enum ViewModes {
         Read, Edit, Delete, Create
     }
 }

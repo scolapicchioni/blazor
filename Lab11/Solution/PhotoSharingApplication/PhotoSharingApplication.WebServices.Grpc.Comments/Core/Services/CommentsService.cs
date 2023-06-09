@@ -2,15 +2,19 @@
 using PhotoSharingApplication.Shared.Exceptions;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services;
-
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services; 
 public class CommentsService : ICommentsService {
     private readonly ICommentsRepository repository;
     private readonly IAuthorizationService<Comment> commentsAuthorizationService;
     private readonly IUserService userService;
 
     public CommentsService(ICommentsRepository repository, IAuthorizationService<Comment> commentsAuthorizationService, IUserService userService) =>
-        (this.repository, this.commentsAuthorizationService, this.userService) = (repository, commentsAuthorizationService, userService);
+    (this.repository, this.commentsAuthorizationService, this.userService) = (repository, commentsAuthorizationService, userService);
+
+    public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
+
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
+
     public async Task<Comment?> CreateAsync(Comment comment) {
         var user = await userService.GetUserAsync();
         if (await commentsAuthorizationService.ItemMayBeCreatedAsync(user, comment)) {
@@ -19,10 +23,6 @@ public class CommentsService : ICommentsService {
             return await repository.CreateAsync(comment);
         } else throw new CreateUnauthorizedException<Comment>($"Unauthorized Create Attempt of Comment {comment.Id}");
     }
-
-    public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
-
-    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
 
     public async Task<Comment?> RemoveAsync(int id) {
         Comment? comment = await FindAsync(id);

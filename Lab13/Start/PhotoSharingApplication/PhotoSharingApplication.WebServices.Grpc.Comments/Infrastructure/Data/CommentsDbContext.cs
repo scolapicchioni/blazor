@@ -2,10 +2,10 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PhotoSharingApplication.Shared.Entities;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
-
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data; 
 public class CommentsDbContext : DbContext {
     public CommentsDbContext(DbContextOptions<CommentsDbContext> options) : base(options) { }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Comment>(ConfigureComments);
     }
@@ -17,5 +17,6 @@ public class CommentsDbContext : DbContext {
             .IsRequired()
             .HasMaxLength(250);
     }
+
     public DbSet<Comment> Comments { get; set; }
 }

@@ -1,23 +1,17 @@
-﻿@inject IPhotosService photosService
+﻿@page "/photos/details/{id:int}"
 
-@page "/photos/details/{id:int}"
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
+@inject IPhotosService photosService
 
 <PageTitle>Photo Details - @photo?.Title</PageTitle>
 
-<MatH3>Details</MatH3>
-
 @if (photo is null) {
-    <p>...Loading...</p>
+    <MudText Typo="Typo.body1">...Loading...</MudText>
 } else {
-        <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <PhotoDetailsComponent Photo="photo" Edit Delete></PhotoDetailsComponent>
-                <Map Photo="photo"></Map>
-                <CommentsComponent PhotoId="Id"></CommentsComponent>
-            </div>
-        </div>
-    </div>
+    <PhotoDetailsComponent Photo="photo" Edit Delete />
+    <MapComponent Photo="photo" />
+    <CommentsComponent PhotoId="Id"></CommentsComponent>
 }
 
 @code {

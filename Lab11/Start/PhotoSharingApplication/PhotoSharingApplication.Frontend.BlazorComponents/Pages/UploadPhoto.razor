@@ -1,16 +1,21 @@
-﻿@inject IPhotosService photosService
+﻿@page "/photos/upload"
+@using Microsoft.AspNetCore.Authorization;
+@using PhotoSharingApplication.Shared.Entities;
+@using PhotoSharingApplication.Shared.Interfaces;
+@inject IPhotosService photosService
 @inject NavigationManager navigationManager
-@page "/photos/upload"
+@attribute [Authorize]
 
 <PageTitle>Upload Photo</PageTitle>
 
-<div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-            <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
-        </div>
-    </div>
-</div>
+<AuthorizeView>
+    <Authorized>
+        <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Login" Color="Color.Error" Href="bff/login">You are not authorized. Log in to upload a picture</MudButton>
+    </NotAuthorized>
+</AuthorizeView>
 @code {
     Photo photo = new Photo();
 

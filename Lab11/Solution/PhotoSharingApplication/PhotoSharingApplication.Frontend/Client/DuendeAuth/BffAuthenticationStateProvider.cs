@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
-using System.Net;
 using System.Net.Http.Json;
+using System.Net;
 using System.Security.Claims;
 
-namespace PhotoSharingApplication.Frontend.Client.DuendeAuth;
-
+namespace PhotoSharingApplication.Frontend.Client.DuendeAuth; 
 public class BffAuthenticationStateProvider : AuthenticationStateProvider {
     private static readonly TimeSpan UserCacheRefreshInterval
         = TimeSpan.FromSeconds(60);

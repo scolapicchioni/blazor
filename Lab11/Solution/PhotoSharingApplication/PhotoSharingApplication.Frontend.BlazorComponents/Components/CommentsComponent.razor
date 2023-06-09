@@ -1,30 +1,33 @@
-﻿@using PhotoSharingApplication.Shared.Exceptions
+﻿@using PhotoSharingApplication.Shared.Entities;
+@using PhotoSharingApplication.Shared.Exceptions;
+@using PhotoSharingApplication.Shared.Interfaces;
 @inject ICommentsService CommentsService
 @inject NavigationManager navigationManager
 
-<MatH3>Comments</MatH3>
+
+<MudText Typo="Typo.h3">Comments</MudText>
 
 @if (comments is null) {
-  <p><em>No Comments for this Photo</em></p>
+    <MudText Typo="Typo.body1">No comments for this photo yet</MudText>
 } else {
-  <div class="list-group">
     @foreach (var comment in comments) {
-      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
+        <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment" OnDelete="DeleteComment"/>
     }
     <AuthorizeView>
-    <Authorized>
-        <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
-    </Authorized>
-        <NotAuthorized><MatButtonLink Href="bff/login">Log in to add a comment<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
+        <Authorized>
+            <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"/>
+        </Authorized>
+        <NotAuthorized>
+            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Login" Color="Color.Error" Href="bff/login">Log in to add a comment</MudButton>
+        </NotAuthorized>
     </AuthorizeView>
-  </div>
 }
 
 @code {
-    [Parameter]
+    [Parameter, EditorRequired]
     public int PhotoId { get; set; }
 
-    private List<Comment>? comments;
+    private List<Comment>? comments = default!;
 
     protected override async Task OnInitializedAsync() {
         comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);

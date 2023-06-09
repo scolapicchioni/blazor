@@ -3,11 +3,11 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.REST.Photos.Infrastructure.Data;
 
 #nullable disable
 
-namespace PhotoSharingApplication.WebServices.Rest.Photos.Migrations
+namespace PhotoSharingApplication.WebServices.REST.Photos.Migrations
 {
     [DbContext(typeof(PhotosDbContext))]
     partial class PhotosDbContextModelSnapshot : ModelSnapshot
@@ -15,7 +15,7 @@ namespace PhotoSharingApplication.WebServices.Rest.Photos.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "6.0.2");
+            modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
 
             modelBuilder.Entity("PhotoSharingApplication.Shared.Entities.Photo", b =>
                 {

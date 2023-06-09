@@ -1,8 +1,7 @@
 ﻿using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
 
-namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Identity;
-
+namespace PhotoSharingApplication.WebServices.REST.Photos.Infrastructure.Identity; 
 public class UserService : IUserService {
     private readonly IHttpContextAccessor accessor;
 

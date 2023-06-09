@@ -6,16 +6,16 @@ The Authentication Server that we're going to use implements [OAuth 2.0 and Open
 [Duende](https://docs.duendesoftware.com/identityserver/v6/overview/) is going to be our Authentication Server.
 
 We are going to use its [Templates](https://docs.duendesoftware.com/identityserver/v6/quickstarts/0_overview/#preparation).  
-Specifically, the [ASP.NET Core Identity](https://docs.duendesoftware.com/identityserver/v6/quickstarts/5_aspnetid/#new-project-for-aspnet-core-identity) template, which contains the UI to login and logout and a couple of example users stored in a SqlLite database. This template stores the configuration in memory, which for our purpose is more than enough. Feel free to explore the other templates and eventually [use EntityFramework Core for configuration and operational data](https://docs.duendesoftware.com/identityserver/v6/quickstarts/4_ef/) instead.   
+Specifically, the [ASP.NET Core Identity](https://docs.duendesoftware.com/identityserver/v6/quickstarts/5_aspnetid/#new-project-for-aspnet-core-identity) template, which contains the UI to login and logout and a couple of example users stored in a Sqlite database. This template stores the configuration in memory, which for our purpose is more than enough. Feel free to explore the other templates and eventually [use EntityFramework Core for configuration and operational data](https://docs.duendesoftware.com/identityserver/v6/quickstarts/4_ef/) instead.   
 
 - We will protect our [resources](https://docs.duendesoftware.com/identityserver/v6/fundamentals/resources/) (both our Photos REST Api and our Comments gRpc Service) by
   - [Defining API Scopes](https://docs.duendesoftware.com/identityserver/v6/quickstarts/1_client_credentials/#defining-an-api-scope)
   - [Adding JWT Bearer Authentication](https://docs.duendesoftware.com/identityserver/v6/quickstarts/1_client_credentials/#add-jwt-bearer-authentication)
-  - [Using the Authorize attribute](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-6.0)
+  - [Using the Authorize attribute](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-7.0)
 - We will configure our client (the Backend For Frontend) by:
   - [Adding an interactive client](https://docs.duendesoftware.com/identityserver/v6/quickstarts/2_interactive/)
 - We will protect our Frontend by
-  - [Using the Duende.BFF security framework](https://docs.duendesoftware.com/identityserver/v6/quickstarts/7_blazor/), specifically integrating it with YARP
+  - [Using the Duende.BFF security framework](https://docs.duendesoftware.com/identityserver/v6/quickstarts/7_blazor/), specifically integrating it with [YARP](https://docs.duendesoftware.com/identityserver/v6/bff/apis/yarp/)
 
 ## The Authentication Server
 
@@ -23,7 +23,7 @@ Specifically, the [ASP.NET Core Identity](https://docs.duendesoftware.com/identi
 - If you haven't installed the Duende templates yet, do it by typing the following command:
 
 ```
-dotnet new --install Duende.IdentityServer.Templates
+dotnet new install Duende.IdentityServer.Templates
 ```
 
 - Create a Duende project that uses ASPNET Core Identity by typing the following command, as described in the [tutorial](https://docs.duendesoftware.com/identityserver/v6/quickstarts/5_aspnetid/): 
@@ -205,7 +205,8 @@ builder.Services.AddAuthentication("Bearer")
     options.Authority = "https://localhost:5007";
 
     options.TokenValidationParameters = new TokenValidationParameters {
-        ValidateAudience = false
+        ValidateAudience = false,
+        NameClaimType = "name"
     };
 });
 ```
@@ -223,7 +224,7 @@ app.UseAuthentication();
 ```
 
 
-The last step is to protect the `Create` action of our `PhotosController` by using the [Authorize](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-6.0) attribute.
+The last step is to protect the `Create` action of our `PhotosController` by using the [Authorize](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-7.0) attribute.
 
 Open your `PhotosController` class, locate the `CreateAsync` method and add the `[Authorize]` attribute right before the definition of the method:
 
@@ -265,7 +266,8 @@ builder.Services.AddAuthentication("Bearer")
         options.Authority = "https://localhost:5007";
 
         options.TokenValidationParameters = new TokenValidationParameters {
-            ValidateAudience = false
+            ValidateAudience = false,
+            NameClaimType = "name"
         };
     });
 builder.Services.AddAuthorization();
@@ -283,7 +285,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 ```
 
-The last step is to protect the `Create` action of our `CommentsGrpcService` by using the [Authorize](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-6.0) attribute.
+The last step is to protect the `Create` action of our `CommentsGrpcService` by using the [Authorize](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/simple?view=aspnetcore-7.0) attribute.
 
 Open your `CommentsGrpcService` class, locate the `Create` method and add the `[Authorize]` attribute right before the definition of the method:
 
@@ -311,9 +313,9 @@ The API is now protected by Duende.
 
 The last part requires the configuration of our client project, which is split in two: the ASP.NET Server Host (the BFF) and the Blazor WebAssembly project (the Frontend client).
 
-When we started, we used a Blazor templates with no authentication. This means that we have to add some parts that would already been there if we had chosen the [Standalone with Authentication Library](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-6.0&tabs=visual-studio) template.
+When we started, we used a Blazor templates with no authentication. This means that we have to add some parts that would already been there if we had chosen the [Standalone with Authentication Library](https://learn.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library?view=aspnetcore-7.0&tabs=visual-studio) template.
 
-Luckily for us, we can steal the code described in the [Building Blazor WASM client applications Tutorial](https://docs.duendesoftware.com/identityserver/v6/quickstarts/7_blazor/)
+Luckily for us, we can steal the code described in the [Building Blazor WASM client applications Tutorial](https://docs.duendesoftware.com/identityserver/v6/quickstarts/7_blazor/) or even directly from the [github repo of the BFF Blazor Wasm Sample](https://github.com/DuendeSoftware/Samples/tree/main/IdentityServer/v6/BFF/BlazorWasm)
 
 
 ### The Frontend.Server Project
@@ -372,9 +374,9 @@ app.UseAuthorization();
 app.MapBffManagementEndpoints();
 ```
 
-- Since we already use YARP, we're going to follow the [documentation](https://docs.duendesoftware.com/identityserver/v5/bff/apis/remote/#use-a-fully-fledged-reverse-proxy) to configure Duende with YARP.
+- Since we already use YARP, we're going to follow the [documentation](https://docs.duendesoftware.com/identityserver/v6/bff/apis/yarp/) to configure Duende with YARP.
 
-- To enable our YARP integration, add a reference to the `Duende.BFF.Yarp` Nuget package and add the YARP and our service to DI by replcing this code:
+- To enable our YARP integration, add a reference to the `Duende.BFF.Yarp` Nuget package and add the YARP and our service to DI by replacing this code:
 
 ```cs
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -383,7 +385,12 @@ builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSecti
 with this code:
 
 ```cs
-builder.Services.AddReverseProxy().AddTransforms<AccessTokenTransformProvider>().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+builder
+    .Services
+    .AddReverseProxy()
+    .AddTransforms<AccessTokenTransformProvider>()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddBffExtensions();
 ```
 
 which requires
@@ -401,9 +408,8 @@ app.MapReverseProxy();
 with this code
 
 ```cs
-app.MapReverseProxy().AsBffApiEndpoint();
+app.MapBffReverseProxy();
 ```
-
 
 ### The Frontend.Client
 
@@ -436,26 +442,43 @@ Now let's add authentication and authorization to our WebAssembly project, the `
 - Add conditional rendering to the navigation menu to be able to trigger login/logout as well as displaying the current user name when logged in. This is achieved by using the `AuthorizeView` component.  Open the `NavMenu.razor` component located under the `Shared` folder of the `BlazorComponents` project and replace its content with
 
 ```html
-<MatNavMenu>
-    <MatNavItem Href="/photos/all">All Photos <MatIcon Icon="@MatIconNames.List"></MatIcon></MatNavItem>
+<MudNavMenu>
+    <MudNavLink Href="/photos/all" Icon="@Icons.Material.Filled.List">All Photos</MudNavLink>
     <AuthorizeView>
         <Authorized>
-            <MatHeadline6>Hello, @context.User.Identity.Name!</MatHeadline6>
-            <MatNavItem Href="/photos/upload">Upload Photo <MatIcon Icon="@MatIconNames.Add"></MatIcon></MatNavItem>
-            <MatNavItem Href="@context.User.FindFirst("bff:logout_url")?.Value">Log out <MatIcon Icon="@MatIconNames.Exit_to_app"></MatIcon></MatNavItem>
+            <MudNavLink Href="/photos/upload" Icon="@Icons.Material.Filled.AddAPhoto">Add Photo</MudNavLink>
+            <MudText Typo="Typo.button">Hello, @context.User.Identity.Name!</MudText>
+            <MudNavLink Icon="@Icons.Material.Filled.Logout" Href="@context.User.FindFirst("bff:logout_url")?.Value" />
         </Authorized>
         <NotAuthorized>
-            <MatNavItem Href="bff/login">Log in <MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatNavItem>
+            <MudSpacer />
+            <MudNavLink Icon="@Icons.Material.Filled.Login" Href="bff/login" />
         </NotAuthorized>
     </AuthorizeView>
-</MatNavMenu>
+</MudNavMenu>
+```
+If you want, you can also personalize the AppBar in `MainLayou.razor` like so:
+
+```html
+<MudAppBar Elevation="1">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+    <MudSpacer />
+    <AuthorizeView>
+        <Authorized>
+            <MudIconButton Color="Color.Inherit" Icon="@Icons.Material.Filled.Logout" Href="@context.User.FindFirst("bff:logout_url")?.Value" />
+        </Authorized>
+        <NotAuthorized>
+            <MudIconButton Color="Color.Inherit" Icon="@Icons.Material.Filled.Login" Href="bff/login" />
+        </NotAuthorized>
+    </AuthorizeView>
+</MudAppBar>
 ```
 
 `CascadingAuthenticationState` is an abstraction over an arbitrary authentication system. It internally relies on a service called `AuthenticationStateProvider` to return the required information about the current authentication state and the information about the currently logged on user.
 
 This component needs to be implemented, and that’s what we’ll do next.
 
-The Duende BFF library has a server-side component that allows querying the current authentication session and state (see [here](https://docs.duendesoftware.com/identityserver/v6/bff/session/management/#user)). We will now add a Blazor `AuthenticationStateProvider` that will internally use this endpoint.
+The Duende BFF library has a server-side component that allows querying the current authentication session and state (see [here](https://docs.duendesoftware.com/identityserver/v6/bff/session/management/#user)). We will now add a Blazor `AuthenticationStateProvider` that will internally use this endpoint. You can find the source code on the [official github Duende Blazor Wasm BFF sample](https://github.com/DuendeSoftware/Samples/blob/main/IdentityServer/v6/BFF/BlazorWasm/Client/BFF/BffAuthenticationStateProvider.cs)
 
 - In the `Frontend.Client` project, add a new `DuendeAuth` folder.  
 - In the new folder, add a `BffAuthenticationStateProvider` class  with the following content:
@@ -551,7 +574,7 @@ using PhotoSharingApplication.Frontend.Client.DuendeAuth;
 
 To properly secure the call, you need to add a static X-CSRF header to the call.
 
-This can be easily accomplished by a delegating handler that can be plugged into the default HTTP client used by the Blazor frontend. Let's first add the handler:
+This can be easily accomplished by a delegating handler that can be plugged into the default HTTP client used by the Blazor frontend. Again, the source code can be found on the [github repo](https://github.com/DuendeSoftware/Samples/blob/main/IdentityServer/v6/BFF/BlazorWasm/Client/BFF/AntiforgeryHandler.cs). Let's first add the handler:
 
 - In the `DuendeAuth` folder, add a new `AntiForgeryHandler` class with the following content:
 
@@ -609,55 +632,9 @@ builder.Services.AddSingleton(services => {
 
 Which requires you to install the `Microsoft.Extensions.Http` NuGet Package.
 
-The configuration is done.
-
-Let's begin by testing if it all still works. Run all four projects.
-You should still be able to get the list of all photos and also to get the details, modify and delete a specific photo, but not to post a new photo or a new comment.
-This happens because we need to retrieve the access token from Duende and pass it to the services.
-
-
-## Deny access to the Create Page for Unauthorized users
-
-We can use the [Authorize attribute](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-6.0#authorize-attribute)
-
-- Add to `_Imports.razor`
-
-```cs 
-@using Microsoft.AspNetCore.Authorization
-```
-
-- Open the `UploadPhoto.razor` component in the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
-- Add the `Authorize` attribute by typing the following code:
-
-```cs
-@attribute [Authorize]
-```
-Then we can wrap the ui in an `AuthorizeView` component, showing a login button if the user is not authorized to upload a photo:
-
-```html
-<PageTitle>Upload Photo</PageTitle>
-
-<AuthorizeView>
-    <Authorized>
-        <div class="mat-layout-grid">
-            <div class="mat-layout-grid-inner">
-                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                    <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
-                </div>
-            </div>
-        </div>
-    </Authorized>
-    <NotAuthorized>
-        <MatButtonLink Href="bff/login">You are not authorized. Log in to upload a picture<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink>
-    </NotAuthorized>
-</AuthorizeView>
-```
-
-If you run the application now, you should be able to login whenever you try to upload a photo. The Upload itself doesn't work yet, though.
-
 ## Retrieving the Access Token
 
-As explained in the [Duende](https://docs.duendesoftware.com/identityserver/v5/bff/apis/remote/#configuring-yarp) tutorial, we need to add an entry to YARP’s metadata dictionary to instruct our plumbing to forward the current user access token for the route:
+As explained in the [Duende](https://docs.duendesoftware.com/identityserver/v6/bff/apis/yarp/#token-management) tutorial, we need to add an entry to YARP’s metadata dictionary to instruct our plumbing to forward the current user access token for the route:
 - Open the `appsettings.json` file in the `PhotoSharingApplication.Frontend.Server` project
 - Replace this code
 
@@ -702,36 +679,45 @@ with this:
     }
 }
 ```
-### Try it
 
-If you run the application now, after loggin (*alice* / *Pass123$*)in you should be able to upload a photo and add a comment again.
-If you don't log on first, you should see an error.
+The configuration is done.
 
-## UI
+Let's begin by testing if it all still works. Run all four projects.
+You should still be able to get the list of all photos and also to get the details, modify and delete a specific photo, but not to post a new photo or a new comment, even if you navigate to `photos/upload`.
+If you login, though, using `alice` or `bob` and `Pass123$`, you should be able to add a photo and / or a comment.
 
-Let's show the `Upload Photo` buttons only if the user is allowed to. We could hide the button or hint that the user needs to logon otherwise.
+The user experience is less than ideal, though, since they don't get warned upfront that they are not authorized to perform specific activities unless they log in first. Let's proceed to give them a better experience.  
 
-Of course this is not really a security measure, but it gives the user a better experience by clarifying the requirements.
+## Deny access to the Create Page for Unauthorized users
 
-Let's use an `<AuthorizeView>` component and display 
-  - The Link to the `Upload` route if the user is authorized
-  - The link to the `Login` route if the user is not authorized
+We can use the [Authorize attribute](https://learn.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-7.0#authorize-attribute)
 
-- Open the `AllPhoto.razor` file under the `Pages` folder of the `PhotoSharing.Frontend.BlazorComponents` project and replace this code
+- Add to `_Imports.razor`
 
-```html
-<MatButton Link="photos/upload">Upload new Photo</MatButton>
+```cs 
+@using Microsoft.AspNetCore.Authorization
 ```
-with this
+
+- Open the `UploadPhoto.razor` component in the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project
+- Add the `Authorize` attribute by typing the following code:
+
+```cs
+@attribute [Authorize]
+```
+Then we can wrap the ui in an `AuthorizeView` component, showing a login button if the user is not authorized to upload a photo:
 
 ```html
+<PageTitle>Upload Photo</PageTitle>
+
 <AuthorizeView>
-    <Authorized><MatButton Link="photos/upload">Upload new Photo</MatButton></Authorized>
-    <NotAuthorized><MatButtonLink Href="bff/login">Log in to upload a photo<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
+    <Authorized>
+        <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Login" Color="Color.Error" Href="bff/login">You are not authorized. Log in to upload a picture</MudButton>
+    </NotAuthorized>
 </AuthorizeView>
 ```
-
-We have successfully managed to protect the `Upload` of a `Photo`.
 
 ## gRPC
 
@@ -743,20 +729,22 @@ Once again,  we're going to use an `<AuthorizedView>` component.
 - Change the `html` to look like this (leave the `code` section as it is)
 
 ```html
-<MatH3>Comments</MatH3>
+<MudText Typo="Typo.h3">Comments</MudText>
 
 @if (comments is null) {
-  <p><em>No Comments for this Photo</em></p>
+    <MudText Typo="Typo.body1">No comments for this photo yet</MudText>
 } else {
-  <div class="list-group">
     @foreach (var comment in comments) {
-      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
+        <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment" OnDelete="DeleteComment"/>
     }
     <AuthorizeView>
-        <Authorized><CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent></Authorized>
-        <NotAuthorized><MatButtonLink Href="bff/login">Log in to add a comment<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
+        <Authorized>
+            <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"/>
+        </Authorized>
+        <NotAuthorized>
+            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Login" Color="Color.Error" Href="bff/login">Log in to add a comment</MudButton>
+        </NotAuthorized>
     </AuthorizeView>
-  </div>
 }
 ```
 
@@ -783,42 +771,17 @@ public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
 }
 ```
 
-In order to display the name of the user on the `PhotoDetailsComponent` component, let's update the user interface as following (leave the `code` section as is)
+In order to display the name of the user on the `PhotoDetailsComponent.razor` component, let's update the user interface by replacing this code 
+```html
+<MudText Typo="Typo.subtitle1">@Photo.CreatedDate.ToShortDateString()</MudText>
+```
+
+with this
 
 ```html
-<MatCard>
-    <div>
-        <MatHeadline6>
-            @Photo.Id - @Photo.Title
-        </MatHeadline6>
-        <MatSubtitle2>
-            Uploaded on @Photo.CreatedDate.ToShortDateString() by @Photo.UserName
-        </MatSubtitle2>
-    </div>
-    <MatCardContent>
-        <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
-        <MatBody2>
-            @Photo.Description
-        </MatBody2>
-    </MatCardContent>
-    <MatCardActions>
-        <MatCardActionButtons>
-            @if (Details) {
-                <MatButton Link="@($"photos/details/{Photo.Id}")">Details</MatButton>
-            }
-            @if (Edit) {
-                <MatButton Link="@($"photos/update/{Photo.Id}")">Update</MatButton>
-            }
-            @if (Delete) {
-                <MatButton Link="@($"photos/delete/{Photo.Id}")">Delete</MatButton>
-            }
-            @if (DeleteConfirm) {
-                <MatButton OnClick="@(async()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))">Confirm Deletion</MatButton>
-            }
-        </MatCardActionButtons>
-    </MatCardActions>
-</MatCard>
+<MudText Typo="Typo.subtitle1">Uploaded on @Photo.CreatedDate.ToShortDateString() by @Photo.UserName</MudText>
 ```
+
 Upload a Photo and verify that the user name is correctly added to the Photo information and shown on the UI.
 
 ### gRPC Backend Service
@@ -840,6 +803,12 @@ public override async Task<CreateReply> Create(CreateRequest request, ServerCall
     }
 }
 ```
+
+Should you have problems with the tokens, you can learn how to troubleshoot and eventually fix the errors in these two excellent articles:
+- https://nestenius.se/2023/03/28/missing-openid-connect-claims-in-asp-net-core/
+- https://nestenius.se/2023/06/02/debugging-jwtbearer-claim-problems-in-asp-net-core/
+
+## Next Steps
 
 What we need to do next is to allow updates and deletes only to the photo (or comment) owner.
 

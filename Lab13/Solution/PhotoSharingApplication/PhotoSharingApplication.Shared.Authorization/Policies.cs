@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
 namespace PhotoSharingApplication.Shared.Authorization;
-
 public static class Policies {
     public const string CreatePhoto = "CreatePhoto";
     public const string EditPhoto = "EditPhoto";

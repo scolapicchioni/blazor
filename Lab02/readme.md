@@ -43,10 +43,10 @@ I know that we already got a Shared project, but that one was intended to share 
  On the `Solution Explorer`, right click you solution, then select `Add` -> `New Project`.
 - Select `Class Library`. Click `Next`
 - In the  `Project Name` field, type `PhotoSharingApplication.Shared`
-- Be sure to select the latest version of .Net (6.0 Preview)
+- Be sure to select the latest version of .Net (7.0)
 - Click `Create`
 
-We are going to define two interfaces: one for an IPhotosService and one for an IPhotosRepository. Our interfaces will look very similar and will contain the definitions for the method to Create, Read, Update and Delete photos. Both are going to use Photo entities, that we also have to define in this project. 
+We are going to define two interfaces: one for an `IPhotosService` and one for an `IPhotosRepository`. Our interfaces will look very similar and will contain the definitions for the method to `Create`, `Read`, `Update` and `Delete` photos. Both are going to use `Photo` entities, that we also have to define in this project. 
 
 So let's create a folder `Entities` and let's create a `Photo` class in this new folder:
 
@@ -127,7 +127,7 @@ public class PhotosService : IPhotosService {
 
 Of course nothing is actually *working*, but we can already start plugging our service to our UI.
 
-To use our service in the `AllPhotos` page, we need to perform a couple of steps, also described in the [Blazor Dependency Injection documentation](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-6.0&pivots=webassembly)
+To use our service in the `AllPhotos` page, we need to perform a couple of steps, also described in the [Blazor Dependency Injection documentation](https://learn.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-7.0&pivots=webassembly)
 
 1. Register the service
 2. Inject the service in the page
@@ -135,7 +135,7 @@ To use our service in the `AllPhotos` page, we need to perform a couple of steps
 
 ### Step 1: Add the service to the app
 
-[In the docs](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-6.0&pivots=webassembly#add-services-to-an-app) they tell us what to do: 
+[In the docs](https://learn.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-7.0&pivots=webassembly#add-services-to-a-blazor-webassembly-app) they tell us what to do: 
 
 - Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.Client`project
 - Add the following code, before the `await builder.Build().RunAsync();`
@@ -167,7 +167,7 @@ We want to fill our `photos` list with data coming from our photosService.
 This means that we don't need our own `Photo` class, because we want the one defined in the `PhotoSharingApplication.Shared.Entities` namespace.  
 We need to add an `@using PhotoSharingApplication.Shared.Entities` and we can remove the `Photo` class from the `code` section.
 
-Because the photosService has an asynchronous method, we need to replace our old `OnInitialized` with a new `OnInitializedAsync` (remember the [Lifecycle?](https://docs.microsoft.com/en-gb/aspnet/core/blazor/components/lifecycle?view=aspnetcore-6.0))
+Because the photosService has an asynchronous method, we need to replace our old `OnInitialized` with a new `OnInitializedAsync` (remember the [Lifecycle?](https://learn.microsoft.com/en-gb/aspnet/core/blazor/components/lifecycle?view=aspnetcore-7.0#component-initialization-oninitializedasync))
 
 So in the end, our code should look something like this:
 
@@ -175,7 +175,7 @@ So in the end, our code should look something like this:
 @page "/photos/all"
 
 @using PhotoSharingApplication.Shared.Entities
-@using PhotoSharingApplication.Frontend.Core.Interfaces
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 
 <PageTitle>All Photos</PageTitle>
@@ -186,12 +186,12 @@ So in the end, our code should look something like this:
     <p>...Loading...</p>
 } else {
     @foreach (var photo in photos) {
-      <article>
-          <p>@photo.Id</p>
-          <p>@photo.Title</p>
-          <p>@photo.Description</p>
-          <p>@photo.CreatedDate.ToShortDateString()</p>
-      </article>
+        <article>
+            <p>@photo.Id</p>
+            <p>@photo.Title</p>
+            <p>@photo.Description</p>
+            <p>@photo.CreatedDate.ToShortDateString()</p>
+        </article>
     }
 }
 
@@ -276,7 +276,7 @@ Let's proceed with the *Upload* page.
 
 ## The Upload Page
 
-In this page we're going learn how to work with [Forms and validation in Blazor](https://docs.microsoft.com/en-gb/aspnet/core/blazor/forms-validation?view=aspnetcore-6.0), since we need to give the user the chance to write some data and submit it to our service. As usual, we're going to start quick and dirty, refining it along the way.
+In this page we're going learn how to work with [ASP.NET Core Blazor forms and input components](https://learn.microsoft.com/en-gb/aspnet/core/blazor/forms-and-input-components?view=aspnetcore-7.0), since we need to give the user the chance to write some data and submit it to our service. As usual, we're going to start quick and dirty, refining it along the way.
 
 You should by now know how to add a new page, but just in case:
 
@@ -334,9 +334,9 @@ In the code, we want to define a photo of type Photo (the model that our form is
 
 If you run the code now, it should work but we don't see much happening. Also, if you type `/photos/all` in the address bar of your browser after you click on submit, you don't see the new photo in the list. Why is that?
 
-Well, when you *navigate* to a new address, you're actually talking to the server, which serves you a completely new `index.html`. The browser gets the new response and initializes the application all over again, so we lose the previous memory state. As soon as we switch our repository to a class that calls the server to retrieve the data, we won't see this problem anymore so we're not going to do anything about this. If you want to know how to fix this, take a look at how to use the browser local storage instead of memory  by either using the [Protected Browser Storage](https://docs.microsoft.com/en-gb/aspnet/core/blazor/state-management?view=aspnetcore-6.0&pivots=webassembly#browser-storage-wasm) or any third party library, such as the [Blazored Local Storage](https://github.com/Blazored/LocalStorage).
+Well, when you *navigate* to a new address, you're actually talking to the server, which serves you a completely new `index.html`. The browser gets the new response and initializes the application all over again, so we lose the previous memory state. As soon as we switch our repository to a class that calls the server to retrieve the data, we won't see this problem anymore so we're not going to do anything about this. If you want to know how to fix this, take a look at how to use the browser local storage instead of memory  by either using the [Protected Browser Storage](https://learn.microsoft.com/en-gb/aspnet/core/blazor/state-management?view=aspnetcore-7.0&pivots=webassembly#browser-storage-wasm) or any third party library, such as the [Blazored Local Storage](https://github.com/Blazored/LocalStorage).
 
-We're not going to fix the navigation problem, but we are going to use a neat little trick to make it *look like* we're navigating to the `photos/all` while we're actually just replacing the address and rerendering a section of our page. Introducing: the [Navigation Manager](https://docs.microsoft.com/en-us/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-6.0#uri-and-navigation-state-helpers).
+We're not going to fix the navigation problem, but we are going to use a neat little trick to make it *look like* we're navigating to the `photos/all` while we're actually just replacing the address and rerendering a section of our page. Introducing: the [Navigation Manager](https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-7.0#uri-and-navigation-state-helpers).
 
 To use the NavigationManager, we can just ask for it as a dependency:
 
@@ -359,7 +359,7 @@ Well, actually, there's a title and a description, but we still have no real pho
 
 ## Upload of an image
 
-We want to give the user the opportunity to select a file from her own device. Blazor has a very helpful [File Upload Compoment](https://docs.microsoft.com/en-us/aspnet/core/blazor/file-uploads?view=aspnetcore-6.0) that we can use.
+We want to give the user the opportunity to select a file from her own device. Blazor has a very helpful [File Upload Compoment](https://learn.microsoft.com/en-us/aspnet/core/blazor/file-uploads?view=aspnetcore-7.0&pivots=webassembly) that we can use.
 
 We need to add it to our form, like so:
 
@@ -419,9 +419,9 @@ Let's move on to a new page.
 
 The details page should show all the information about one particular photo, which means we need to know which photo, first. What we can do is to append the unique id of the photo to the url as a parameter. That way the details page can retrieve it from there and pass it to a photosService to retrieve the data to show. 
 
-We will make use of [Route Parameters](https://docs.microsoft.com/en-us/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-6.0#route-parameters)
+We will make use of [Route Parameters](https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-7.0#route-parameters)
 
-Add the new `PhotoDetails.razor` page to the `Pages` folder of the `PhotoSharingApplication.Frontend.BlazorWebAssembly` project, then insert the following line:
+Add the new `PhotoDetails.razor` page to the `Pages` folder of the `PhotoSharingApplication.Frontend.Client` project, then insert the following line:
 
 ```
 @page "/photos/details/{id:int}"
@@ -440,14 +440,14 @@ In the `@code` section, add the following parameter:
 
 It's important that the name matches the one we used in the route, although not case sensitive.
 
-The rest is very similar to the `AllPhotos`: we work with the photosService to get the photo and we display in the html. De difference is that instead of a list of photos, we now only have one, so we don't even need to loop.
+The rest is very similar to the `AllPhotos`: we work with the `photosService` to get the photo and we display in the html. De difference is that instead of a list of photos, we now only have one, so we don't even need to loop.
 
 ```cs
+@page "/photos/details/{id:int}"
+
 @using PhotoSharingApplication.Shared.Interfaces
 @using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
-
-@page "/photos/details/{id:int}"
 
 <PageTitle>Photo Details - @photo?.Title</PageTitle>
 
@@ -483,34 +483,34 @@ We can repeat the same steps for the Delete Page as a start.
 Add a new `DeletePhoto.razor` page to the `Pages` folder of the `PhotoSharingApplication.Frontend.Client` project, then type the following code:
 
 ```cs
+@page "/photos/delete/{id:int}"
+
 @using PhotoSharingApplication.Shared.Interfaces
 @using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 
-@page "/photos/delete/{id:int}"
-
 <PageTitle>Delete Photo @photo?.Title</PageTitle>
 @if (photo is null) {
-  <p>...Loading...</p>
+    <p>...Loading...</p>
 } else {
-  <article>
-    <p>@photo.Id</p>
-    <p>@photo.Title</p>
-    <p>@photo.Description</p>
-    <p>@photo.CreatedDate.ToShortDateString()</p>
-    <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
-  </article>
+    <article>
+        <p>@photo.Id</p>
+        <p>@photo.Title</p>
+        <p>@photo.Description</p>
+        <p>@photo.CreatedDate.ToShortDateString()</p>
+        <p><img src="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" /></p>
+    </article>
 }
 
 @code {
-  [Parameter]
-  public int Id { get; set; }
+    [Parameter]
+    public int Id { get; set; }
 
-  Photo? photo;
+    Photo? photo;
 
-  protected override async Task OnInitializedAsync() {
-    photo = await photosService.FindAsync(Id);
-  }
+    protected override async Task OnInitializedAsync() {
+        photo = await photosService.FindAsync(Id);
+    }
 }
 ```
 
@@ -518,7 +518,7 @@ As you can see, it's the third time that we copy / paste code. This is usually a
 
 Our Delete page doesn't actually delete, yet, so let's add a button to invoke the `photosService.RemoveAsync` method. 
 
-We'll use [Event Handling](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/event-handling?view=aspnetcore-6.0) to handle the click of a button with a C# method that in turn will call the photosService.
+We'll use [Event Handling](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/event-handling?view=aspnetcore-7.0) to handle the click of a button with a C# method that in turn will call our `photosService`.
 
 Let's add the button:
 
@@ -546,12 +546,12 @@ Also, don't forget to ask for the NavigationManager:
 This is the complete code of the Delete page:
 
 ```cs
+@page "/photos/delete/{id:int}"
+
 @using PhotoSharingApplication.Shared.Interfaces
 @using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
-
-@page "/photos/delete/{id:int}"
 
 <PageTitle>Delete Photo @photo?.Title</PageTitle>
 @if (photo is null) {
@@ -589,7 +589,7 @@ Start your application, navigate to `/photos/delete/2`, click on `Confirm Deleti
 
 ## The Update Page
 
-Last but not least, let's think about the update page, which is a mix between the Details and the Upload.
+Last but not least, let's think about the `UpdatePhoto.razor` page, which is a mix between the Details and the Upload.
 
 It is similar to the Details because it needs to know which photo to show; it's similar to the Upload because it contains a form bound to the photo.
 The difference is that the save button invokes the `UpdateAsync` instead of the `UploadAsync`:
@@ -663,11 +663,11 @@ We did it! We have all the pages we need.
 
 ## The NavLink component
 
-The very last thing for this lab is to sprinkle some [navigation links](https://docs.microsoft.com/en-us/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-5.0#navlink-and-navmenu-components) here and there, so that the user can go to the different pages more easily, without having to write the url by hand.
+The very last thing for this lab is to sprinkle some [navigation links](https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-7.0#navlink-and-navmenu-components) here and there, so that the user can go to the different pages more easily, without having to write the url by hand.
 
 Let's start with the `AllPhotos.razor`.
 
-We will insert a link to view the details, update and delete for each product (passing the specific id to the route) and one link to create a new product.
+We will insert a link to view the details, update and delete for each photo (passing the specific id to the route) and one link to upload a new photo.
 
 The last one is actually the easiest, because it's a static address:
 
@@ -675,7 +675,7 @@ The last one is actually the easiest, because it's a static address:
 <NavLink href="photos/upload">Upload new Photo</NavLink>
 ```
 
-The links for details, update and delete need to be constructed using an [Explicit Razor Expression](https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-6.0#explicit-razor-expressions), like this:
+The links for details, update and delete need to be constructed using an [Explicit Razor Expression](https://learn.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-7.0#explicit-razor-expressions), like this:
 
 ```html
 <div>

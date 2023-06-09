@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.ResponseCompression;
-using PhotoSharingApplication.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 var app = builder.Build();
 

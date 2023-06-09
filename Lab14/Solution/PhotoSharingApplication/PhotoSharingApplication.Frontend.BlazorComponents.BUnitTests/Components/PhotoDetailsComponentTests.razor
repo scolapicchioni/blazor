@@ -1,80 +1,86 @@
-﻿@inherits PhotoDetailsComponentTestsBase
-
-<h3>PhotoDetailsComponentTests</h3>
+﻿@using System.Security.Claims;
+@inherits PhotoDetailsComponentTestsBase
 
 @code {
     [Fact]
-    public void ShouldRenderH6WithPhotoIdAndTitle() {
-        // Arrange
-        photo.Id = 1;
-        photo.Title = "Photo Title";
-
-        // Act
+    public void PhotoDetailsComponentRendersIdAndTitleInCardHeader() {
+        //Act
         var cut = Render(@<PhotoDetailsComponent Photo="photo" />);
-        var h6 = cut.FindComponent<MatHeadline6>().Find("h6").TextContent;
+
+        // Assert
+        cut.Find("div.mud-card-header-content").MarkupMatches(
+            @<div class="mud-card-header-content">
+                <p class="mud-typography mud-typography-body1">@photo.Id</p>
+                <p class="mud-typography mud-typography-body2">@photo.Title</p>
+            </div>
+        );
+    }
+
+    [Fact]
+    public void PhotoDetailsComponentRendersDescriptionCreatedDateAndUserName() {
+        // Act
+        var cut = RenderComponent<PhotoDetailsComponent>(parameters => parameters
+            .Add(p => p.Photo, photo));
+
+        var mudTextFields = cut.FindComponent<MudCardContent>().FindComponents<MudText>();
+
+        // Assert
+        mudTextFields.Count.Should().Be(2);
+        mudTextFields[0].Find("p").TextContent.Should().Be(photo.Description);
+        mudTextFields[1].MarkupMatches(@<h6 diff:ignoreAttributes>Uploaded on @photo.CreatedDate.ToShortDateString() by @photo.UserName</h6>);
+    }
+
+    [Fact]
+    public void PhotoDetailsComponentShouldNotRenderDeleteButton_WhenDetailsPropertyNotSet() {
+        //Act
+        var cut = Render(@<PhotoDetailsComponent Photo=photo/>);
 
         //Assert
-        h6.MarkupMatches("1 - Photo Title");
+        var buttons = cut.FindComponents<MudIconButton>();
+        buttons.FirstOrDefault(b => b.Instance.Icon == Icons.Material.Filled.Delete).Should().BeNull();
     }
 
     [Fact]
-    public void ShouldSetPhotoOfPhotoPicture() {
-        var cut = Render(@<PhotoDetailsComponent Photo="photo"></PhotoDetailsComponent>);
-        var photoPictureComponent = cut.FindComponent<PhotoPictureComponent>();
-        Assert.Equal(photo, photoPictureComponent.Instance.Photo);
+    public void PhotoDetailsComponentShouldRenderDeleteButton_WhenDeletePropertyIsSetAndUserIsAuthorized() {
+        //Arrange
+        mockAuthorizationService.Setup(a => a.ItemMayBeDeletedAsync(It.IsAny<ClaimsPrincipal>(), photo)).ReturnsAsync(true);
+
+        //Act
+        var cut = Render(@<PhotoDetailsComponent Photo=photo Delete/>);
+
+        //Assert
+        var buttons = cut.FindComponents<MudIconButton>();
+        buttons.Count(b => b.Instance.Icon == Icons.Material.Filled.Delete).Should().Be(1);
+        buttons.Count(b => b.Instance.Href == "photos/delete/1").Should().Be(1);
     }
 
     [Fact]
-    public void ShouldNotRenderDetailsButton_WhenDetailsPropertyNotSet() {
-        var cut = Render(@<PhotoDetailsComponent Photo="photo"></PhotoDetailsComponent>);
-        var renderedButtons = cut.FindComponents<MatButton>();
-        Assert.DoesNotContain(renderedButtons, rb => rb.Find("button").TextContent.Contains("Details"));
+    public void PhotoDetailsComponentShouldNotRenderDeleteButton_WhenDeletePropertyIsSetAndUserIsNotAuthorized() {
+        //Arrange
+        mockAuthorizationService.Setup(a => a.ItemMayBeDeletedAsync(It.IsAny<ClaimsPrincipal>(), photo)).ReturnsAsync(false);
+
+        //Act
+        var cut = Render(@<PhotoDetailsComponent Photo=photo Delete />);
+
+        //Assert
+        var buttons = cut.FindComponents<MudIconButton>();
+        buttons.FirstOrDefault(b => b.Instance.Icon == Icons.Material.Filled.Delete).Should().BeNull();
     }
 
     [Fact]
-    public void ShouldRenderDetailsButton_WhenDetailsPropertyIsSet() {
-        JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = Render(@<PhotoDetailsComponent Photo="photo" Details></PhotoDetailsComponent>);
-        var renderedButtons = cut.FindComponents<MatButton>();
-        Assert.Contains(renderedButtons, rb => rb.Find("button").TextContent.Contains("Details"));
-    }
+    public async Task DeleteForeverInvokesOnDeleteConfirmed() {
+        //Arrange
+        mockAuthorizationService.Setup(a => a.ItemMayBeDeletedAsync(It.IsAny<ClaimsPrincipal>(), photo)).ReturnsAsync(true);
 
-    [Fact]
-    public void ShouldRenderDetailsButtonWithLinkSetToPhotoId() {
-        photo.Id = 1;
-        JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = Render(@<PhotoDetailsComponent Photo="photo" Details></PhotoDetailsComponent>);
-        var detailsButton = cut.FindComponent<MatButton>();
-        Assert.Equal("photos/details/1", detailsButton.Instance.Link);
-    }
+        int actualPhotoId = 0;
+        Action<int> eventHandler = photoId => actualPhotoId = photoId;
+        
+        //Act
+        var cut = Render(@<PhotoDetailsComponent Photo=photo DeleteConfirm OnDeleteConfirmed="eventHandler" />);
 
-    [Fact]
-    public void ShouldNotRenderDeleteButton_WhenUserNotAuthorized_AndDeletePropertyNotSet() {
-        UserIsAuthorized(false);
-        var cut = Render(@<PhotoDetailsComponent Photo="photo"></PhotoDetailsComponent>);
-        var renderedButtons = cut.FindComponents<MatButton>();
-        Assert.DoesNotContain(renderedButtons, rb => rb.Find("button").TextContent.Contains("Delete"));
-    }
-    [Fact]
-    public void ShouldNotRenderDeleteButton_WhenUserNotAuthorized_AndDeletePropertyIsSet() {
-        UserIsAuthorized(false);
-        var cut = Render(@<PhotoDetailsComponent Photo="photo" Delete></PhotoDetailsComponent>);
-        var renderedButtons = cut.FindComponents<MatButton>();
-        Assert.DoesNotContain(renderedButtons, rb => rb.Find("button").TextContent.Contains("Delete"));
-    }
-    [Fact]
-    public void ShouldNotRenderDeleteButton_WhenUserAuthorized_AndDeletePropertyNotSet() {
-        UserIsAuthorized(true);
-        var cut = Render(@<PhotoDetailsComponent Photo="photo"></PhotoDetailsComponent>);
-        var renderedButtons = cut.FindComponents<MatButton>();
-        Assert.DoesNotContain(renderedButtons, rb => rb.Find("button").TextContent.Contains("Delete"));
-    }
-    [Fact]
-    public void ShouldRenderDeleteButton_WhenUserAuthorized_AndDeletePropertyIsSet() {
-        UserIsAuthorized(true);
-        JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = Render(@<PhotoDetailsComponent Photo="photo" Delete></PhotoDetailsComponent>);
-        var renderedButtons = cut.FindComponents<MatButton>();
-        Assert.Contains(renderedButtons, rb => rb.Find("button").TextContent.Contains("Delete"));
+        var deleteButton = cut.FindComponents<MudIconButton>().First(b => b.Instance.Icon == Icons.Material.Filled.DeleteForever).Instance;
+        await cut.InvokeAsync(async() => await deleteButton.OnClick.InvokeAsync(null));
+
+        actualPhotoId.Should().Be(photo.Id);
     }
 }

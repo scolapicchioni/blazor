@@ -1,40 +1,36 @@
 ﻿@page "/photos/all"
-@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+@using Microsoft.AspNetCore.Components.Web.Virtualization;
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 
 <PageTitle>All Photos</PageTitle>
 
-<MatH3>All Photos</MatH3>
+<MudText Typo="Typo.h1">All Photos</MudText>
 
-<AuthorizeView>
-    <Authorized><MatButton Link="photos/upload">Upload new Photo</MatButton></Authorized>
-    <NotAuthorized><MatButtonLink Href="bff/login">Log in to upload a photo<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
-</AuthorizeView>
+<MudIconButton Icon="@Icons.Material.Filled.AddAPhoto" Color="Color.Default" Href="photos/upload" />
 
-<div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-        <Virtualize @ref="virtualizecomponent" Context="photo" ItemsProvider="@LoadPhotos">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
-                <PhotoDetailsComponent Photo="photo" Edit Delete Details></PhotoDetailsComponent>
-            </div>
-        </Virtualize>
-    </div>
-</div>
-
-
+<MudGrid Spacing="2" Justify="Justify.FlexStart" class="object-contain overflow-scroll">
+<Virtualize @ref="virtualizecomponent" Context="photo" ItemsProvider="@LoadPhotos">
+<MudItem xs="12" sm="4">
+    <PhotoDetailsComponent @key="photo.Id" Photo="photo" Details Edit Delete />
+</MudItem>
+</Virtualize>
+</MudGrid>
 @code {
-    Virtualize<Photo> virtualizecomponent;
+    Virtualize<Photo> virtualizecomponent = default!;
     int totalNumberOfPhotos;
+
     protected override async Task OnInitializedAsync() {
         totalNumberOfPhotos = await photosService.GetPhotosCountAsync();
         await virtualizecomponent.RefreshDataAsync();
     }
 
     private async ValueTask<ItemsProviderResult<Photo>> LoadPhotos(ItemsProviderRequest request) {
-        var numberOfPhotos = Math.Min(request.Count, totalNumberOfPhotos - request.StartIndex);
-        var employees = await photosService.GetPhotosAsync(request.StartIndex,
-            numberOfPhotos, request.CancellationToken);
+        int numberOfPhotos = Math.Min(request.Count, totalNumberOfPhotos - request.StartIndex);
+        List<Photo> photos = await photosService.GetPhotosAsync(request.StartIndex, numberOfPhotos, request.CancellationToken);
 
-        return new ItemsProviderResult<Photo>(employees, totalNumberOfPhotos);
+        return new ItemsProviderResult<Photo>(photos, totalNumberOfPhotos);
     }
 }

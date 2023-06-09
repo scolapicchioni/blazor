@@ -1,9 +1,9 @@
-﻿@using PhotoSharingApplication.Shared.Interfaces
+﻿@page "/photos/delete/{id:int}"
+
+@using PhotoSharingApplication.Shared.Interfaces
 @using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
-
-@page "/photos/delete/{id:int}"
 
 <PageTitle>Delete Photo @photo?.Title</PageTitle>
 @if (photo is null) {

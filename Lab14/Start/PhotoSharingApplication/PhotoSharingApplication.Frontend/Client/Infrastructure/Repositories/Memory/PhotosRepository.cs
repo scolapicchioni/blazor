@@ -2,16 +2,17 @@
 using PhotoSharingApplication.Shared.Interfaces;
 
 namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory;
-
-public class PhotosRepository : IPhotosRepository {
+public class PhotosRepository : IPhotosRepository
+{
     private List<Photo> photos;
     private List<PhotoImage> photoImages;
-    public PhotosRepository() {
+    public PhotosRepository()
+    {
         photos = new List<Photo> {
             new Photo {Id=1, Title = "One photo", Description = "Lorem ipsum dolor sit amen", CreatedDate = DateTime.Now.AddDays(-2) },
             new Photo {Id=2, Title = "Another photo", Description = "Some description" ,CreatedDate= DateTime.Now.AddDays(-1)},
             new Photo {Id=3, Title = "Yet another photo", Description = "More description here", CreatedDate= DateTime.Now }
-        };
+          };
         photoImages = new List<PhotoImage> {
             new PhotoImage {Id=1, ImageMimeType="jpg"},
             new PhotoImage {Id=2, ImageMimeType = "gif"},
@@ -19,7 +20,8 @@ public class PhotosRepository : IPhotosRepository {
         };
     }
 
-    public Task<Photo?> CreateAsync(Photo photo) {
+    public Task<Photo?> CreateAsync(Photo photo)
+    {
         photo.Id = photos.Max(p => p.Id) + 1;
         photos.Add(photo);
         return Task.FromResult(photo)!;
@@ -27,22 +29,22 @@ public class PhotosRepository : IPhotosRepository {
 
     public Task<Photo?> FindAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
 
-    public Task<Photo?> FindWithImageAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
-
-    public Task<PhotoImage?> GetImageAsync(int id) => Task.FromResult(photoImages.FirstOrDefault(p => p.Id == id));
-
     public Task<List<Photo>> GetPhotosAsync(int startIndex, int amount, CancellationToken cancellationToken) => Task.FromResult(photos.OrderByDescending(p => p.CreatedDate).ThenBy(p => p.Title).Skip(startIndex).Take(amount).ToList());
+
     public Task<int> GetPhotosCountAsync() => Task.FromResult(photos.Count);
 
-    public Task<Photo?> RemoveAsync(int id) {
+    public Task<Photo?> RemoveAsync(int id)
+    {
         Photo? photo = photos.FirstOrDefault(p => p.Id == id);
-        if (photo is not null) photos.Remove(photo);
+        if (photo != null) photos.Remove(photo);
         return Task.FromResult(photo);
     }
 
-    public Task<Photo?> UpdateAsync(Photo photo) {
+    public Task<Photo?> UpdateAsync(Photo photo)
+    {
         Photo? oldPhoto = photos.FirstOrDefault(p => p.Id == photo.Id);
-        if (oldPhoto is not null) {
+        if (oldPhoto != null)
+        {
             oldPhoto.Title = photo.Title;
             oldPhoto.Description = photo.Description;
             oldPhoto.CreatedDate = photo.CreatedDate;
@@ -54,4 +56,8 @@ public class PhotosRepository : IPhotosRepository {
         }
         return Task.FromResult(oldPhoto);
     }
+
+    public Task<Photo?> FindWithImageAsync(int id) => Task.FromResult(photos.FirstOrDefault(p => p.Id == id));
+
+    public Task<PhotoImage?> GetImageAsync(int id) => Task.FromResult(photoImages.FirstOrDefault(p => p.Id == id));
 }

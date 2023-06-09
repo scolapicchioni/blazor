@@ -8,7 +8,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddReverseProxy().AddTransforms<AccessTokenTransformProvider>().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+//builder.Services.AddReverseProxy()
+//    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+builder.Services
+    .AddReverseProxy()
+    .AddTransforms<AccessTokenTransformProvider>()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddBffExtensions();
+
 
 builder.Services.AddBff();
 
@@ -65,7 +73,7 @@ app.UseAuthorization();
 app.MapBffManagementEndpoints();
 
 app.MapRazorPages();
-app.MapReverseProxy();
+app.MapBffReverseProxy();
 app.MapFallbackToFile("index.html");
 
 app.Run();

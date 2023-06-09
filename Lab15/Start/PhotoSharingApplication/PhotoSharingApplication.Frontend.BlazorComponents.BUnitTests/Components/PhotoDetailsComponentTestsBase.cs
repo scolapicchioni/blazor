@@ -4,24 +4,27 @@ using Moq;
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests.Components;
-
+namespace PhotoSharingApplication.Frontend.BlazorComponents.BUnitTests.Components; 
 public class PhotoDetailsComponentTestsBase : TestContext {
-    protected Mock<IUserService> userServiceMock;
-    protected Mock<IAuthorizationService<Photo>> authorizationServiceMock;
     protected Photo photo;
-    public PhotoDetailsComponentTestsBase() {
-        userServiceMock = new Mock<IUserService>();
-        authorizationServiceMock = new Mock<IAuthorizationService<Photo>>();
+    protected Mock<IUserService> mockUserService;
+    protected Mock<IAuthorizationService<Photo>> mockAuthorizationService;
 
-        Services.AddSingleton<IUserService>(userServiceMock.Object);
-        Services.AddSingleton<IAuthorizationService<Photo>>(authorizationServiceMock.Object);
+    public PhotoDetailsComponentTestsBase()
+    {
+        photo = new Photo() {
+            Id = 1,
+            Title = "Photo 1",
+            Description = "Description 1",
+            ImageUrl = "https://localhost:44300/images/1.jpg",
+            CreatedDate = DateTime.Now,
+            UserName = "User 1"
+        };
 
-        photo = new Photo();
-    }
-    protected void UserIsAuthorized(bool authorized) {
-        var User = new System.Security.Claims.ClaimsPrincipal();
-        userServiceMock.Setup(us => us.GetUserAsync()).ReturnsAsync(User);
-        authorizationServiceMock.Setup(auth => auth.ItemMayBeDeletedAsync(User, photo)).ReturnsAsync(authorized);
+        mockUserService = new Mock<IUserService>();
+        mockAuthorizationService = new Mock<IAuthorizationService<Photo>>();
+
+        Services.AddSingleton<IUserService>(mockUserService.Object);
+        Services.AddSingleton<IAuthorizationService<Photo>>(mockAuthorizationService.Object);
     }
 }

@@ -1,8 +1,7 @@
 ﻿using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services;
-
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services; 
 public class CommentsService : ICommentsService {
     private readonly ICommentsRepository repository;
 

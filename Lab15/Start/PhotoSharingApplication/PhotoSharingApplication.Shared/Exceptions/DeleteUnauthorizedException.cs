@@ -1,7 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace PhotoSharingApplication.Shared.Exceptions;
-
+namespace PhotoSharingApplication.Shared.Exceptions; 
 [Serializable]
 public class DeleteUnauthorizedException<T> : Exception {
     public DeleteUnauthorizedException() { }

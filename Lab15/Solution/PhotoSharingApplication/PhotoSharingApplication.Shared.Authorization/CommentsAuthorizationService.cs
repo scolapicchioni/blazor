@@ -4,7 +4,6 @@ using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
 
 namespace PhotoSharingApplication.Shared.Authorization;
-
 public class CommentsAuthorizationService : IAuthorizationService<Comment> {
     private readonly IAuthorizationService authorizationService;
 

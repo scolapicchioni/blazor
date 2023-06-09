@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Duende.IdentityServer.Events;
 using Duende.IdentityServer.Extensions;
 using Duende.IdentityServer.Models;
@@ -10,7 +6,6 @@ using Duende.IdentityServer.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 
 namespace PhotoSharingApplication.IdentityProvider.Pages.Ciba;
 
@@ -20,12 +15,12 @@ public class Consent : PageModel
 {
     private readonly IBackchannelAuthenticationInteractionService _interaction;
     private readonly IEventService _events;
-    private readonly ILogger<Index> _logger;
+    private readonly ILogger<Consent> _logger;
 
     public Consent(
         IBackchannelAuthenticationInteractionService interaction,
         IEventService events,
-        ILogger<Index> logger)
+        ILogger<Consent> logger)
     {
         _interaction = interaction;
         _events = events;

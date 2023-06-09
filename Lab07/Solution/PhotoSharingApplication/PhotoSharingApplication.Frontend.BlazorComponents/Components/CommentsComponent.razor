@@ -1,23 +1,23 @@
-﻿@inject ICommentsService CommentsService
+﻿@using PhotoSharingApplication.Shared.Entities;
+@using PhotoSharingApplication.Shared.Interfaces;
+@inject ICommentsService CommentsService
 
-<MatH3>Comments</MatH3>
+<MudText Typo="Typo.h3">Comments</MudText>
 
 @if (comments is null) {
-  <p><em>No Comments for this Photo</em></p>
+    <MudText Typo="Typo.body1">No comments for this photo yet</MudText>
 } else {
-  <div class="list-group">
     @foreach (var comment in comments) {
-      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
+        <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment" OnDelete="DeleteComment"/>
     }
-    <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
-  </div>
+    <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"/>
 }
 
 @code {
-    [Parameter]
+    [Parameter, EditorRequired]
     public int PhotoId { get; set; }
 
-    private List<Comment>? comments;
+    private List<Comment>? comments = default!;
 
     protected override async Task OnInitializedAsync() {
         comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);

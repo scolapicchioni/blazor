@@ -2,14 +2,14 @@
 
 In this lab we're going connect everything together.  
 
-We're going to use a design pattern called [Backends For Frontends](https://docs.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), where the client calls our own server (*home* so to speak) and the server calls the Rest Service, using a reverse proxy.
+We're going to use a design pattern called [Backends For Frontends](https://learn.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), where the client calls our own server (*home* so to speak) and the server calls the Rest Service, using a reverse proxy.
 
 Our client will issue http requests to our server and it will handle the results to update the model. Blazor already takes care of updating the UI.  
 Our Server will forward the calls to the REST service and return the results to the client. Since there is no point in reinventing the wheel, we're going to use [YARP](https://microsoft.github.io/reverse-proxy/index.html), a library that will forward the calls for us so that we don't have to write any service for it.
 
 Let's start by our `Frontend` project.
 
-We're going to replace our old Memory Repository with a new one that uses [`HttpClient`](https://docs.microsoft.com/en-us/aspnet/core/blazor/call-web-api?view=aspnetcore-6.0).
+We're going to replace our old Memory Repository with a new one that uses [`HttpClient`](https://learn.microsoft.com/en-us/aspnet/core/blazor/call-web-api?view=aspnetcore-7.0&pivots=webassembly). 
 
 ## Create a new Repository with HttpClient
 
@@ -61,7 +61,7 @@ Now let's implement the different actions
 - The `FindAsync` becomes
 
 ```cs
-public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/api/photos/{id}");
 ```
 
 which requires
@@ -73,7 +73,7 @@ using System.Net.Http.Json;
 - The GetPhotosAsync becomes
 
 ```cs
-public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
+public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/api/photos");
 ```
 
 ## The Create
@@ -82,7 +82,7 @@ public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.Get
 
 ```cs
 public async Task<Photo?> CreateAsync(Photo photo) {
-    HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
+    HttpResponseMessage response = await http.PostAsJsonAsync("/api/photos", photo);
     return await response.Content.ReadFromJsonAsync<Photo>();
 }
 ```
@@ -93,7 +93,7 @@ public async Task<Photo?> CreateAsync(Photo photo) {
 
 ```cs
 public async Task<Photo?> UpdateAsync(Photo photo) {
-    HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
+    HttpResponseMessage response = await http.PutAsJsonAsync($"/api/photos/{photo.Id}", photo);
     return await response.Content.ReadFromJsonAsync<Photo>();
 }
 ```
@@ -104,7 +104,7 @@ public async Task<Photo?> UpdateAsync(Photo photo) {
 
 ```cs
 public async Task<Photo?> RemoveAsync(int id) {
-    HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
+    HttpResponseMessage response = await http.DeleteAsync($"/api/photos/{id}");
     return await response.Content.ReadFromJsonAsync<Photo>();
 }
 ```
@@ -162,7 +162,7 @@ app.MapReverseProxy();
         "photosrestroute": {
             "ClusterId": "photosrestcluster",
             "Match": {
-                "Path": "/photos/{*any}"
+                "Path": "/api/photos/{*any}"
             }
         }
     },
@@ -170,13 +170,16 @@ app.MapReverseProxy();
         "photosrestcluster": {
             "Destinations": {
                 "photosrestdestination": {
-                "Address": "https://localhost:5003/"
+                "Address": "https://localhost:5003"
                 }
             }
         }
     }
 }
 ```
+
+**NOTE: My `Address` section uses `https://localhost:5003` because my REST service is running on that port. Yours may be running on a different one. If you want to run on the same port, right click on the PhotoSharingApplication.WebServices.REST.Photos project name in the Visual Studio Solution Explorer, select the `Debug` section, click ok `Open debug lunch profile UI` then change the `App URL` from what you have to `https://localhost:5003;http://localhost:5004`**
+
 ## Start both projects
 
 In order to start both projects at the same time, we need to configure the Solution in Visual Studio
@@ -194,7 +197,7 @@ You will notice an error in the browser console:
 Failed to fetch
 ```
 
-This happens because our Rest service does not allow [Cross Origin Requests (CORS)](https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0). Let's proceed to modify our Rest project.
+This happens because our Rest service does not allow [Cross Origin Requests (CORS)](https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-7.0). Let's proceed to modify our Rest project.
 
 - Open `Program.cs` of the `PhotoSharingApplication.WebServices.Rest.Photos` project and add the following code right before the building of the app
 
@@ -216,6 +219,13 @@ app.UseCors("AllowAll");
 ```
 
 Save and verify that the client can send and receive data to and from the server.
+
+NOTE: If you still cannot receive a response, you may want to check the logs. To do that follow the [documentation](https://microsoft.github.io/reverse-proxy/articles/diagnosing-yarp-issues.html) and add this keys to the `Logging` section of the `appsettings.json` file on your server project:  
+
+```json
+"Microsoft": "Information",
+"Yarp": "Information"
+```
 
 The lab is complete, we successfully connected our frontend with the backend.
 

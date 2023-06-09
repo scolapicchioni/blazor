@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PhotoSharingApplication.Shared.Interfaces;
 using PhotoSharingApplication.WebServices.Grpc.Comments.Core.Services;
 using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Data;
-using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Repositories.EntityFramework;
+using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Repositories;
 using PhotoSharingApplication.WebServices.Grpc.Comments.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +15,7 @@ builder.Services.AddGrpc();
 
 builder.Services.AddDbContext<CommentsDbContext>(options =>
         options.UseSqlite(builder.Configuration.GetConnectionString("CommentsDbContext")));
+
 builder.Services.AddScoped<ICommentsService, CommentsService>();
 builder.Services.AddScoped<ICommentsRepository, CommentsRepository>();
 

@@ -1,12 +1,12 @@
-# Backend: Web API with ASP.NET 6.0 and Visual Studio 2022
+# Backend: Web API with ASP.NET 7.0 and Visual Studio 2022
 
 In this lab we're going to take care of our Backend.
 
 We're going to use the same [CLEAN architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) that we have on the frontend:
 
 - A *Core* folder where we define the business logic. There's going to be a *Service* that knows what to do (for example it validates the data before passing it to the infrastructure) 
-- An *Infrastructure* folder where we define how to actually read and save the data. We're going to use [Entity Framework Core](https://docs.microsoft.com/en-gb/ef/core/)  to talk to a SQL Server DataBase.
-- An *Application* project, which in this case consists of a [REST](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET Core 6.0 Web API](https://docs.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-6.0&tabs=visual-studio).
+- An *Infrastructure* folder where we define how to actually read and save the data. We're going to use [Entity Framework Core](https://learn.microsoft.com/en-gb/ef/core/)  to talk to a SQL Server DataBase.
+- An *Application* project, which in this case consists of a [REST](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET Core 6.0 Web API](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-7.0&tabs=visual-studio).
 
 Both the `Service` and the `Repository` will implement the interfaces and make use of the `Photo` entity that we have already defined on the `Shared` project.
 
@@ -17,12 +17,13 @@ Both the `Service` and the `Repository` will implement the interfaces and make u
 - On the `Solution Explorer`, right click your solution, then select `Add` -> `New Project`.
 - Select the `ASP.NET Core Web Api` project template. 
     - Name the Project `PhotoSharingApplication.WebServices.REST.Photos`
-    - Select `.NET 6.0`
+    - Select `.NET 7.0`
     - Leave the `Authentication Type` to `None`. 
     - Ensure that the `Configure for Https` checkbox is selected
     - Do not check `Enable Docker Support`.
     - Ensure that the `Use controllers` checkbox is selected.
     - Ensure that `Enable OpenAPI Support` is selected
+    - Uncheck `Do not use top-level statements`
     - Click `Create`
     - Add a project reference to the `PhotoSharingApplication.Shared` project.
 
@@ -79,13 +80,13 @@ public class PhotosDbContext : DbContext {
 
 ```
 
-Because we're going to use this `DbContext` from an ASP.NET Core project, we are going to use the [constructor accepting the DbOptions](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/connection-strings#aspnet-core)
+Because we're going to use this `DbContext` from an ASP.NET Core project, we are going to use the [constructor accepting the DbOptions](https://learn.microsoft.com/en-gb/ef/core/miscellaneous/connection-strings#aspnet-core)
 
 ```cs
 public PhotosDbContext(DbContextOptions<PhotosDbContext> options)  : base(options) {}
 ```
 
-We want to give our model some configurations and restrictions, so we're going to use [Fluent API](https://docs.microsoft.com/en-gb/ef/core/modeling/#use-fluent-api-to-configure-a-model) to do that:
+We want to give our model some configurations and restrictions, so we're going to use [Fluent API](https://learn.microsoft.com/en-gb/ef/core/modeling/#use-fluent-api-to-configure-a-model) to do that:
 
 ```cs
 protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -116,9 +117,9 @@ using PhotoSharingApplication.Shared.Entities;
 
 ### Configuring the DbContext
 
-The context has to be configured and added as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
+The context has to be configured and added as a Service using the [Dependency Injection](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-7.0) features of `ASP.NET Core`.
 
-Open the [`Program.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-6.0) file, and add the configuration for the `DbContext` before building the app:
+Open the [`Program.cs`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-7.0) file, and add the configuration for the `DbContext` before building the app:
 
 ```cs
 builder.Services.AddDbContext<PhotosDbContext>(options =>
@@ -134,7 +135,7 @@ using Microsoft.EntityFrameworkCore;
 using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
 ```
 
-Add a `PhotosDbContext` connection string to [configure](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0) it in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-configuration):
+Add a `PhotosDbContext` connection string to [configure](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-7.0) it in the `appsettings.json` file, as per [Default](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-7.0#default-configuration):
 
 ```json
 "ConnectionStrings": {
@@ -144,13 +145,13 @@ Add a `PhotosDbContext` connection string to [configure](https://docs.microsoft.
 
 ### Generate migrations and database
 
-The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://docs.microsoft.com/en-us/ef/core/cli/powershell).
+The database has not been created. We're going to use [Migrations](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab, using the [Entity Framework Core Tools in the Package Manager Console](https://learn.microsoft.com/en-us/ef/core/cli/powershell).
 
 First, we need to add the tools by adding the following NuGet Packages to our `PhotoSharingApplication.WebServices.Rest.Photos` project:
 
 - `Microsoft.EntityFrameworkCore.Design`
 
-Then, as per the [documentation](https://docs.microsoft.com/en-us/ef/core/cli/powershell):
+Then, as per the [documentation](https://learn.microsoft.com/en-us/ef/core/cli/powershell#using-the-tools):
 
 > Before using the tools:
 > 
@@ -242,10 +243,10 @@ which requires
 using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
 ```
 
-Now we're going to use [Asynchronous operations](https://docs.microsoft.com/en-gb/ef/core/miscellaneous/async) to Create, Reade, Update and Delete data.
+Now we're going to use [Asynchronous operations](https://learn.microsoft.com/en-gb/ef/core/miscellaneous/async) to Create, Reade, Update and Delete data.
 
 
-- The code to [Add](https://docs.microsoft.com/en-gb/ef/core/saving/basic#adding-data) the Photo to the DataBase becomes:
+- The code to [Add](https://learn.microsoft.com/en-gb/ef/core/saving/basic#adding-data) the Photo to the DataBase becomes:
 
 ```cs
 public async Task<Photo> CreateAsync(Photo photo) {
@@ -255,7 +256,7 @@ public async Task<Photo> CreateAsync(Photo photo) {
 }
 ```
 
-- The code to [Update](https://docs.microsoft.com/en-gb/ef/core/saving/basic#updating-data) a Photo in the database becomes:
+- The code to [Update](https://learn.microsoft.com/en-gb/ef/core/saving/basic#updating-data) a Photo in the database becomes:
 
 ```cs
 public async Task<Photo> UpdateAsync(Photo photo) {
@@ -265,7 +266,7 @@ public async Task<Photo> UpdateAsync(Photo photo) {
 }
 ```
 
-- The code to [Delete](https://docs.microsoft.com/en-gb/ef/core/saving/basic#deleting-data) a Photo from the Database becomes:
+- The code to [Delete](https://learn.microsoft.com/en-gb/ef/core/saving/basic#deleting-data) a Photo from the Database becomes:
 
 
 ```cs
@@ -285,15 +286,15 @@ which requires
 using Microsoft.EntityFrameworkCore;
 ```
 
-To read the data, we're going to use [Asynchronous Queries](https://docs.microsoft.com/en-gb/ef/core/querying/async)
+To read the data, we're going to use [Asynchronous Queries](https://learn.microsoft.com/en-gb/ef/core/miscellaneous/async)
 
 - The code to Read all the photos becomes
 
 ```cs
-    public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => 
-    await (from p in context.Photos
-            orderby p.CreatedDate descending
-            select p).Take(amount).ToListAsync();
+public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => 
+await (from p in context.Photos
+        orderby p.CreatedDate descending
+        select p).Take(amount).ToListAsync();
 ```
 
 - The code to read one photo becomes
@@ -320,7 +321,7 @@ Here is the API that you'll create:
 
 The client submits a request and receives a response from the application. Within the application we find the controller, which makes use of the Service we implemented in the *Backend.Core* project. The request comes into the application's controller, and read/write operations occur between the controller and the service. The model is serialized and returned to the client in the response.
 
-The **client** is whatever consumes the web API (browser, mobile app, and so forth). We aren't writing a client in this tutorial. We'll use [Swagger / OpenApi](https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-help-pages-using-swagger?view=aspnetcore-6.0) to try the app. We will write the client in the following lab.
+The **client** is whatever consumes the web API (browser, mobile app, and so forth). We aren't writing a client in this tutorial. We'll use [Swagger / OpenApi](https://learn.microsoft.com/en-us/aspnet/core/tutorials/web-api-help-pages-using-swagger?view=aspnetcore-7.0) to try the app. We will write the client in the following lab.
 
 A **model** is an object that represents the data in your application. In this case, the only model is a Photo item. Models are represented as simple C# classes (POCOs).
 
@@ -332,16 +333,16 @@ A **controller** is an object that handles HTTP requests and creates the HTTP re
 - Select `API Empty`
 - Name the controller `PhotosController`
 
-The wizard took care of the [Controller](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0) by generating a class that derives from [ControllerBase](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase?view=aspnetcore-5.0&viewFallbackFrom=aspnetcore-6.0), which provides many properties and methods that are useful for handling HTTP requests.
+The wizard took care of the [Controller](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-7.0) by generating a class that derives from [ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase?view=aspnetcore-7.0), which provides many properties and methods that are useful for handling HTTP requests.
 
 The `Microsoft.AspNetCore.Mvc` namespace provides attributes that can be used to configure the behavior of web API controllers and action methods.
 
-The [ApiController](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.apicontrollerattribute?view=aspnetcore-5.0&viewFallbackFrom=aspnetcore-6.0) attribute was applied to the controller class to enable the following API-specific behaviors:
-- [Attribute routing requirement](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#attribute-routing-requirement)
-- [Automatic HTTP 400 responses](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#automatic-http-400-responses)
-- [Binding source parameter inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#binding-source-parameter-inference)
-- [Multipart/form-data request inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#multipartform-data-request-inference)
-- [Problem details for error status codes](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#problem-details-for-error-status-codes) 
+The [ApiController](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.apicontrollerattribute?view=aspnetcore-7.0) attribute was applied to the controller class to enable the following API-specific behaviors:
+- [Attribute routing requirement](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-7.0#attribute-routing-requirement)
+- [Automatic HTTP 400 responses](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-7.0#automatic-http-400-responses)
+- [Binding source parameter inference](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-7.0#binding-source-parameter-inference)
+- [Multipart/form-data request inference](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-7.0#multipartform-data-request-inference)
+- [Problem details for error status codes](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-7.0#problem-details-for-error-status-codes) 
 
 ```cs
 using Microsoft.AspNetCore.Http;
@@ -373,7 +374,7 @@ using PhotoSharingApplication.Shared.Interfaces;
 
 Now we can start implementing our CRUD methods.
 
-The controller and every action should be mapped to a route through the use of [routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0) system, in particular [attribute routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0#attribute-routing-for-rest-apis) and [attribute routing using http verbs attributes](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0#http-verb-templates).
+The controller and every action should be mapped to a route through the use of [routing](https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-7.0) system, in particular [attribute routing](https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-7.0#attribute-routing-for-rest-apis) and [attribute routing using http verbs attributes](https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-7.0#http-verb-templates).
 
 We want all the routes to start with `photos` and not with `api/photos`, so, let's change the `[Route]` attribute at the beginning of out controller:
 
@@ -433,7 +434,7 @@ As for REST standards, the action that adds a product to the database is bound t
 [HttpPost]
 public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
     Photo? p = await service.UploadAsync(photo);
-    return CreatedAtRoute("Find", photo, new { id = photo.Id});
+    return CreatedAtRoute("Find", new { id = photo.Id }, photo);
 }
 ```
 
@@ -504,7 +505,7 @@ It returns
 
 Now, the two interfaces and implementations.
 
-To use our service in the `PhotosController` controller, we need to perform a couple of steps, also described in the [Dependency Injection documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0)
+To use our service in the `PhotosController` controller, we need to perform a couple of steps, also described in the [Dependency Injection documentation](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-7.0)
 
 - Open the `Program.cs` file
 - Add the following lines right before the building of the app :
@@ -525,8 +526,6 @@ using PhotoSharingApplication.WebServices.Rest.Photos.Core.Services;
 using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
 using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Repositories.EntityFramework;
 ```
-
-
 
 ### Try the Actions of the controller
 

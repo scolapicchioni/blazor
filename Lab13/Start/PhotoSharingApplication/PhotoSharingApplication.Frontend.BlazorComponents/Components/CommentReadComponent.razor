@@ -1,39 +1,42 @@
 ﻿@inject IUserService UserService
 @inject IAuthorizationService<Comment> CommentsAuthorizationService
 
-<MatCardContent>
-    <em>On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</em>
-    <MatH5>@CommentItem.Subject</MatH5>
-    <p>@CommentItem.Body</p>
-</MatCardContent>
-<MatCardActions>
-    @if (mayEdit) {
-        <MatButton OnClick="RaiseEdit">Edit</MatButton>
-    }
-    @if (mayDelete) {
-        <MatButton OnClick="RaiseDelete">Delete</MatButton>
-    }
-</MatCardActions>
+<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.subtitle2">On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</MudText>
+        <MudText Typo="Typo.body1">@CommentItem.Subject</MudText>
+        <MudText Typo="Typo.body2">@CommentItem.Body</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        @if (mayEdit)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="RaiseEdit" />
+        }
+        @if (mayDelete)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="RaiseDelete" />
+        }
+    </MudCardActions>
+</MudCard>
 
 @code {
-    [Parameter]
-    public Comment CommentItem { get; set; }
+    [Parameter, EditorRequired]
+    public Comment CommentItem { get; set; } = default!;
 
     [Parameter]
     public EventCallback<Comment> OnEdit { get; set; }
-
     [Parameter]
     public EventCallback<Comment> OnDelete { get; set; }
 
-    private bool mayEdit = false;
-    private bool mayDelete = false;
+    async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
+    async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
+
+    bool mayEdit = false;
+    bool mayDelete = false;
 
     protected override async Task OnInitializedAsync() {
         var User = await UserService.GetUserAsync();
         mayEdit = await CommentsAuthorizationService.ItemMayBeUpdatedAsync(User, CommentItem);
         mayDelete = await CommentsAuthorizationService.ItemMayBeDeletedAsync(User, CommentItem);
     }
-
-    async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
-    async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
 }

@@ -1,7 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
 namespace PhotoSharingApplication.Shared.Exceptions;
-
 [Serializable]
 public class EditUnauthorizedException<T> : Exception {
     public EditUnauthorizedException() { }

@@ -1,0 +1,14 @@
+﻿@inject MapJsInterop mapInterop
+
+<MudIconButton Icon="@Icons.Material.Filled.Map" OnClick="ShowMap" aria-label="map"></MudIconButton>
+
+<div id="map"></div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Photo Photo { get; set; } = default!;
+
+    public async Task ShowMap() {
+        await mapInterop.ShowMap(Photo.Latitude, Photo.Longitude, Photo.Title);
+    }
+}

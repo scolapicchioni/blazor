@@ -1,34 +1,30 @@
 ﻿@page "/photos/all"
+
+@using PhotoSharingApplication.Shared.Entities
+@using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 
 <PageTitle>All Photos</PageTitle>
 
-<MatH3>All Photos</MatH3>
+<MudText Typo="Typo.h1">All Photos</MudText>
 
-<AuthorizeView>
-    <Authorized><MatButton Link="photos/upload">Upload new Photo</MatButton></Authorized>
-    <NotAuthorized><MatButtonLink Href="bff/login">Log in to upload a photo<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
-</AuthorizeView>
+<MudIconButton Icon="@Icons.Material.Filled.AddAPhoto" Color="Color.Default" Href="photos/upload" />
 
+<MudGrid Spacing="2" Justify="Justify.FlexStart">
 @if (photos is null) {
-    <p>...Loading...</p>
+    <MudText Typo="Typo.caption">...Loading...</MudText>
 } else {
-    <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            @foreach (var photo in photos) {
-                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
-                    <PhotoDetailsComponent Photo="photo" Edit Delete Details></PhotoDetailsComponent>
-                </div>
-            }
-        </div>
-    </div>
+    @foreach (var photo in photos) {
+    <MudItem xs="12" sm="4">
+        <PhotoDetailsComponent Photo="photo" Details Edit Delete />
+    </MudItem>
+    }
 }
-
+</MudGrid>
 @code {
     List<Photo>? photos;
 
-    protected override async Task OnInitializedAsync()
-    {
+    protected override async Task OnInitializedAsync() {
         photos = await photosService.GetPhotosAsync();
     }
 }

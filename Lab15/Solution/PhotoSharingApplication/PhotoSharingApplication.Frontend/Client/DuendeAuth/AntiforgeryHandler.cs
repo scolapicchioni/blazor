@@ -1,5 +1,4 @@
-﻿namespace PhotoSharingApplication.Frontend.Client.DuendeAuth;
-
+﻿namespace PhotoSharingApplication.Frontend.Client.DuendeAuth; 
 public class AntiforgeryHandler : DelegatingHandler {
     public AntiforgeryHandler() { }
     public AntiforgeryHandler(HttpClientHandler innerHandler) : base(innerHandler) { }

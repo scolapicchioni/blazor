@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor.Services;
 using PhotoSharingApplication.Frontend.Client;
 using PhotoSharingApplication.Frontend.Client.Core.Services;
 using PhotoSharingApplication.Frontend.Client.DuendeAuth;
@@ -25,9 +26,11 @@ builder.Services.AddTransient(sp => sp.GetRequiredService<IHttpClientFactory>().
 
 builder.Services.AddScoped<IPhotosService, PhotosService>();
 builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest.PhotosRepository>();
-
 builder.Services.AddScoped<ICommentsService, CommentsService>();
+builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.CommentsRepository>();
+
 builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc.CommentsRepository>();
+
 builder.Services.AddSingleton(services => {
     var backendUrl = new Uri(builder.HostEnvironment.BaseAddress);
     var channel = GrpcChannel.ForAddress(backendUrl, new GrpcChannelOptions {
@@ -36,12 +39,15 @@ builder.Services.AddSingleton(services => {
     return new Commenter.CommenterClient(channel);
 });
 
+builder.Services.AddMudServices();
+
 builder.Services.AddAuthorizationCore(options => {
     options.AddPhotosPolicies();
     options.AddCommentsPolicies();
 });
 
 builder.Services.AddScoped<AuthenticationStateProvider, BffAuthenticationStateProvider>();
+
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddSingleton<IAuthorizationHandler, PhotoEditDeleteAuthorizationHandler>();

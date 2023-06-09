@@ -23,7 +23,7 @@ You'll see a link to a `bootstrap.min.css` file:
 
 This means that we can already use it to give a better look to our UI.
 
-For example we could transform our `Pages/AllPhotos.razor` to use a [Card](https://getbootstrap.com/docs/5.0/components/card/) for each Photo, like this:
+For example we could transform our `Pages/AllPhotos.razor` to use a [Card](https://getbootstrap.com/docs/5.3/components/card/) for each Photo, like this:
 
 ```html
 <h3>AllPhotos</h3>
@@ -57,79 +57,126 @@ For example we could transform our `Pages/AllPhotos.razor` to use a [Card](https
 }
 ```
 
-It is just a matter of learning which css class to use and what html structure to give to your content. All I did was to go to the [Bootstrap](https://getbootstrap.com/docs/5.0/getting-started/introduction/) documentation site, take a look at some example for a [Card](https://getbootstrap.com/docs/5.0/components/card/), copy some of that code into my page and tweek it to my liking.
+It is just a matter of learning which css class to use and what html structure to give to your content. All I did was to go to the [Bootstrap](https://getbootstrap.com/docs/5.3/getting-started/introduction/) documentation site, take a look at some example for a [Card](https://getbootstrap.com/docs/5.3/components/card/), copy some of that code into my page and tweek it to my liking.
 
 This is an approach you can use for all the rest of your site.
 
 What some people in the community have done, is to create Blazor Components that already wrap those css classes for you, so another approach is to use those components instead of (or together with) the base css.
 
-If you check the [Awesome Blazor Repo](https://github.com/AdrienTorris/awesome-blazor#libraries--extensions) (which contains tons of links to Blazor resources), you can see that there are many ongoing projects. One of the first link under the extensions points to [MatBlazor](https://github.com/SamProf/MatBlazor), which implements the [Google Material Design Guidelines](https://material.io/guidelines/).    
-I am going to use MatBlazor, but feel free to try any framework you like.
+If you check the [Awesome Blazor Repo](https://github.com/AdrienTorris/awesome-blazor#libraries--extensions) (which contains tons of links to Blazor resources), you can see that there are many ongoing projects. One of the first link under the extensions points to [MudBlazor](https://github.com/MudBlazor/MudBlazor), which implements the [Google Material Design Guidelines](https://material.io/guidelines/).    
+I am going to use MudBlazor, but feel free to try any framework you like.
 
-So what I'm going to do in my project is to use the `MatBlazor` components instead of Bootstrap. I'm not saying that it's the best choice, but it is a valid choice (there are [many](https://www.sitepoint.com/free-material-design-css-frameworks-compared/) different css framework around).
+So what I'm going to do in my project is to use the `MudBlazor` components instead of Bootstrap. I'm not saying that it's the best choice, but it is a valid choice (there are [many](https://www.sitepoint.com/free-material-design-css-frameworks-compared/) different css framework around).
 
-According to its own [official git repo](https://github.com/SamProf/MatBlazor)
+According to its own [official git repo](https://github.com/MudBlazor/MudBlazor)
 
-> MatBlazor comprises a range of components which implement common interaction patterns according to the Material Design specification.
+> MudBlazor is an ambitious Material Design component framework for Blazor with an emphasis on ease of use and clear structure. It is perfect for .NET developers who want to rapidly build web applications without having to struggle with CSS and Javascript. MudBlazor, being written entirely in C#, empowers you to adapt, fix or extend the framework. There are plenty of examples in the documentation, which makes understanding and learning MudBlazor very easy.
 
-So let's install it following the [documentation](https://github.com/SamProf/MatBlazor#installation)
+So let's install it following the [documentation](https://mudblazor.com/getting-started/installation#manual-install)
 
 ## Installation
 
 - In your `Fontend.Client` project, in the Solution Explorer, right click the Dependencies and select `Manage NuGet Packages`
-- On the `Browse` Tab, search for `MatBlazor`. 
-- Install the `MatBlazor` package by Vladimir Samoilenko
-- Add the following code in the `head` section of `index.html` 
+- On the `Browse` Tab, search for `MudBlazor`. 
+- Install the `MudBlazor` package by Garderoben, Henon and Contributors
+- Add `@using MudBlazor` to your `_Imports.razor`
+- Replace the lisk to Boostrap with google fonts and the MudBlazor stylesheet: add the following code in the `head` section of `index.html` 
 
 ```html
-<script src="_content/MatBlazor/dist/matBlazor.js"></script>
-<link href="_content/MatBlazor/dist/matBlazor.css" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+<link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
 ```
 
-- Add `@using MatBlazor` to your `_Imports.razor`
+- Add a script reference at the end on `index.html`, after the `blazor.webassembly.js` script
+
+```html
+<script src="_content/MudBlazor/MudBlazor.min.js"></script>
+```
+
 
 ## Break Everything
 
-Let's remove all the stiles we don't want to use from the `wwwroot/css/app.css`. I'm going to delete everything, leaving only these (I'll explain later what these are for):
+Let's remove all the styles we don't want to use from the `wwwroot/css/app.css`. I'm going to delete everything, leaving only these (I'll explain later what these are for):
 
 ```css
 #blazor-error-ui {
-  background: lightyellow;
-  bottom: 0;
-  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-  display: none;
-  left: 0;
-  padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-  position: fixed;
-  width: 100%;
-  z-index: 1000;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
 }
 
-  #blazor-error-ui .dismiss {
-    cursor: pointer;
-    position: absolute;
-    right: 0.75rem;
-    top: 0.5rem;
-  }
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
 
 .blazor-error-boundary {
-  background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
-  padding: 1rem 1rem 1rem 3.7rem;
-  color: white;
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
 }
 
-  .blazor-error-boundary::after {
-    content: "An error has occurred."
-  }
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+    .loading-progress circle {
+        fill: none;
+        stroke: #e0e0e0;
+        stroke-width: 0.6rem;
+        transform-origin: 50% 50%;
+        transform: rotate(-90deg);
+    }
+
+        .loading-progress circle:last-child {
+            stroke: #1b6ec2;
+            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+            transition: stroke-dasharray 0.05s ease-in-out;
+        }
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+}
+
+    .loading-progress-text:after {
+        content: var(--blazor-load-percentage-text, "Loading");
+    }
+
 ```
 
-Then I'm going to remove the link to bootstrap from `index.html`
+- Register the services in `Program.cs`
 
-```html
-<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+```cs
+using MudBlazor.Services;
+builder.Services.AddMudServices();
 ```
 
-Right now, if you play your app you'll see a partial disaster (**if it still looks good, you either did not remove the link to bootstrap or you need to refresh your browser cache by reloading the page on your browser with `CTRL` + `F5`**)
+- Add the following components to your `PhotoSharingApplication.Frontend.Client/Shared/MainLayout.razor`.
+
+```
+<MudThemeProvider />
+```
+
+Right now, if you run your site you'll see a partial disaster (**if it still looks good, you either did not remove the link to bootstrap or you need to refresh your browser cache by reloading the page on your browser with `CTRL` + `F5`**)
 
 ## Let's fix it
 
@@ -137,65 +184,58 @@ There are multiple places where we need to update our html.
 
 Let's start with our `Pages/AllPhotos.razor`.
 
-Our goal is to use a [Card](https://www.matblazor.com/Card) for each Photo. 
+Our goal is to use a [Card](https://mudblazor.com/components/card) for each Photo. 
 
-I'm going to go for this html, but feel free to use a layout you like, by looking at the documentation of MatBlazor and applying it to your component.
+I'm going to go for this html, but feel free to use a layout you like, by looking at the documentation of MudBlazor and applying it to your component.
 
 ```html
 @page "/photos/all"
+
 @using PhotoSharingApplication.Shared.Entities
 @using PhotoSharingApplication.Shared.Interfaces
 @inject IPhotosService photosService
 
 <PageTitle>All Photos</PageTitle>
 
-<MatH3>All Photos</MatH3>
+<MudText Typo="Typo.h1">All Photos</MudText>
 
-<MatButton Link="photos/upload">Upload new Photo</MatButton>
+<MudIconButton Icon="@Icons.Material.Filled.AddAPhoto" Color="Color.Default" Href="photos/upload" />
 
-@if (photos is null) {
-  <p>...Loading...</p>
+<MudGrid Spacing="2" Justify="Justify.FlexStart">
+    
+@if (photos == null) {
+    <p>...Loading...</p>
 } else {
-  <div class="mat-layout-grid">
-      <div class="mat-layout-grid-inner">
-  @foreach (var photo in photos) {
-      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-4">
-        <MatCard>
-          <div>
-            <MatHeadline6>
-              @photo.Id - @photo.Title
-            </MatHeadline6>
-            <MatSubtitle2>
-              @photo.CreatedDate.ToShortDateString()
-            </MatSubtitle2>
-          </div>
-        <MatCardContent>
-          <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" ></MatCardMedia>
-            <MatBody2>
-              @photo.Description
-            </MatBody2>
-          </MatCardContent>
-          <MatCardActions>
-            <MatCardActionButtons>
-              <MatButton Link="@($"photos/details/{photo.Id}")">Details</MatButton>
-              <MatButton Link="@($"photos/update/{photo.Id}")">Update</MatButton>
-              <MatButton Link="@($"photos/delete/{photo.Id}")">Delete</MatButton>
-            </MatCardActionButtons>
-          </MatCardActions>
-        </MatCard>
-      </div>
+    @foreach (var photo in photos) {
+    <MudItem xs="12" sm="4">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.body1">@photo.Id</MudText>
+                    <MudText Typo="Typo.body2">@photo.Title</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardMedia Image="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" Height="250" />
+            <MudCardContent>
+                <MudText Typo="Typo.body2">@photo.Description</MudText>
+                <MudText Typo="Typo.subtitle1">@photo.CreatedDate.ToShortDateString()</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudIconButton Icon="@Icons.Material.Filled.Photo" Color="Color.Default" Href="@($"photos/details/{photo.Id}")" />
+                <MudIconButton Icon="@Icons.Material.Filled.PhotoSizeSelectLarge" Color="Color.Default" Href="@($"photos/update/{photo.Id}")" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" Href="@($"photos/delete/{photo.Id}")" />
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
     }
-    </div>
-  </div>
 }
-
+</MudGrid>
 @code {
-  List<Photo>? photos;
+    List<Photo>? photos;
 
-  protected override async Task OnInitializedAsync()
-  {
-    photos = await photosService.GetPhotosAsync();
-  }
+    protected override async Task OnInitializedAsync() {
+        photos = await photosService.GetPhotosAsync();
+    }
 }
 ```
 
@@ -224,7 +264,7 @@ Open `App.razor`.
 
 You may have already noticed that `DefaultLayout="@typeof(MainLayout)"` attribute in the `<RouteView>` component.
 
-That is a reference to our application [Layout](https://docs.microsoft.com/en-us/aspnet/core/blazor/layouts?view=aspnetcore-6.0)
+That is a reference to our application [Layout](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/layouts?view=aspnetcore-7.0)
 
 The basic idea is that our `Page` focuses on the content, while the `Layout` takes care of all the fluff that you want to have on every page but you don't want to have to rewrite over and over and over.
 
@@ -232,78 +272,70 @@ Since the navigation is indeed something we want to have on each page, that is i
 
 ```html
 @inherits LayoutComponentBase
+
+<MudThemeProvider />
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
 
-    <div class="main">
+    <main>
         <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank" class="ml-md-auto">About</a>
+            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
         </div>
 
-        <div class="content px-4">
+        <article class="content px-4">
             @Body
-        </div>
-    </div>
+        </article>
+    </main>
 </div>
 ```
 
 As you can see, it contains some html that make use of the Bootstrap classes (which of course don't work anymore because we removed the link to `bootstrap.css` from our `index.html`).  
 What you may have not noticed is that in the Solution explorer, you can see a small arrow on the left of the MainLayout.razor filename and that if you click on it you can see an additional `MainLayout.razor.css`.
-That file is using [CSS Isolation](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/css-isolation?view=aspnetcore-6.0), a technique to define component-specific styles by creating a `.razor.css` file matching the name of the `.razor` file for the component in the same folder. The `.razor.css` file is a `scoped CSS file`.  
-We can remove the `MainLayout.razor.css` file, since all the styles we need are already in MatBlazor.
+That file is using [CSS Isolation](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/css-isolation?view=aspnetcore-7.0), a technique to define component-specific styles by creating a `.razor.css` file matching the name of the `.razor` file for the component in the same folder. The `.razor.css` file is a `scoped CSS file`.  
+We can remove the `MainLayout.razor.css` file, since all the styles we need are already in MudBlazor.
 
-Now we can replace the html of `MainLayout.razor` with some `MatBlazor` components.
+Now we can replace the html of `MainLayout.razor` with some `MudBlazor` components.
 
-I Like the idea of having a sidebar that opens or closes at the click of a button, so I'm going to use a [Drawer](https://www.matblazor.com/Drawer).
+I'm going to use 
+- [MudLayout](https://mudblazor.com/getting-started/layouts) 
+- [MudAppBar](https://mudblazor.com/components/appbar#regular-app-bar) 
+- [MudDrawer](https://mudblazor.com/components/drawer#variants-responsive)
+- [MudMainContent and MudContainer](https://mudblazor.com/getting-started/layouts#content-&-containers)
 
-We create a Drawer by using the `<MatDrawerContainer>` component, which is composed by two main sections:
-- `MatDrawer`
-- `MatDrawerContent`
+as shown in the [documentation](https://mudblazor.com/getting-started/layouts#appbar-&-drawer)
 
-The `MatDrawer` will contain our `<NavMenu>`, while the `MatDrawerContent` will have an [AppBar](https://www.matblazor.com/AppBar)
-
-The AppBar also has a container (`<MatAppBarContainer>`) with the bar ( `<MatAppBar>`) and the content (`<MatAppBarContent>`).
-
-The `MatDrawer` can appear or disappear depending on the value of an `Opened` property, which we can [bind](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/data-binding?view=aspnetcore-6.0) to a boolean variable.
-
-We're going to change the value of our variable [at the click of a button](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/event-handling?view=aspnetcore-6.0)
 
 ```html
 @inherits LayoutComponentBase
 
-<MatDrawerContainer Style="width: 100vw; height: 100vh;">
-  <MatDrawer @bind-Opened="@Opened">
-    <NavMenu />
-  </MatDrawer>
-  <MatDrawerContent>
-    <MatAppBarContainer>
-      <MatAppBar Fixed="true">
-        <MatAppBarRow>
-          <MatAppBarSection>
-            <MatIconButton Icon="menu" OnClick="@((e) => ButtonClicked())"></MatIconButton>
-            <MatAppBarTitle>Photo Sharing Application</MatAppBarTitle>
-          </MatAppBarSection>
-          <MatAppBarSection Align="@MatAppBarSectionAlign.End">
-            <MatIconButton Icon="favorite"></MatIconButton>
-          </MatAppBarSection>
-        </MatAppBarRow>
-      </MatAppBar>
-      <MatAppBarContent>
-        @Body
-      </MatAppBarContent>
-    </MatAppBarContainer>
-  </MatDrawerContent>
-</MatDrawerContainer>
+<MudThemeProvider />
 
-@code
-{
-  bool Opened = true;
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="@open" Elevation="1">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Photo Sharing Application</MudText>
+        </MudDrawerHeader>
+        <NavMenu/>
+    </MudDrawer>
+    <MudMainContent Class="pt-16 px-16">
+        <MudContainer Class="mt-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
 
-  void ButtonClicked() {
-    Opened = !Opened;
-  }
+@code {
+    bool open = false;
+
+    void ToggleDrawer() {
+        open = !open;
+    }
 }
 ```
 
@@ -360,64 +392,65 @@ We already have the logic to open or close our drawer, so we can delete the `cod
 Which means that all what's left is simply
 
 ```html
-<MatNavMenu>
-  <MatNavItem Href="/photos/all">All Photos <MatIcon Icon="@MatIconNames.List"></MatIcon></MatNavItem>
-  <MatNavItem Href="/photos/upload">Upload Photo <MatIcon Icon="@MatIconNames.Add"></MatIcon></MatNavItem>
-</MatNavMenu>
+<MudNavMenu>
+    <MudNavLink Href="/photos/all" Icon="@Icons.Material.Filled.List">All Photos</MudNavLink>
+    <MudNavLink Href="/photos/upload" Icon="@Icons.Material.Filled.AddAPhoto">Add Photo</MudNavLink>
+</MudNavMenu>
 ```
-
-You can also delete the corresponding `NavMenu.razor.css` file from the Solution Explorer.  
 
 If you navigate to your home page, you should already see a better layout than before. Clicking on the links of the navigation bar should take you to the correct pages and style the menu items accordingly.
 
 ## Changing the Theme
 
-We can also apply our own [Theme](https://www.matblazor.com/Themes) to our site, by wrapping our `MainLayout` in a `<MatThemeProvider>`, then creating and assigning properties to a `ThemeProvider` instance:
+We can also apply our own [Theme](https://mudblazor.com/customization/overview#theme-provider) to our site, by creating and assigning properties to a `MudTheme` instance, as shown in the [docs](https://mudblazor.com/customization/overview#custom-themes):
 
 Our `MainLayout.razor` becomes:
 
 ```html
 @inherits LayoutComponentBase
-<MatThemeProvider Theme="@theme">
-  <MatDrawerContainer Style="width: 100vw; height: 100vh;">
-    <MatDrawer @bind-Opened="@Opened">
-      <NavMenu />
-    </MatDrawer>
-    <MatDrawerContent>
-      <MatAppBarContainer>
-        <MatAppBar Fixed="true">
-          <MatAppBarRow>
-            <MatAppBarSection>
-              <MatIconButton Icon="menu" OnClick="ButtonClicked"></MatIconButton>
-              <MatAppBarTitle>Photo Sharing Application</MatAppBarTitle>
-            </MatAppBarSection>
-            <MatAppBarSection Align="@MatAppBarSectionAlign.End">
-              <MatIconButton Icon="favorite"></MatIconButton>
-            </MatAppBarSection>
-          </MatAppBarRow>
-        </MatAppBar>
-        <MatAppBarContent>
-          <div class="mat">
+
+<MudThemeProvider Theme="MyCustomTheme" />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="@open" Elevation="1">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Photo Sharing Application</MudText>
+        </MudDrawerHeader>
+        <NavMenu/>
+    </MudDrawer>
+    <MudMainContent Class="pt-16 px-16">
+        <MudContainer Class="mt-6">
             @Body
-          </div>
-        </MatAppBarContent>
-      </MatAppBarContainer>
-    </MatDrawerContent>
-  </MatDrawerContainer>
-</MatThemeProvider>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
 
-@code
-{
-  bool Opened = true;
+@code {
+    bool open = false;
 
-  void ButtonClicked() {
-    Opened = !Opened;
-  }
+    void ToggleDrawer() {
+        open = !open;
+    }
 
-  MatTheme theme = new MatTheme() {
-    Primary = MatThemeColors.Orange._500.Value,
-    Secondary = MatThemeColors.BlueGrey._500.Value
-  };
+
+    MudTheme MyCustomTheme = new MudTheme() {
+        Palette = new PaletteLight() {
+            Primary = new MudBlazor.Utilities.MudColor("#BADA55"),
+            Secondary = Colors.DeepOrange.Accent1,
+            AppbarBackground = new MudBlazor.Utilities.MudColor("#BADA55"),
+        },
+        PaletteDark = new PaletteDark() {
+            Primary = Colors.Blue.Lighten1
+        },
+
+        LayoutProperties = new LayoutProperties() {
+            DrawerWidthLeft = "260px",
+            DrawerWidthRight = "300px"
+        }
+    };
 }
 ```
 
@@ -430,39 +463,27 @@ The html section of the `PhotoDetails.razor` page will look pretty much like the
 ```html
 <PageTitle>Photo Details - @photo?.Title</PageTitle>
 
-<MatH3>Details</MatH3>
-
 @if (photo is null) {
-  <p>...Loading...</p>
+    <MudText Typo="Typo.body1">...Loading...</MudText>
 } else {
-<div class="mat-layout-grid">
-  <div class="mat-layout-grid-inner">
-    <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-      <MatCard>
-        <div>
-          <MatHeadline6>
-            @photo.Id - @photo.Title
-          </MatHeadline6>
-          <MatSubtitle2>
-            @photo.CreatedDate.ToShortDateString()
-          </MatSubtitle2>
-        </div>
-        <MatCardContent>
-          <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
-          <MatBody2>
-            @photo.Description
-          </MatBody2>
-        </MatCardContent>
-        <MatCardActions>
-          <MatCardActionButtons>
-            <MatButton Link="@($"photos/update/{photo.Id}")">Update</MatButton>
-            <MatButton Link="@($"photos/delete/{photo.Id}")">Delete</MatButton>
-          </MatCardActionButtons>
-        </MatCardActions>
-      </MatCard>
-    </div>
-  </div>
-</div>
+    <MudCard >
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.body1">@photo.Id</MudText>
+                <MudText Typo="Typo.body2">@photo.Title</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardMedia Image="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" />
+        <MudCardContent>
+            <MudText Typo="Typo.body2">@photo.Description</MudText>
+            <MudText Typo="Typo.subtitle1">@photo.CreatedDate.ToShortDateString()</MudText>
+        </MudCardContent>
+        <MudCardActions>
+            <MudIconButton Icon="@Icons.Material.Filled.Photo" Color="Color.Default" Href="@($"photos/details/{photo.Id}")" />
+            <MudIconButton Icon="@Icons.Material.Filled.PhotoSizeSelectLarge" Color="Color.Default" Href="@($"photos/update/{photo.Id}")" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" Href="@($"photos/delete/{photo.Id}")" />
+        </MudCardActions>
+    </MudCard>
 }
 ```
 
@@ -470,64 +491,60 @@ The html section of the `PhotoDetails.razor` page will look pretty much like the
 
 Let's tackle the `UploadPhoto` Page.
 
-We still need our [EditForm](https://docs.microsoft.com/en-us/aspnet/core/blazor/forms-validation?view=aspnetcore-6.0). 
-Inside the form we will need [TextFields](https://www.matblazor.com/TextField) and [FileUpload](https://www.matblazor.com/FileUpload).  
-We also need to change the code to handle the selection of the file, because MatBlazor passes different parameters than the ones we had with the native Blazor `FileUpload` component.
+We still need our [EditForm](https://learn.microsoft.com/en-us/aspnet/core/blazor/forms-and-input-components?view=aspnetcore-7.0). 
+Inside the form we will need [TextFields](https://mudblazor.com/components/textfield) and [FileUpload](https://mudblazor.com/components/fileupload).  
+We also need to change the code to handle the selection of the file, because MudBlazor passes different parameters than the ones we had with the native Blazor `FileUpload` component.
 
 ```html
-@using PhotoSharingApplication.Shared.Entities
-@using PhotoSharingApplication.Shared.Interfaces
+@page "/photos/upload"
+@using PhotoSharingApplication.Shared.Entities;
+@using PhotoSharingApplication.Shared.Interfaces;
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
-@page "/photos/upload"
 
-<PageTitle>Upload Photo</PageTitle>
+<MudCard>
+    <MudForm Model="photo">
+        <MudCardContent>
+            <MudTextField @bind-Value="photo.Title"
+                          For="@(() => photo.Title)"
+                          Label="Title" />
+            <MudTextField @bind-Value="photo.Description"
+                          Lines="3"
+                          For="@(() => photo.Description)"
+                          Label="Description" />
+            <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileSelected">
+                <ButtonTemplate>
+                    <MudFab HtmlTag="label"
+                            Color="Color.Secondary"
+                            StartIcon="@Icons.Material.Filled.Image"
+                            Label="Load picture"
+                            for="@context" />
+                </ButtonTemplate>
+            </MudFileUpload>
+            <MudImage Fluid Src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" Elevation="25" Class="rounded-lg" />
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.FileUpload" OnClick="HandleValidSubmit">Upload</MudIconButton>
+    </MudCardActions>
+</MudCard>
 
-<div class="mat-layout-grid">
-  <div class="mat-layout-grid-inner">
-    <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-      <MatCard>
-        <MatH3>Upload Photo</MatH3>
-        <MatCardContent>
-          <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
-            <p>
-              <MatTextField @bind-Value="photo.Title" Label="Title" FullWidth ></MatTextField> 
-            </p>
-            <p>
-              <MatTextField @bind-Value="photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
-            </p>
-            <p>
-              <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
-            </p>
-            <p>
-              <MatButton Type="Submit">Upload</MatButton>
-            </p>
-          </EditForm>
-          <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" ></MatCardMedia>
-        </MatCardContent>
-      </MatCard>
-    </div>
-  </div>
-</div>
+
 @code {
-  Photo photo = new Photo();
+    Photo photo = new Photo();
 
-  private async Task HandleValidSubmit() {
-    await photosService.UploadAsync(photo);
-    navigationManager.NavigateTo("/photos/all");
-  }
-  private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-    IMatFileUploadEntry? file = files.FirstOrDefault();
-    if(file is null){
-      return;
+    private async Task HandleValidSubmit() {
+        await photosService.UploadAsync(photo);
+        navigationManager.NavigateTo("/photos/all");
     }
-    photo.ImageMimeType = file.Type;
+    private async Task HandleFileSelected(IBrowserFile args) {
+        photo.ImageMimeType = args.ContentType;
 
-    using (var stream = new System.IO.MemoryStream()) {
-      await file.WriteToStreamAsync(stream);
-      photo.PhotoFile = stream.ToArray();
+        using (var streamReader = new System.IO.MemoryStream()) {
+            await args.OpenReadStream().CopyToAsync(streamReader);
+            photo.PhotoFile = streamReader.ToArray();
+        }
     }
-  }
 }
 ```
 
@@ -538,72 +555,67 @@ The `UpdatePhoto.razor` will look more or less the same, we just need to modify 
 ```html
 @page "/photos/update/{id:int}"
 
-@using PhotoSharingApplication.Shared.Entities
 @using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
 <PageTitle>Update Photo @photo?.Title</PageTitle>
 
 @if (photo is null) {
-  <p>...Loading...</p>
+    <MudText Typo="Typo.caption">...Loading...</MudText>
 } else {
-  <div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-        <MatCard>
-          <MatCardContent>
-            <MatH3>Update Photo</MatH3>
-            <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
-              <p>
-                <MatTextField @bind-Value="photo.Title" Label="Title" FullWidth ></MatTextField>
-              </p>
-              <p>
-                <MatTextField @bind-Value="photo.Description" Label="Description (optional):" FullWidth></MatTextField>
-              </p>
-              <p>
-                <MatFileUpload OnChange="HandleMatFileSelected"></MatFileUpload>
-              </p>
-              <p>
-                <MatButton Type="submit">Update</MatButton>
-              </p>
-            </EditForm>
-            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
-          </MatCardContent>
-        </MatCard>
-      </div>
-    </div>
-  </div>
+    <MudCard>
+        <MudForm Model="photo">
+            <MudCardContent>
+                <MudTextField @bind-Value="photo.Title"
+                              For="@(() => photo.Title)"
+                              Label="Title" />
+                <MudTextField @bind-Value="photo.Description"
+                              Lines="3"
+                              For="@(() => photo.Description)"
+                              Label="Description" />
+                <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileSelected">
+                    <ButtonTemplate>
+                        <MudFab HtmlTag="label"
+                                Color="Color.Secondary"
+                                StartIcon="@Icons.Material.Filled.Image"
+                                Label="Load picture"
+                                for="@context"/>
+                    </ButtonTemplate>
+                </MudFileUpload>
+                <MudImage Fluid Src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" Elevation="25" Class="rounded-lg" />
+            </MudCardContent>
+        </MudForm>
+        <MudCardActions>
+            <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.FileUpload" OnClick="HandleValidSubmit">Upload</MudIconButton>
+        </MudCardActions>
+    </MudCard>
 }
 
 @code {
-  [Parameter]
-  public int Id { get; set; }
+    [Parameter]
+    public int Id { get; set; }
 
-  Photo? photo;
+    Photo? photo;
 
-  protected override async Task OnInitializedAsync() {
-    photo = await photosService.FindAsync(Id);
-  }
-
-  private async Task HandleValidSubmit() {
-    await photosService.UpdateAsync(photo!);
-    navigationManager.NavigateTo("/photos/all");
-  }
-
-  async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-    IMatFileUploadEntry? file = files.FirstOrDefault();
-    if (file is null) {
-      return;
+    protected override async Task OnInitializedAsync() {
+        photo = await photosService.FindAsync(Id);
     }
-    
-    photo!.ImageMimeType = file.Type;
 
-    using (var stream = new System.IO.MemoryStream()) {
-      await file.WriteToStreamAsync(stream);
-      photo.PhotoFile = stream.ToArray();
+    private async Task HandleValidSubmit() {
+        await photosService.UpdateAsync(photo);
+        navigationManager.NavigateTo("/photos/all");
     }
-  }
+
+    private async Task HandleFileSelected(IBrowserFile args) {
+        photo.ImageMimeType = args.ContentType;
+
+        using (var streamReader = new System.IO.MemoryStream()) {
+            await args.OpenReadStream().CopyToAsync(streamReader);
+            photo.PhotoFile = streamReader.ToArray();
+        }
+    }
 }
 ```
 
@@ -612,62 +624,50 @@ The `UpdatePhoto.razor` will look more or less the same, we just need to modify 
 The last template we have to change is the one of the `DeletePhoto.razor` Page, which will look similar to the `PhotoDetails` page.
 
 ```html
-@using PhotoSharingApplication.Shared.Entities
+@page "/photos/delete/{id:int}"
+
 @using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
-@page "/photos/delete/{id:int}"
-
 <PageTitle>Delete Photo @photo?.Title</PageTitle>
 
-<MatH3>Delete</MatH3>
-
 @if (photo is null) {
-  <p>...Loading...</p>
+    <MudText Typo="Typo.body1">...Loading...</MudText>
 } else {
-  <div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-        <MatCard>
-          <div>
-            <MatHeadline6>
-              @photo.Id - @photo.Title
-            </MatHeadline6>
-            <MatSubtitle2>
-              @photo.CreatedDate.ToShortDateString()
-            </MatSubtitle2>
-          </div>
-          <MatCardContent>
-            <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
-            <MatBody2>
-              @photo.Description
-            </MatBody2>
-          </MatCardContent>
-          <MatCardActions>
-            <MatCardActionButtons>
-              <MatButton OnClick="DeleteConfirm">Confirm Deletion</MatButton>
-            </MatCardActionButtons>
-          </MatCardActions>
-        </MatCard>
-      </div>
-    </div>
-  </div>
-}
+    <MudCard >
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.body1">@photo.Id</MudText>
+                <MudText Typo="Typo.body2">@photo.Title</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardMedia Image="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" />
+        <MudCardContent>
+            <MudText Typo="Typo.body2">@photo.Description</MudText>
+            <MudText Typo="Typo.subtitle1">@photo.CreatedDate.ToShortDateString()</MudText>
+        </MudCardContent>
+        <MudCardActions>
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Href="photos/all" />
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" OnClick="DeleteConfirm" />
+        </MudCardActions>
+    </MudCard>
+ }
 
 @code {
-  [Parameter]
-  public int Id { get; set; }
+    [Parameter]
+    public int Id { get; set; }
 
-  Photo? photo;
+    Photo? photo;
 
-  protected override async Task OnInitializedAsync() {
-    photo = await photosService.FindAsync(Id);
-  }
-  private async Task DeleteConfirm(MouseEventArgs e) {
-    await photosService.RemoveAsync(Id);
-    navigationManager.NavigateTo("/photos/all");
-  }
+    protected override async Task OnInitializedAsync() {
+        photo = await photosService.FindAsync(Id);
+    }
+    private async Task DeleteConfirm(MouseEventArgs e) {
+        await photosService.RemoveAsync(Id);
+        navigationManager.NavigateTo("/photos/all");
+    }
 }
 ```
 

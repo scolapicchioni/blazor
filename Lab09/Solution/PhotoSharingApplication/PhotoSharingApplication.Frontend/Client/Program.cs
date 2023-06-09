@@ -2,6 +2,7 @@ using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor.Services;
 using PhotoSharingApplication.Frontend.Client;
 using PhotoSharingApplication.Frontend.Client.Core.Services;
 using PhotoSharingApplication.Shared.Interfaces;
@@ -12,11 +13,11 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
 builder.Services.AddScoped<IPhotosService, PhotosService>();
 builder.Services.AddScoped<IPhotosRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Rest.PhotosRepository>();
-
 builder.Services.AddScoped<ICommentsService, CommentsService>();
+builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory.CommentsRepository>();
+
 builder.Services.AddScoped<ICommentsRepository, PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Grpc.CommentsRepository>();
 builder.Services.AddSingleton(services => {
     var backendUrl = new Uri(builder.HostEnvironment.BaseAddress);
@@ -25,5 +26,7 @@ builder.Services.AddSingleton(services => {
     });
     return new Commenter.CommenterClient(channel);
 });
+
+builder.Services.AddMudServices();
 
 await builder.Build().RunAsync();

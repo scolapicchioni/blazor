@@ -4,7 +4,6 @@ using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
 
 namespace PhotoSharingApplication.Shared.Authorization;
-
 public class PhotosAuthorizationService : IAuthorizationService<Photo> {
     private readonly IAuthorizationService authorizationService;
     public PhotosAuthorizationService(IAuthorizationService authorizationService) => this.authorizationService = authorizationService;

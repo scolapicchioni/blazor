@@ -13,7 +13,7 @@ namespace PhotoSharingApplication.Frontend.BlazorComponents {
 
         public ExampleJsInterop(IJSRuntime jsRuntime) {
             moduleTask = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
-               "import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/exampleJsInterop.js").AsTask());
+                "import", "./_content/PhotoSharingApplication.Frontend.BlazorComponents/exampleJsInterop.js").AsTask());
         }
 
         public async ValueTask<string> Prompt(string message) {

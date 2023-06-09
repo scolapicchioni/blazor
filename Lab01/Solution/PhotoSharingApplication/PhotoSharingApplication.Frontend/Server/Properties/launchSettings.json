@@ -3,17 +3,27 @@
       "windowsAuthentication": false,
       "anonymousAuthentication": true,
       "iisExpress": {
-        "applicationUrl": "http://localhost:4129",
-        "sslPort": 44304
+        "applicationUrl": "http://localhost:32683",
+        "sslPort": 44336
       }
     },
     "profiles": {
-      "PhotoSharingApplication.Frontend.Server": {
+      "http": {
         "commandName": "Project",
         "dotnetRunMessages": true,
         "launchBrowser": true,
         "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-        "applicationUrl": "https://localhost:7014;http://localhost:5014",
+        "applicationUrl": "http://localhost:5222",
+        "environmentVariables": {
+          "ASPNETCORE_ENVIRONMENT": "Development"
+        }
+      },
+      "https": {
+        "commandName": "Project",
+        "dotnetRunMessages": true,
+        "launchBrowser": true,
+        "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+        "applicationUrl": "https://localhost:7075;http://localhost:5222",
         "environmentVariables": {
           "ASPNETCORE_ENVIRONMENT": "Development"
         }

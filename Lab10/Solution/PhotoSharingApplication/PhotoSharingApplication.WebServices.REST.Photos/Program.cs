@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PhotoSharingApplication.Shared.Interfaces;
-using PhotoSharingApplication.WebServices.Rest.Photos.Core.Services;
-using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Data;
-using PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Repositories.EntityFramework;
+using PhotoSharingApplication.WebServices.REST.Photos.Infrastructure.Data;
+using PhotoSharingApplication.WebServices.REST.Photos.Infrastructure.Repositories.EntityFramework;
+using PhotoSharingApplication.WebServices.REST.Photos.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +16,6 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<PhotosDbContext>(options =>
         options.UseSqlite(builder.Configuration.GetConnectionString("PhotosDbContext")));
-
 builder.Services.AddScoped<IPhotosService, PhotosService>();
 builder.Services.AddScoped<IPhotosRepository, PhotosRepository>();
 
@@ -29,10 +28,12 @@ builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder => {
 builder.Services.AddAuthentication("Bearer")
 .AddJwtBearer("Bearer", options => {
     options.Authority = "https://localhost:5007";
-
+    
     options.TokenValidationParameters = new TokenValidationParameters {
-        ValidateAudience = false
+        ValidateAudience = false,
+        NameClaimType = "name"
     };
+    
 });
 
 var app = builder.Build();

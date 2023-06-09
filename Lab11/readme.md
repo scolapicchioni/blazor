@@ -288,7 +288,7 @@ using PhotoSharingApplication.Shared.Interfaces;
 
 namespace PhotoSharingApplication.WebServices.Rest.Photos.Controllers;
 
-[Route("[controller]")]
+[Route("api/[controller]")]
 [ApiController]
 public class PhotosController : ControllerBase {
   private readonly IPhotosService service;
@@ -345,7 +345,7 @@ public class PhotosController : ControllerBase {
 
 ### Comments gRPC Service
 
-We can follow the same idea in the `Comments` `gRPC` service. The difference is that instead of a `ForbidResult`, a `gRPC` service should return an `RpcException` with a `StatusCode` of `Permission Denied`, as shown in the [Error Handling](https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/error-handling) article from the Microsoft documentation.
+We can follow the same idea in the `Comments` `gRPC` service. The difference is that instead of a `ForbidResult`, a `gRPC` service should return an `RpcException` with a `StatusCode` of `Permission Denied`, as shown in the [Error Handling](https://learn.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/error-handling) article from the Microsoft documentation.
 
 Under the `Services` folder of the `PhotoSharingApplication.WebServices.Grpc.Comments` project, replace the `CommentsService` code with the following:
 ```cs
@@ -429,8 +429,6 @@ public class CommentsGrpcService : Commenter.CommenterBase {
 }
 ```
 
-
-
 ## Frontend Client
 
 Now we ned to go to our Client to intercept the different status codes and act accordingly.    
@@ -454,19 +452,19 @@ public class PhotosRepository : IPhotosRepository {
 
     public PhotosRepository(HttpClient http) => this.http = http;
     public async Task<Photo?> CreateAsync(Photo photo) {
-        HttpResponseMessage response = await http.PostAsJsonAsync("/photos", photo);
+        HttpResponseMessage response = await http.PostAsJsonAsync("/api/photos", photo);
         if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) {
             throw new CreateUnauthorizedException<Photo>();
         }
         return await response.Content.ReadFromJsonAsync<Photo>();
     }
 
-    public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/photos/{id}");
+    public async Task<Photo?> FindAsync(int id) => await http.GetFromJsonAsync<Photo>($"/api/photos/{id}");
 
     public async Task<List<Photo>> GetPhotosAsync(int amount = 10) => await http.GetFromJsonAsync<List<Photo>>($"/photos");
 
     public async Task<Photo?> RemoveAsync(int id) {
-        HttpResponseMessage response = await http.DeleteAsync($"/photos/{id}");
+        HttpResponseMessage response = await http.DeleteAsync($"/api/photos/{id}");
         return response.StatusCode switch {
             HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
             HttpStatusCode.NotFound => null,
@@ -476,7 +474,7 @@ public class PhotosRepository : IPhotosRepository {
     }
 
     public async Task<Photo?> UpdateAsync(Photo photo) {
-        HttpResponseMessage response = await http.PutAsJsonAsync($"/photos/{photo.Id}", photo);
+        HttpResponseMessage response = await http.PutAsJsonAsync($"/api/photos/{photo.Id}", photo);
         return response.StatusCode switch {
             HttpStatusCode.OK => await response.Content.ReadFromJsonAsync<Photo>(),
             HttpStatusCode.NotFound => null,
@@ -564,9 +562,9 @@ In our `PhotoSharingApplication.Frontend.BlazorComponents`, under the `Pages` fo
 - `DeletePhoto`
 
 In all three we'll try to talk to the service.  
-If we catch a `***UnauthorizedException`, we send our user to a new `Forbidden` page where we tell the user that he's not authorized.
+If we catch an `UnauthorizedException`, we send our user to a new `Forbidden` page where we tell the user that he's not authorized.
 
-- First of all, open the `_Imports.razor` file in the `` project and add
+- First of all, open the `_Imports.razor` file in the `PhotoSharingApplication.Frontend.BlazorComponents` project and add
 
 ```cs
 @using Microsoft.AspNetCore.Authorization
@@ -574,207 +572,121 @@ If we catch a `***UnauthorizedException`, we send our user to a new `Forbidden` 
 
 ### UploadPhoto.razor
 
+Replace the `Upload` method with the following:
+
 ```cs
-@inject IPhotosService photosService
-@inject NavigationManager navigationManager
-@page "/photos/upload"
-@using PhotoSharingApplication.Shared.Exceptions
-@attribute [Authorize]
-
-<PageTitle>Upload Photo</PageTitle>
-
-<AuthorizeView>
-    <Authorized>
-        <div class="mat-layout-grid">
-            <div class="mat-layout-grid-inner">
-                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                    <PhotoEditComponent Photo="photo" OnSave="Upload"></PhotoEditComponent>
-                </div>
-            </div>
-        </div>
-    </Authorized>
-    <NotAuthorized>
-        <MatButtonLink Href="bff/login">You are not authorized. Log in to upload a picture<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink>
-    </NotAuthorized>
-</AuthorizeView>
-@code {
-    Photo photo = new Photo();
-
-    private async Task Upload() {
-        try {
-            await photosService.UploadAsync(photo);
-            navigationManager.NavigateTo("/photos/all");
-        } catch (CreateUnauthorizedException<Photo>) {
-            navigationManager.NavigateTo("/forbidden");
-        }
+private async Task Upload() {
+    try {
+        await photosService.UploadAsync(photo);
+        navigationManager.NavigateTo("/photos/all");
+    } catch (CreateUnauthorizedException<Photo>) {
+        navigationManager.NavigateTo("/forbidden");
     }
 }
+```
+
+which requires a 
+```cs
+@using PhotoSharingApplication.Shared.Exceptions
 ```
 
 ### UpdatePhoto.razor
 
+Replace the `Ipload` method with the following:
+
 ```cs
-@page "/photos/update/{id:int}"
-@using PhotoSharingApplication.Shared.Exceptions
-
-@inject IPhotosService photosService
-@inject NavigationManager navigationManager
-
-<PageTitle>Update Photo @photo?.Title</PageTitle>
-
-@if (photo is null) {
-  <p>...Loading...</p>
-} else {
-  <div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-        <PhotoEditComponent Photo="photo" OnSave="Update"></PhotoEditComponent>
-      </div>
-    </div>
-  </div>
-}
-
-@code {
-  [Parameter]
-  public int Id { get; set; }
-
-  Photo? photo;
-
-  protected override async Task OnInitializedAsync() {
-    photo = await photosService.FindAsync(Id);
-  }
-
-  private async Task Update() {
+private async Task Upload() {
     try {
-      await photosService.UpdateAsync(photo!);
-      navigationManager.NavigateTo("/photos/all");
+        await photosService.UpdateAsync(photo!);
+        navigationManager.NavigateTo("/photos/all");
     } catch (EditUnauthorizedException<Photo>) {
-      navigationManager.NavigateTo("/forbidden");
+        navigationManager.NavigateTo("/forbidden");
     }
-  }
 }
+```
+
+which requires a 
+```cs
+@using PhotoSharingApplication.Shared.Exceptions;
 ```
 
 ### DeletePhoto.razor
 
+Replace the `Delete` method with the following:
+
 ```cs
-@inject IPhotosService photosService
-@inject NavigationManager navigationManager
-
-@page "/photos/delete/{id:int}"
-@using PhotoSharingApplication.Shared.Exceptions
-
-<PageTitle>Delete Photo @photo?.Title</PageTitle>
-
-<MatH3>Delete</MatH3>
-
-@if (photo is null) {
-  <p>...Loading...</p>
-} else {
-  <div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-        <PhotoDetailsComponent Photo="photo" DeleteConfirm OnDeleteConfirmed="Delete"></PhotoDetailsComponent>
-      </div>
-    </div>
-  </div>
-}
-
-@code {
-  [Parameter]
-  public int Id { get; set; }
-
-  Photo? photo;
-
-  protected override async Task OnInitializedAsync() {
-    photo = await photosService.FindAsync(Id);
-  }
-  private async Task Delete(int id) {
+private async Task Delete(int id) {
     try {
-      await photosService.RemoveAsync(id);
-      navigationManager.NavigateTo("/photos/all");
+        await photosService.RemoveAsync(id);
+        navigationManager.NavigateTo("/photos/all");
     } catch (DeleteUnauthorizedException<Photo>) {
-      navigationManager.NavigateTo("/forbidden");
+        navigationManager.NavigateTo("/forbidden");
     }
-  }
 }
 ```
+
+which requires a 
+```cs
+@using PhotoSharingApplication.Shared.Exceptions;
+```
+
+### Forbidden.razor
 
 Create a new `Forbidden.razor` file in the same folder and configure its route:
 
 ```html
 @page "/forbidden"
 
-<MatH3>Forbidden</MatH3>
+<MudText Typo="Typo.h1" Color="Color.Error">Error</MudText>
 
-<p>You are not authorized to perform this operation</p>
-@code {
-
-}
+<MudText Typo="Typo.h2" Color="Color.Error">You are not authorized to perform this operation</MudText>
 ```
 
 ### CommentsComponent
 
-For the `Comments` part, we have to use the same logic but from within the methods of the `CommentsComponent.razor` file located under the `Components` folder of our `PhotoSharingApplication.Frontend.BlazorComponents` project:
+For the `Comments` part, we have to use the same logic but from within the methods of the `CommentsComponent.razor` file located under the `Components` folder of our `PhotoSharingApplication.Frontend.BlazorComponents` project.  
+The `CreateComment`, `UpdateComment`and `DeleteComment` methods become:  
+
 
 ```cs
-@using PhotoSharingApplication.Shared.Exceptions
-@inject ICommentsService CommentsService
-@inject NavigationManager navigationManager
-
-<MatH3>Comments</MatH3>
-
-@if (comments is null) {
-  <p><em>No Comments for this Photo</em></p>
-} else {
-  <div class="list-group">
-    @foreach (var comment in comments) {
-      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
+async Task CreateComment(Comment comment) {
+    try {
+        comments.Add(await CommentsService.CreateAsync(comment));
+    } catch (CreateUnauthorizedException<Comment>) {
+        navigationManager.NavigateTo("/forbidden");
     }
-    <AuthorizeView>
-    <Authorized>
-        <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
-    </Authorized>
-        <NotAuthorized><MatButtonLink Href="bff/login">Log in to add a comment<MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatButtonLink></NotAuthorized>
-    </AuthorizeView>
-  </div>
 }
 
-@code {
-    [Parameter]
-    public int PhotoId { get; set; }
-
-    private List<Comment>? comments;
-
-    protected override async Task OnInitializedAsync() {
-        comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);
+async Task UpdateComment(Comment comment) {
+    try {
+        comment = await CommentsService.UpdateAsync(comment);
+    } catch (EditUnauthorizedException<Comment>) {
+        navigationManager.NavigateTo("/forbidden");
     }
-    async Task CreateComment(Comment comment) {
-        try {
-            comments.Add(await CommentsService.CreateAsync(comment));
-        } catch (CreateUnauthorizedException<Comment>) {
-            navigationManager.NavigateTo("/forbidden");
-        }
-    }
+}
 
-    async Task UpdateComment(Comment comment) {
-        try {
-            comment = await CommentsService.UpdateAsync(comment);
-        } catch (EditUnauthorizedException<Comment>) {
-            navigationManager.NavigateTo("/forbidden");
-        }
-    }
-
-    async Task DeleteComment(Comment comment) {
-        try {
-            await CommentsService.RemoveAsync(comment.Id);
-            comments.Remove(comment);
-        } catch (DeleteUnauthorizedException<Comment>) {
-            navigationManager.NavigateTo("/forbidden");
-        }
+async Task DeleteComment(Comment comment) {
+    try {
+        await CommentsService.RemoveAsync(comment.Id);
+        comments.Remove(comment);
+    } catch (DeleteUnauthorizedException<Comment>) {
+        navigationManager.NavigateTo("/forbidden");
     }
 }
 ```
+
+which require
+
+```cs
+@using PhotoSharingApplication.Shared.Exceptions
+```
+
+and a 
+```cs
+@inject NavigationManager navigationManager
+```
+
+### The Infrastructure
 
 So far so good, we're done with the *Application Layer*, both server side and client side.  
 Everything should compile, but nothig works anymore, because we're missing the code that actually checks the permission.  
@@ -787,7 +699,7 @@ Blazor WebAssembly and ASP.NET Core have two different ways to retrieve the curr
 
 ### Backend
 
-As explained in the [Retrieve the current user in an ASP.NET Core app](https://docs.microsoft.com/en-us/aspnet/core/migration/claimsprincipal-current?view=aspnetcore-6.0#retrieve-the-current-user-in-an-aspnet-core-app) documentation, we need an `HttpContext`in order to get the current user. We can register an `IHttpContextAccessor` as a service and ask it as a dependency as explained in [Use HttpContext from custom components](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-context?view=aspnetcore-6.0#use-httpcontext-from-custom-components). The `IHttpContextAccessor` can give us access to `HttpContext` which in turn can give us the `User`.
+As explained in the [Retrieve the current user in an ASP.NET Core app](https://learn.microsoft.com/en-us/aspnet/core/migration/claimsprincipal-current?view=aspnetcore-7.0#retrieve-the-current-user-in-an-aspnet-core-app) documentation, we need an `HttpContext`in order to get the current user. We can register an `IHttpContextAccessor` as a service and ask it as a dependency as explained in [Use HttpContext from custom components](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-context?view=aspnetcore-7.0#use-httpcontext-from-custom-components). The `IHttpContextAccessor` can give us access to `HttpContext` which in turn can give us the `User`.
 
 ### Rest
 
@@ -833,14 +745,14 @@ The code should look like this:
 using PhotoSharingApplication.Shared.Interfaces;
 using System.Security.Claims;
 
-namespace PhotoSharingApplication.WebServices.Rest.Photos.Infrastructure.Identity;
-
+namespace PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Identity; 
 public class UserService : IUserService {
-  private readonly IHttpContextAccessor accessor;
+    private readonly IHttpContextAccessor accessor;
 
-  public UserService(IHttpContextAccessor accessor) => this.accessor = accessor;
-  public Task<ClaimsPrincipal> GetUserAsync() => Task.FromResult(accessor.HttpContext.User);
+    public UserService(IHttpContextAccessor accessor) => this.accessor = accessor;
+    public Task<ClaimsPrincipal> GetUserAsync() => Task.FromResult(accessor.HttpContext.User);
 }
+
 ```
 
 - Open the `Program` class of the `PhotoSharingApplication.WebServices.Grpc.Comments` project
@@ -849,7 +761,7 @@ public class UserService : IUserService {
 which requires a `using PhotoSharingApplication.WebServices.Grpc.Comments.Infrastructure.Identity;`
 
 ### Frontend
-To get the current User, Blazor WebAssembly makes use of the `AuthenticationStateProvider`, as explained in the [AuthenticationStateProvider service](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-6.0#authenticationstateprovider-service) documentation.
+To get the current User, Blazor WebAssembly makes use of the `AuthenticationStateProvider`, as explained in the [AuthenticationStateProvider service](https://learn.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-7.0#authenticationstateprovider-service) documentation.
 
 
 - In the `Solution Explorer`, create a new folder `Identity` under the `PhotoSharingApplication.Frontent.Infrastructure` project.
@@ -882,7 +794,7 @@ which requires a `using PhotoSharingApplication.Frontend.Client.Infrastructure.I
 ## Authorization
 
 Now we have to tackle the `IAuthorizationService<T>` by creating our own `PhotosAuthorizationService` and `CommentsAuthorizationService` classes.
-As explained in the [Resource Based Authorization](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/resourcebased?view=aspnetcore-6.0) documentation, our classes can use a `Microsoft.AspNetCore.Authorization.IAuthorizationService` to check if the user is authorized to perform a specific operation.  
+As explained in the [Resource Based Authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/resourcebased?view=aspnetcore-7.0) documentation, our classes can use a `Microsoft.AspNetCore.Authorization.IAuthorizationService` to check if the user is authorized to perform a specific operation.  
 The Microsoft `IAuthorizationService` has an `AuthorizeAsync` method that accepts 
 - a *User*  
 This is the `ClaimsIdentity` returned by our `UserService`
@@ -1013,9 +925,9 @@ For example the *Have a valid Id* requirement could be checked by multiple condi
 Each condition is checked by a specific *handler*
 
 So what we need to do is to create 
-- [Policies](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-6.0) 
-- [Requirements](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-6.0#requirements) 
-- [Handlers](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-6.0#authorization-handlers)
+- [Policies](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-7.0) 
+- [Requirements](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-7.0#requirements) 
+- [Handlers](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-7.0#authorization-handlers)
 
 We're going to use the approach explained in the article [Configuring Policy-based Authorization with Blazor](https://chrissainty.com/securing-your-blazor-apps-configuring-policy-based-authorization-with-blazor/) of the great Chris Sainty.
 
@@ -1127,7 +1039,7 @@ public class CommentEditDeleteAuthorizationHandler : AuthorizationHandler<SameAu
 
 Handlers must be registered in the services collection during configuration. We have to configure both the two servers and the client.
 
-Each handler is added to the services collection by using ```services.AddSingleton<IAuthorizationHandler, YourHandlerClass>();``` passing in your handler class.
+Each handler is added to the services collection by using `services.AddSingleton<IAuthorizationHandler, YourHandlerClass>();` passing in your handler class.
 
 ### PhotoSharingApplication.WebServices.REST.Photos
 
@@ -1307,43 +1219,39 @@ The code should look like the following:
 ```html
 @inject IUserService UserService
 @inject IAuthorizationService<Photo> PhotosAuthorizationService
-
-<MatCard>
-    <div>
-        <MatHeadline6>
-            @Photo.Id - @Photo.Title
-        </MatHeadline6>
-        <MatSubtitle2>
-            @Photo.CreatedDate.ToShortDateString() by @Photo.UserName
-        </MatSubtitle2>
-    </div>
-    <MatCardContent>
-        <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
-        <MatBody2>
-            @Photo.Description
-        </MatBody2>
-    </MatCardContent>
-    <MatCardActions>
-        <MatCardActionButtons>
-            @if (Details) {
-                <MatButton Link="@($"photos/details/{Photo.Id}")">Details</MatButton>
-            }
-            @if (Edit && mayEdit) {
-                <MatButton Link="@($"photos/update/{Photo.Id}")">Update</MatButton>
-            }
-            @if (Delete && mayDelete) {
-                <MatButton Link="@($"photos/delete/{Photo.Id}")">Delete</MatButton>
-            }
-            @if (DeleteConfirm  && mayDelete) {
-                <MatButton OnClick="@(async()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))">Confirm Deletion</MatButton>
-            }
-        </MatCardActionButtons>
-    </MatCardActions>
-</MatCard>
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.body1">@Photo.Id</MudText>
+            <MudText Typo="Typo.body2">@Photo.Title</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardMedia Image="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")" Height="250" />
+    <MudCardContent>
+        <MudText Typo="Typo.body2">@Photo.Description</MudText>
+        <MudText Typo="Typo.subtitle1">Uploaded on @Photo.CreatedDate.ToShortDateString() by @Photo.UserName</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        @if (Details)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Photo" Color="Color.Default" Href="@($"photos/details/{Photo.Id}")" />
+        }
+        @if (Edit && mayEdit) {
+            <MudIconButton Icon="@Icons.Material.Filled.PhotoSizeSelectLarge" Color="Color.Default" Href="@($"photos/update/{Photo.Id}")" />
+        }
+        @if (Delete && mayDelete) {
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" Href="@($"photos/delete/{Photo.Id}")" />
+        }
+        @if (DeleteConfirm && mayDelete) {
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Href="photos/all" />
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" OnClick="@(async ()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))" />
+        }
+    </MudCardActions>
+</MudCard>
 
 @code {
-    [Parameter]
-    public Photo Photo { get; set; }
+    [Parameter, EditorRequired]
+    public Photo Photo { get; set; } = default!;
 
     [Parameter]
     public bool Details { get; set; }
@@ -1387,46 +1295,47 @@ The code should look like the following:
 
 
 ```html
-@using PhotoSharingApplication.Shared.Core.Entities
-@using PhotoSharingApplication.Shared.Core.Interfaces;
-
 @inject IUserService UserService
 @inject IAuthorizationService<Comment> CommentsAuthorizationService
-<MatCardContent>
-  <em>On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</em>
-  <MatH5>@CommentItem.Subject</MatH5>
-  <p>@CommentItem.Body</p>
-</MatCardContent>
-<MatCardActions>
-  @if (mayEdit) {
-      <MatButton OnClick="RaiseEdit">Edit</MatButton>
-  }
-  @if (mayDelete) {
-      <MatButton OnClick="RaiseDelete">Delete</MatButton>
-  }
-</MatCardActions>
+
+<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.subtitle2">On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</MudText>
+        <MudText Typo="Typo.body1">@CommentItem.Subject</MudText>
+        <MudText Typo="Typo.body2">@CommentItem.Body</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        @if (mayEdit)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="RaiseEdit" />
+        }
+        @if (mayDelete)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="RaiseDelete" />
+        }
+    </MudCardActions>
+</MudCard>
 
 @code {
-  [Parameter]
-  public Comment CommentItem { get; set; }
+    [Parameter, EditorRequired]
+    public Comment CommentItem { get; set; } = default!;
 
-  [Parameter]
-  public EventCallback<Comment> OnEdit { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnEdit { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnDelete { get; set; }
 
-  [Parameter]
-  public EventCallback<Comment> OnDelete { get; set; }
+    async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
+    async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
 
-  bool mayEdit = false;
-  bool mayDelete = false;
+    bool mayEdit = false;
+    bool mayDelete = false;
 
-  protected override async Task OnInitializedAsync() {
-    var User = await UserService.GetUserAsync();
-    mayEdit = await CommentsAuthorizationService.ItemMayBeUpdatedAsync(User, CommentItem);
-    mayDelete = await CommentsAuthorizationService.ItemMayBeDeletedAsync(User, CommentItem);
-  }
-
-  async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
-  async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
+    protected override async Task OnInitializedAsync() {
+        var User = await UserService.GetUserAsync();
+        mayEdit = await CommentsAuthorizationService.ItemMayBeUpdatedAsync(User, CommentItem);
+        mayDelete = await CommentsAuthorizationService.ItemMayBeDeletedAsync(User, CommentItem);
+    }
 }
 ```
 

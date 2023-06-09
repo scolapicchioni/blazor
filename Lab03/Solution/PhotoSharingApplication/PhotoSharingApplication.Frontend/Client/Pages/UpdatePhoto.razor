@@ -1,41 +1,41 @@
 ﻿@page "/photos/update/{id:int}"
 
-@using PhotoSharingApplication.Shared.Entities
 @using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
 
 <PageTitle>Update Photo @photo?.Title</PageTitle>
 
 @if (photo is null) {
-    <p>...Loading...</p>
+    <MudText Typo="Typo.caption">...Loading...</MudText>
 } else {
-    <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <MatCard>
-                    <MatCardContent>
-                        <MatH3>Update Photo</MatH3>
-                        <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
-                            <p>
-                                <MatTextField @bind-Value="photo.Title" Label="Title" FullWidth ></MatTextField>
-                            </p>
-                            <p>
-                                <MatTextField @bind-Value="photo.Description" Label="Description (optional):" FullWidth></MatTextField>
-                            </p>
-                            <p>
-                                <MatFileUpload OnChange="HandleMatFileSelected"></MatFileUpload>
-                            </p>
-                            <p>
-                                <MatButton Type="submit">Update</MatButton>
-                            </p>
-                        </EditForm>
-                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")"></MatCardMedia>
-                    </MatCardContent>
-                </MatCard>
-            </div>
-        </div>
-    </div>
+    <MudCard>
+        <MudForm Model="photo">
+            <MudCardContent>
+                <MudTextField @bind-Value="photo.Title"
+                              For="@(() => photo.Title)"
+                              Label="Title" />
+                <MudTextField @bind-Value="photo.Description"
+                              Lines="3"
+                              For="@(() => photo.Description)"
+                              Label="Description" />
+                <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileSelected">
+                    <ButtonTemplate>
+                        <MudFab HtmlTag="label"
+                                Color="Color.Secondary"
+                                StartIcon="@Icons.Material.Filled.Image"
+                                Label="Load picture"
+                                for="@context"/>
+                    </ButtonTemplate>
+                </MudFileUpload>
+                <MudImage Fluid Src="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" Elevation="25" Class="rounded-lg" />
+            </MudCardContent>
+        </MudForm>
+        <MudCardActions>
+            <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.FileUpload" OnClick="HandleValidSubmit">Upload</MudIconButton>
+        </MudCardActions>
+    </MudCard>
 }
 
 @code {
@@ -49,21 +49,16 @@
     }
 
     private async Task HandleValidSubmit() {
-        await photosService.UpdateAsync(photo!);
+        await photosService.UpdateAsync(photo);
         navigationManager.NavigateTo("/photos/all");
     }
 
-    async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-        IMatFileUploadEntry? file = files.FirstOrDefault();
-        if (file is null) {
-            return;
-        }
-        
-        photo!.ImageMimeType = file.Type;
+    private async Task HandleFileSelected(IBrowserFile args) {
+        photo.ImageMimeType = args.ContentType;
 
-        using (var stream = new System.IO.MemoryStream()) {
-            await file.WriteToStreamAsync(stream);
-            photo.PhotoFile = stream.ToArray();
+        using (var streamReader = new System.IO.MemoryStream()) {
+            await args.OpenReadStream().CopyToAsync(streamReader);
+            photo.PhotoFile = streamReader.ToArray();
         }
     }
 }

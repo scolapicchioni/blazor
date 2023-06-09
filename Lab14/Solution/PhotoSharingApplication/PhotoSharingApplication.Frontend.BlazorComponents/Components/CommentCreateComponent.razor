@@ -1,28 +1,56 @@
-﻿<MatCardContent>
-    <EditForm Model="@CommentItem" OnValidSubmit="HandleValidSubmit">
-        <FluentValidationValidator />
-        <p>
-            <MatTextField @bind-Value="@CommentItem.Subject" Label="Subject" FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Subject)" />
-        </p>
-        <p>
-            <MatTextField @bind-Value="@CommentItem.Body" Label="Description" TextArea FullWidth></MatTextField>
-            <ValidationMessage For="@(() => CommentItem.Body)" />
-        </p>
-        <p>
-            <MatButton Type="submit">Submit</MatButton>
-        </p>
-    </EditForm>
-</MatCardContent>
+﻿@using PhotoSharingApplication.Shared.Validators;
+<MudCard>
+    <MudForm Model="originalComment" @ref="@form" Validation="@(commentValidator.ValidateValue)">
+        <MudCardContent>
+            <MudTextField @bind-Value="originalComment.Subject"
+                          For="@(() => originalComment.Subject)"
+                          Label="Title" />
+            <MudTextField @bind-Value="originalComment.Body"
+                          Lines="3"
+                          For="@(() => originalComment.Body)"
+                          Label="Description" />
+            <MudText Typo="Typo.caption" Color="Color.Error">@message</MudText>
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.Check" OnClick="RaiseCreate">Create</MudIconButton>
+    </MudCardActions>    
+</MudCard>
+
 
 @code {
     [Parameter]
-    public Comment CommentItem { get; set; }
+    public Comment CommentItem { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
 
     [Parameter]
     public EventCallback<Comment> OnSave { get; set; }
 
-    private async Task HandleValidSubmit() {
-        await OnSave.InvokeAsync(CommentItem);
+    private Comment originalComment = default!;
+
+    private string message;
+    protected override void OnInitialized() {
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
     }
+
+    async Task RaiseCreate(MouseEventArgs args) {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            try
+            {
+                message = string.Empty;
+                await OnSave.InvokeAsync(originalComment);
+                originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+            }
+            catch (FluentValidation.ValidationException ex) {
+                message = ex.Message;
+            }
+        }
+    }
+
+    private MudForm form;
+    private readonly CommentValidator commentValidator = new CommentValidator();
 }

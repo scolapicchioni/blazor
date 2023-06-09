@@ -1,50 +1,55 @@
-﻿<MatCard>
-    <MatH3>Upload Photo</MatH3>
-    <MatCardContent>
-        <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
-            <FluentValidationValidator/>
-            <p>
-                <MatTextField @bind-Value="Photo.Title" Label="Title" FullWidth ></MatTextField> 
-                <ValidationMessage For="@(() => Photo.Title)" />
-            </p>
-            <p>
-                <MatTextField @bind-Value="Photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
-                <ValidationMessage For="@(() => Photo.Description)" />
-            </p>
-            <p>
-                <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
-                <ValidationMessage For="@(() => Photo.PhotoImage.PhotoFile)" />
-            </p>
-            <p>
-                <MatButton Type="Submit">Upload</MatButton>
-            </p>
-        </EditForm>
-        <PhotoPictureComponent Photo="Photo" IsLocal></PhotoPictureComponent>
-    </MatCardContent>
-</MatCard>
+﻿@using PhotoSharingApplication.Shared.Validators;
+<MudCard>
+    <MudForm Model="Photo" @ref="@form" Validation="@(photoValidator.ValidateValue)">
+        <MudCardContent>
+            <MudTextField @bind-Value="Photo.Title"
+                          For="@(() => Photo.Title)"
+                          Label="Title" />
+            <MudTextField @bind-Value="Photo.Description"
+                          Lines="3"
+                          For="@(() => Photo.Description)"
+                          Label="Description" />
+            <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileSelected">
+                <ButtonTemplate>
+                    <MudFab HtmlTag="label"
+                            Color="Color.Secondary"
+                            StartIcon="@Icons.Material.Filled.Image"
+                            Label="Load picture"
+                            for="@context" />
+                </ButtonTemplate>
+            </MudFileUpload>
+            <MudImage Fluid Src="@(Photo.PhotoImage?.PhotoFile is null ? "" : $"data:{Photo.PhotoImage.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoImage.PhotoFile)}")" Elevation="25" Class="rounded-lg" />
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.FileUpload" OnClick="ValidateAndSubmit">Upload</MudIconButton>
+    </MudCardActions>
+</MudCard>
 
 @code {
-    [Parameter]
-    public Photo Photo { get; set; }
+    [Parameter, EditorRequired]
+    public Photo Photo { get; set; } = default!;
 
     [Parameter]
     public EventCallback<Photo> OnSave { get; set; }
 
-    protected override void OnInitialized() {
-        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage(); 
+    private MudForm form;
+    private readonly PhotoValidator photoValidator = new PhotoValidator();
+
+    private async Task HandleFileSelected(IBrowserFile args) {
+        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
+        Photo.PhotoImage.ImageMimeType = args.ContentType;
+
+        using (var streamReader = new System.IO.MemoryStream()) {
+            await args.OpenReadStream().CopyToAsync(streamReader);
+            Photo.PhotoImage.PhotoFile = streamReader.ToArray();
+        }
     }
 
-    private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-        IMatFileUploadEntry? file = files.FirstOrDefault();
-        if(file is null){
-            return;
-        }
-        if (Photo.PhotoImage is null) Photo.PhotoImage = new PhotoImage();
-        Photo.PhotoImage.ImageMimeType = file.Type;
-
-        using (var stream = new System.IO.MemoryStream()) {
-            await file.WriteToStreamAsync(stream);
-            Photo.PhotoImage.PhotoFile = stream.ToArray();
+    private async Task ValidateAndSubmit() {
+        await form.Validate();
+        if(form.IsValid) {
+            await OnSave.InvokeAsync(Photo);
         }
     }
 }

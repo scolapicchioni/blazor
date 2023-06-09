@@ -1,20 +1,21 @@
-﻿<MatCardContent>
-    <em>On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</em>
-    <MatH5>@CommentItem.Subject</MatH5>
-    <p>@CommentItem.Body</p>
-</MatCardContent>
-<MatCardActions>        
-    <MatButton OnClick="RaiseEdit">Edit</MatButton>
-    <MatButton OnClick="RaiseDelete">Delete</MatButton>
-</MatCardActions>
+﻿<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.subtitle2">On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</MudText>
+        <MudText Typo="Typo.body1">@CommentItem.Subject</MudText>
+        <MudText Typo="Typo.body2">@CommentItem.Body</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="RaiseEdit" />
+        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="RaiseDelete" />
+    </MudCardActions>
+</MudCard>
 
 @code {
-    [Parameter]
-    public Comment CommentItem { get; set; }
+    [Parameter, EditorRequired]
+    public Comment CommentItem { get; set; } = default!;
 
     [Parameter]
     public EventCallback<Comment> OnEdit { get; set; }
-
     [Parameter]
     public EventCallback<Comment> OnDelete { get; set; }
 

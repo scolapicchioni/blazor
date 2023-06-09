@@ -4,15 +4,13 @@ using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Exceptions;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.Rest.Photos.Controllers;
-
-[Route("[controller]")]
+namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers;
+[Route("api/[controller]")]
 [ApiController]
 public class PhotosController : ControllerBase {
     private readonly IPhotosService service;
 
     public PhotosController(IPhotosService service) => this.service = service;
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service.GetPhotosAsync();
 

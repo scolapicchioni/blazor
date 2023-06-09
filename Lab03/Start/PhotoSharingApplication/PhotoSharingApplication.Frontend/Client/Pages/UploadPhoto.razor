@@ -1,10 +1,8 @@
-﻿@using PhotoSharingApplication.Shared.Interfaces
-@using PhotoSharingApplication.Shared.Entities
+﻿@page "/photos/upload"
+@using PhotoSharingApplication.Shared.Entities;
+@using PhotoSharingApplication.Shared.Interfaces;
 @inject IPhotosService photosService
 @inject NavigationManager navigationManager
-@page "/photos/upload"
-
-<PageTitle>Upload Photo</PageTitle>
 
 <EditForm Model="@photo" OnValidSubmit="HandleValidSubmit">
     <p>

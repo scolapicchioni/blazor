@@ -39,12 +39,12 @@ We are going to define two interfaces: one for an `ICommentsService` and one for
 namespace PhotoSharingApplication.Shared.Entities;
 
 public class Comment {
-    public int Id { get; set; }
-    public int PhotoId { get; set; }
-    public string UserName { get; set; } = String.Empty;
-    public string Subject { get; set; } = String.Empty;
-    public string Body { get; set; } = String.Empty;
-    public DateTime SubmittedOn { get; set; }
+  public int Id { get; set; }
+  public int PhotoId { get; set; }
+  public string UserName { get; set; } = String.Empty;
+  public string Subject { get; set; } = String.Empty;
+  public string Body { get; set; } = String.Empty;
+  public DateTime SubmittedOn { get; set; }
 }
 ```
 
@@ -58,11 +58,11 @@ using PhotoSharingApplication.Shared.Entities;
 namespace PhotoSharingApplication.Shared.Interfaces;
 
 public interface ICommentsService {
-    Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId);
-    Task<Comment?> FindAsync(int id);
-    Task<Comment?> CreateAsync(Comment comment);
-    Task<Comment?> UpdateAsync(Comment comment);
-    Task<Comment?> RemoveAsync(int id);
+  Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId);
+  Task<Comment?> FindAsync(int id);
+  Task<Comment?> CreateAsync(Comment comment);
+  Task<Comment?> UpdateAsync(Comment comment);
+  Task<Comment?> RemoveAsync(int id);
 }
 ```
 
@@ -74,11 +74,11 @@ using PhotoSharingApplication.Shared.Entities;
 namespace PhotoSharingApplication.Shared.Interfaces;
 
 public interface ICommentsRepository {
-    Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId);
-    Task<Comment?> FindAsync(int id);
-    Task<Comment?> CreateAsync(Comment comment);
-    Task<Comment?> UpdateAsync(Comment comment);
-    Task<Comment?> RemoveAsync(int id);
+  Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId);
+  Task<Comment?> FindAsync(int id);
+  Task<Comment?> CreateAsync(Comment comment);
+  Task<Comment?> UpdateAsync(Comment comment);
+  Task<Comment?> RemoveAsync(int id);
 }
 ```
 
@@ -93,33 +93,33 @@ using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 
 namespace PhotoSharingApplication.Frontend.Client.Core.Services {
-    public class CommentsService : ICommentsService {
-        private readonly ICommentsRepository repository;
-        public CommentsService(ICommentsRepository repository) => this.repository = repository;
+  public class CommentsService : ICommentsService {
+    private readonly ICommentsRepository repository;
+    public CommentsService(ICommentsRepository repository) => this.repository = repository;
 
-        public async Task<Comment?> CreateAsync(Comment comment) => await repository.CreateAsync(comment);
+    public async Task<Comment?> CreateAsync(Comment comment) => await repository.CreateAsync(comment);
 
-        public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
+    public async Task<Comment?> FindAsync(int id) => await repository.FindAsync(id);
 
-        public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
+    public async Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => await repository.GetCommentsForPhotoAsync(photoId);
 
-        public async Task<Comment?> RemoveAsync(int id) => await repository.RemoveAsync(id);
+    public async Task<Comment?> RemoveAsync(int id) => await repository.RemoveAsync(id);
 
-        public async Task<Comment?> UpdateAsync(Comment comment) {
-            comment.SubmittedOn = DateTime.Now;
-            return await repository.UpdateAsync(comment);
-        }
+    public async Task<Comment?> UpdateAsync(Comment comment) {
+      comment.SubmittedOn = DateTime.Now;
+      return await repository.UpdateAsync(comment);
     }
+  }
 }
 ```
 
 Of course nothing is actually *working*, but we can already start plugging our service to our UI.
 
-To use our service in the `Details` page, we need to perform a couple of steps, also described in the [Blazor Dependency Injection documentation](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-6.0&pivots=webassembly)
+To use our service in the `Details` page, we need to perform a couple of steps, also described in the [Blazor Dependency Injection documentation](https://learn.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-7.0&pivots=webassembly)
 
 ### Add the service to the app
 
-[In the docs](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-6.0&pivots=webassembly#add-services-to-a-blazor-webassembly-app) they tell us what to do: 
+[In the docs](https://learn.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-7.0&pivots=webassembly#add-services-to-a-blazor-webassembly-app) they tell us what to do: 
 
 - Open the `Program.cs` file of the `PhotoSharingApplication.Frontend.Client`project
 - Add the following code, before the `await builder.Build().RunAsync();`
@@ -136,43 +136,43 @@ builder.Services.AddScoped<ICommentsService, CommentsService>();
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory {
-    public class CommentsRepository : ICommentsRepository {
-        private List<Comment> comments;
-        public CommentsRepository() {
-            comments = new() {
-                new() { Id = 1, Subject = "A Comment", Body = "The Body of the comment", SubmittedOn = DateTime.Now.AddDays(-1), PhotoId = 1 },
-                new() { Id = 2, Subject = "Another Comment", Body = "Another Body of the comment", SubmittedOn = DateTime.Now.AddDays(-2), PhotoId = 1 },
-                new() { Id = 3, Subject = "Yet another Comment", Body = "Yet Another Body of the comment", SubmittedOn = DateTime.Now, PhotoId = 2 },
-                new() { Id = 4, Subject = "More Comment", Body = "More Body of the comment", SubmittedOn = DateTime.Now.AddDays(-3), PhotoId = 2 }
-            };
-        }
-        public Task<Comment?> CreateAsync(Comment comment) {
-            comment.Id = comments.Max(p => p.Id) + 1;
-            comments.Add(comment);
-            return Task.FromResult(comment);
-        }
+namespace PhotoSharingApplication.Frontend.Client.Infrastructure.Repositories.Memory;
+public class CommentsRepository : ICommentsRepository {
+  private List<Comment> comments;
+  public CommentsRepository() {
+    comments = new() {
+      new() { Id = 1, Subject = "A Comment", Body = "The Body of the comment", SubmittedOn = DateTime.Now.AddDays(-1), PhotoId = 1 },
+      new() { Id = 2, Subject = "Another Comment", Body = "Another Body of the comment", SubmittedOn = DateTime.Now.AddDays(-2), PhotoId = 1 },
+      new() { Id = 3, Subject = "Yet another Comment", Body = "Yet Another Body of the comment", SubmittedOn = DateTime.Now, PhotoId = 2 },
+      new() { Id = 4, Subject = "More Comment", Body = "More Body of the comment", SubmittedOn = DateTime.Now.AddDays(-3), PhotoId = 2 }
+    };
+  }
+  public Task<Comment?> CreateAsync(Comment comment) {
+    comment.Id = comments.Max(p => p.Id) + 1;
+    comments.Add(comment);
+    return Task.FromResult(comment);
+  }
 
-        public Task<Comment?> FindAsync(int id) => Task.FromResult(comments.FirstOrDefault(p => p.Id == id));
+  public Task<Comment?> FindAsync(int id) => Task.FromResult(comments.FirstOrDefault(p => p.Id == id));
 
-        public Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => Task.FromResult(comments.Where(c => c.PhotoId == photoId).OrderByDescending(c => c.SubmittedOn).ThenBy(c => c.Subject).ToList());
+  public Task<List<Comment>?> GetCommentsForPhotoAsync(int photoId) => Task.FromResult(comments.Where(c => c.PhotoId == photoId).OrderByDescending(c => c.SubmittedOn).ThenBy(c => c.Subject).ToList());
 
-        public Task<Comment?> RemoveAsync(int id) {
-            Comment? comment = comments.FirstOrDefault(c => c.Id == id);
-            if (comment is not null) comments.Remove(comment);
-            return Task.FromResult(comment);
-        }
+  public Task<Comment?> RemoveAsync(int id) {
+    Comment? comment = comments.FirstOrDefault(c => c.Id == id);
+    if (comment is not null) comments.Remove(comment);
+    return Task.FromResult(comment);
+  }
 
-        public Task<Comment?> UpdateAsync(Comment comment) {
-            Comment? oldComment = comments.FirstOrDefault(c => c.Id == comment.Id);
-            if (oldComment is not null) {
-                oldComment.Subject = comment.Subject;
-                oldComment.Body = comment.Body;
-            }
-            return Task.FromResult(oldComment);
-        }
+  public Task<Comment?> UpdateAsync(Comment comment) {
+    Comment? oldComment = comments.FirstOrDefault(c => c.Id == comment.Id);
+    if (oldComment is not null) {
+      oldComment.Subject = comment.Subject;
+      oldComment.Body = comment.Body;
     }
+    return Task.FromResult(oldComment);
+  }
 }
+
 ```
 
 I know, I know, it's a very naive implementation, but it's just to have something working so that we can see some action in the UI, we're going to replace it with something better later anyway.
@@ -199,20 +199,14 @@ We shouldn't give too many responsibilities to the `PhotoDetails` page.
 
 We can split the functionalities by creating a `CommentsComponent` and referring to it from within the `PhotoDetails` page.
 
-The `CommentsComponent` will receive the Id of the Photo and take care of the rest. The only thing we need to add to the `PhotoDetals.razor` page of the `PhotoSharingApplication.Frontend.Client` project is the `CommentsComponent` tag, passing the `PhotoId` as a property, which we will use to retrieve the comments.
+The `CommentsComponent` will receive the Id of the Photo and take care of the rest. The only thing we need to add to the `PhotoDetails.razor` page of the `PhotoSharingApplication.Frontend.Client` project is the `CommentsComponent` tag, passing the `PhotoId` as a property, which we will use to retrieve the comments.
 
 ```html
 @if (photo is null) {
-    <p>...Loading...</p>
+    <MudText Typo="Typo.body1">...Loading...</MudText>
 } else {
-  <div class="mat-layout-grid">
-    <div class="mat-layout-grid-inner">
-      <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-        <PhotoDetailsComponent Photo="photo" Edit Delete></PhotoDetailsComponent>
-        <CommentsComponent PhotoId="Id"></CommentsComponent>
-      </div>
-    </div>
-  </div>
+    <PhotoDetailsComponent Photo="photo" Edit Delete />
+    <CommentsComponent PhotoId="Id"></CommentsComponent>
 }
 ```
 
@@ -224,7 +218,7 @@ Here, we will provide a `[Parameter]` to get the `PhotoId`.
 
 ```cs
 @code {
-  [Parameter]
+  [Parameter, EditorRequired]
   public int PhotoId { get; set; }
 }
 ```
@@ -232,15 +226,17 @@ Here, we will provide a `[Parameter]` to get the `PhotoId`.
 We will also get the dependency on the `CommentsService` and initialize a `List` of comments.
 
 ```cs
+@using PhotoSharingApplication.Shared.Entities;
+@using PhotoSharingApplication.Shared.Interfaces;
 @inject ICommentsService CommentsService
 
-<MatH3>Comments</MatH3>
+<MudText Typo="Typo.h3">Comments</MudText>
 
 @code {
-    [Parameter]
+    [Parameter, EditorRequired]
     public int PhotoId { get; set; }
 
-    private List<Comment>? comments;
+    private List<Comment>? comments = default!;
 
     protected override async Task OnInitializedAsync() {
         comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);
@@ -264,17 +260,15 @@ Depending on the value of this property, the component will render specific HTML
 Let's first use it from our `CommentsComponent`, which becomes:
 
 ```html
-<MatH3>Comments</MatH3>
+<MudText Typo="Typo.h3">Comments</MudText>
 
 @if (comments is null) {
-  <p><em>No Comments for this Photo</em></p>
+    <MudText Typo="Typo.body1">No comments for this photo yet</MudText>
 } else {
-  <div class="list-group">
     @foreach (var comment in comments) {
-      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read"></CommentComponent>
+        <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read"></CommentComponent>
     }
     <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create"></CommentComponent>
-  </div>
 }
 ```
 
@@ -288,48 +282,45 @@ We will accept a `[Parameter]` for the `Comment` and a `[Parameter]` for the *Vi
 <MatH4>Comment</MatH4>
 
 @code {
-  [Parameter]
-  public Comment CommentItem { get; set; }
-  
-  [Parameter]
-  public ViewModes ViewMode { get; set; }
+  [Parameter, EditorRequired]
+  public Comment CommentItem { get; set; } = default!;
 
-  public enum ViewModes { 
+  [Parameter]
+  public ViewModes ViewMode { get; set; } = ViewModes.Read;
+
+  public enum ViewModes {
     Read, Edit, Delete, Create
   }
 }
 ```
 
+When the component is initialized, we will make our own copy of the CommentItem that we got as a parameter
 Our `CommentComponent` will render a different subcomponent depending on the `ViewMode`:
 
 ```html
-<MatCard>
 @if (ViewMode == ViewModes.Read) {
-  <CommentReadComponent CommentItem="CommentItem"></CommentReadComponent>
+  <CommentReadComponent CommentItem="CommentItem" />
 } else if (ViewMode == ViewModes.Edit) {
-  <CommentEditComponent CommentItem="CommentItem"></CommentEditComponent>
+  <CommentEditComponent CommentItem="CommentItem" />
 } else if (ViewMode == ViewModes.Delete) {
-  <CommentDeleteComponent CommentItem="CommentItem"></CommentDeleteComponent>
+  <CommentDeleteComponent CommentItem="CommentItem" />
 } else if (ViewMode == ViewModes.Create) {
-  <CommentCreateComponent CommentItem="CommentItem"></CommentCreateComponent>
+  <CommentCreateComponent CommentItem="CommentItem" />
 }
-</MatCard>
 ```
 
 Each of these component will render the correct HTML and  it will  raise events that we will handle here, either to switch view or to let the page know that it's time to talk to the service to create / update / delete a comment.
 
 ```html
-<MatCard>
 @if (ViewMode == ViewModes.Read) {
-  <CommentReadComponent CommentItem="CommentItem" OnEdit="SwitchToEditMode" OnDelete="SwitchToDeleteMode"></CommentReadComponent>
+  <CommentReadComponent CommentItem="CommentItem" OnEdit="SwitchToEditMode" OnDelete="SwitchToDeleteMode"/>
 } else if (ViewMode == ViewModes.Edit) {
-  <CommentEditComponent CommentItem="CommentItem" OnSave="ConfirmUpdate" OnCancel="CancelUpdate"></CommentEditComponent>
+    <CommentEditComponent CommentItem="CommentItem" OnSave="ConfirmUpdate" OnCancel="SwitchToReadMode" />
 } else if (ViewMode == ViewModes.Delete) {
-  <CommentDeleteComponent CommentItem="CommentItem" OnDelete="ConfirmDelete" OnCancel="SwitchToReadMode"></CommentDeleteComponent>
+  <CommentDeleteComponent CommentItem="CommentItem" OnDelete="ConfirmDelete" OnCancel="SwitchToReadMode"/>
 } else if (ViewMode == ViewModes.Create) {
-  <CommentCreateComponent CommentItem="CommentItem" OnSave="ConfirmCreate"></CommentCreateComponent>
+  <CommentCreateComponent CommentItem="CommentItem" OnSave="ConfirmCreate"/>
 }
-</MatCard>
 ```
 
 The code to handle these events will switch ViewMode eventually after notifying the parent component. We will also need some `EventCallback` to notify the parent component.
@@ -337,9 +328,9 @@ The code to handle these events will switch ViewMode eventually after notifying 
 The code to switch view mode is fairly simple:
 
 ```cs
-void SwitchToReadMode() => ViewMode = ViewModes.Read;
-void SwitchToEditMode() => ViewMode = ViewModes.Edit;
-void SwitchToDeleteMode() => ViewMode = ViewModes.Delete;
+private void SwitchToReadMode() => ViewMode = ViewModes.Read;
+private void SwitchToEditMode() => ViewMode = ViewModes.Edit;
+private void SwitchToDeleteMode() => ViewMode = ViewModes.Delete;
 ```
 
 The `ConfirmUpdate` will notify the parent component then switch to read mode:
@@ -348,27 +339,9 @@ The `ConfirmUpdate` will notify the parent component then switch to read mode:
 [Parameter]
 public EventCallback<Comment> OnUpdate { get; set; }
 
-async Task ConfirmUpdate() {
-    await OnUpdate.InvokeAsync(CommentItem);
+private async Task ConfirmUpdate(Comment comment) {
+    await OnUpdate.InvokeAsync(comment);
     SwitchToReadMode();
-}
-```
-
-The `CancelUpdate` will be a sort of *undo*, because the user may have changed the values of our `CommentItem` by writing on some textfields.
-This means we need to store a copy of our CommentItem and restore the values on cancel.
-
-```cs
-private Comment originalComment;
-
-protected override void OnInitialized() {
-  originalComment = new Comment { Subject = CommentItem.Subject, Body = CommentItem.Body };
-}
-
-public void CancelUpdate() {
-  CommentItem.Subject = originalComment.Subject;
-  CommentItem.Body = originalComment.Body;
-
-  SwitchToReadMode();
 }
 ```
 
@@ -376,11 +349,11 @@ The `ConfirmDelete` will notify the parent component then switch to read mode:
 
 ```cs
 [Parameter]
-public EventCallback<Comment> OnDelete{ get; set; }
+public EventCallback<Comment> OnDelete { get; set; }
 
-async Task ConfirmDelete() {
-  await OnDelete.InvokeAsync(CommentItem);
-  SwitchToReadMode();
+private async Task ConfirmDelete(Comment comment) {
+    await OnDelete.InvokeAsync(comment);
+    SwitchToReadMode();
 }
 ```
 
@@ -390,9 +363,8 @@ The `ConfirmCreate` will notify the parent component then create a new comment t
 [Parameter]
 public EventCallback<Comment> OnCreate { get; set; }
 
-async Task ConfirmCreate() {
-  await OnCreate.InvokeAsync(CommentItem);
-  CommentItem = new Comment() { PhotoId = CommentItem.PhotoId, UserName = CommentItem.UserName };
+private async Task ConfirmCreate(Comment comment) {
+    await OnCreate.InvokeAsync(comment);
 }
 ```
 
@@ -405,66 +377,73 @@ This component shows a `Card` with the details of the comment and two buttons to
 Its logic only notifies its parent component.  
 
 ```cs
-<MatCardContent>
-  <em>On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</em>
-  <MatH5>@CommentItem.Subject</MatH5>
-  <p>@CommentItem.Body</p>
-</MatCardContent>
-<MatCardActions>        
-  <MatButton OnClick="RaiseEdit">Edit</MatButton>
-  <MatButton OnClick="RaiseDelete">Delete</MatButton>
-</MatCardActions>
+<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.subtitle2">On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</MudText>
+        <MudText Typo="Typo.body1">@CommentItem.Subject</MudText>
+        <MudText Typo="Typo.body2">@CommentItem.Body</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="RaiseEdit" />
+        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="RaiseDelete" />
+    </MudCardActions>
+</MudCard>
 
 @code {
-  [Parameter]
-  public Comment CommentItem { get; set; }
+    [Parameter, EditorRequired]
+    public Comment CommentItem { get; set; } = default!;
 
-  [Parameter]
-  public EventCallback<Comment> OnEdit { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnEdit { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnDelete { get; set; }
 
-  [Parameter]
-  public EventCallback<Comment> OnDelete { get; set; }
-
-  async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
-  async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
+    async Task RaiseEdit(MouseEventArgs args) => await OnEdit.InvokeAsync(CommentItem);
+    async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
 }
 ```
 
 ## The CommentEditComponent
 
 In the `PhotoSharingApplication.Frontend.BlazorComponents` project, create a `CommentEditComponent.razor` Razor Component.  
-This component will have an `EditForm` with two TextFields (for `Subject` and `Body`) and two buttons (for `Update` and `Cancel`).  
+This component will have a `MudForm` with two TextFields (for `Subject` and `Body`) and two buttons (for `Update` and `Cancel`).  
 The logic will notify the parent component through the use of event callbacks.  
+The most important thing is that this component will make its own copy of the comment it receives from the parent and binds the textfields to its own copy.
 
 ```cs
-<MatCardContent>
-  <EditForm Model="@CommentItem" OnValidSubmit="HandleValidSubmit">
-    <p>
-      <MatTextField @bind-Value="@CommentItem.Subject" Label="Subject" FullWidth></MatTextField>
-    </p>
-    <p>
-      <MatTextField @bind-Value="@CommentItem.Body" Label="Description" TextArea FullWidth></MatTextField>
-    </p>
-    <p>
-      <MatButton Type="submit">Update</MatButton>
-      <MatButton OnClick="OnCancel">Cancel</MatButton>
-    </p>
-  </EditForm>
-</MatCardContent>
+<MudCard>
+    <MudForm Model="originalComment">
+        <MudCardContent>
+            <MudTextField @bind-Value="originalComment.Subject"
+                          For="@(() => originalComment.Subject)"
+                          Label="Title" />
+            <MudTextField @bind-Value="originalComment.Body"
+                          Lines="3"
+                          For="@(() => originalComment.Body)"
+                          Label="Description" />
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="@(async ()=> await OnCancel.InvokeAsync(originalComment))">Cancel</MudIconButton>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.Check" OnClick="@(async ()=> await OnSave.InvokeAsync(originalComment))">Update</MudIconButton>
+    </MudCardActions>
+</MudCard>
 
 @code {
-  [Parameter]
-  public Comment CommentItem { get; set; }
+    [Parameter]
+    public Comment CommentItem { get; set; } = default!;
 
-  [Parameter]
-  public EventCallback OnCancel { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
 
-  [Parameter]
-  public EventCallback<Comment> OnSave { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnSave { get; set; }
 
-  private async Task HandleValidSubmit() {
-    await OnSave.InvokeAsync(CommentItem);
-  }
+    private Comment originalComment = default!;
+
+    protected override void OnInitialized() {
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+    }
 }
 ```
 ## The CommentDeleteComponent
@@ -474,59 +453,75 @@ The `CommentDeleteComponent` will show the details of the comment and it will pr
 Its logic will notify the parent component through `EventCallback`s.  
 
 ```cs
-<MatCardContent>
-  <MatCaption Class="mat-text-danger">Are you sure you want to delete this comment?</MatCaption>
-  <em>On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</em>
-  <MatH5>@CommentItem.Subject</MatH5>
-  <p>@CommentItem.Body</p>
-</MatCardContent>
-<MatCardActions>
-  <MatButton OnClick="OnCancel">Cancel</MatButton>
-  <MatButton OnClick="OnDelete">Delete</MatButton>
-</MatCardActions>
+<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.subtitle2">On @CommentItem.SubmittedOn.ToShortDateString() At @CommentItem.SubmittedOn.ToShortTimeString(), @CommentItem.UserName said:</MudText>
+        <MudText Typo="Typo.body2">@CommentItem.Subject</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        <MudIconButton Icon="@Icons.Material.Filled.NavigateBefore" OnClick="RaiseCancel" />
+        <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" OnClick="RaiseDelete" />
+    </MudCardActions>
+</MudCard>
 
 @code {
-  [Parameter]
-  public Comment CommentItem { get; set; }
+    [Parameter, EditorRequired]
+    public Comment CommentItem { get; set; } = default!;
 
-  [Parameter]
-  public EventCallback OnCancel { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnDelete { get; set; }
 
-  [Parameter]
-  public EventCallback OnDelete { get; set; }
+    async Task RaiseCancel(MouseEventArgs args) => await OnCancel.InvokeAsync(CommentItem);
+    async Task RaiseDelete(MouseEventArgs args) => await OnDelete.InvokeAsync(CommentItem);
 }
 ```
 ## The CommentCreateComponent
 
 In the `PhotoSharingApplication.Frontend.BlazorComponents` project, create a `CommentCreateComponent.razor` Razor Component.  
-The `CommentCreateComponent` will have an `EditForm` with two TextFields (for `Subject` and `Body`) and one button for `Save`.  
+The `CommentCreateComponent` will have an `MudForm` with two TextFields (for `Subject` and `Body`) and one button for `Save`.  
 The logic will notify the parent component through the use of an `EventCallback`.  
+The most important thing is that this component will make its own copy of the comment it receives from the parent and binds the textfields to its own copy.  
 
 ```cs
-<MatCardContent>
-  <EditForm Model="@CommentItem" OnValidSubmit="HandleValidSubmit">
-    <p>
-      <MatTextField @bind-Value="@CommentItem.Subject" Label="Subject" FullWidth></MatTextField>
-    </p>
-    <p>
-      <MatTextField @bind-Value="@CommentItem.Body" Label="Description" TextArea FullWidth></MatTextField>
-    </p>
-    <p>
-      <MatButton Type="submit">Submit</MatButton>
-    </p>
-  </EditForm>
-</MatCardContent>
+<MudCard>
+    <MudForm Model="originalComment">
+        <MudCardContent>
+            <MudTextField @bind-Value="originalComment.Subject"
+                          For="@(() => originalComment.Subject)"
+                          Label="Title" />
+            <MudTextField @bind-Value="originalComment.Body"
+                          Lines="3"
+                          For="@(() => originalComment.Body)"
+                          Label="Description" />
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.Check" OnClick="RaiseCreate">Create</MudIconButton>
+    </MudCardActions>
+</MudCard>
 
 @code {
-  [Parameter]
-  public Comment CommentItem { get; set; }
+    [Parameter]
+    public Comment CommentItem { get; set; } = default!;
 
-  [Parameter]
-  public EventCallback<Comment> OnSave { get; set; }
+    [Parameter]
+    public EventCallback<Comment> OnCancel { get; set; }
 
-  private async Task HandleValidSubmit() {
-      await OnSave.InvokeAsync(CommentItem);
-  }
+    [Parameter]
+    public EventCallback<Comment> OnSave { get; set; }
+
+    private Comment originalComment = default!;
+
+    protected override void OnInitialized() {
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+    }
+
+    async Task RaiseCreate(MouseEventArgs args) {
+        await OnSave.InvokeAsync(originalComment);
+        originalComment = new Comment { Id = CommentItem.Id, PhotoId = CommentItem.PhotoId, Subject = CommentItem.Subject, Body = CommentItem.Body, SubmittedOn = CommentItem.SubmittedOn, UserName = CommentItem.UserName };
+    }
 }
 ```
 
@@ -536,50 +531,46 @@ Open the `CommentsComponent` and replace its content with the following code:
 
 
 ```cs
+@using PhotoSharingApplication.Shared.Entities;
+@using PhotoSharingApplication.Shared.Interfaces;
 @inject ICommentsService CommentsService
 
-<MatH3>Comments</MatH3>
+<MudText Typo="Typo.h3">Comments</MudText>
 
 @if (comments is null) {
-  <p><em>No Comments for this Photo</em></p>
+    <MudText Typo="Typo.body1">No comments for this photo yet</MudText>
 } else {
-  <div class="list-group">
     @foreach (var comment in comments) {
-      <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment"  OnDelete="DeleteComment"></CommentComponent>
+        <CommentComponent CommentItem="comment" ViewMode="CommentComponent.ViewModes.Read" OnUpdate="UpdateComment" OnDelete="DeleteComment"/>
     }
-    <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"></CommentComponent>
-  </div>
+    <CommentComponent CommentItem="new Comment() {PhotoId = PhotoId}" ViewMode="CommentComponent.ViewModes.Create" OnCreate="CreateComment"/>
 }
+
 @code {
-  [Parameter]
-  public int PhotoId { get; set; }
+    [Parameter, EditorRequired]
+    public int PhotoId { get; set; }
 
-  private List<Comment>? comments;
+    private List<Comment>? comments = default!;
 
-  protected override async Task OnInitializedAsync() {
-    comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);
-  }
+    protected override async Task OnInitializedAsync() {
+        comments = await CommentsService.GetCommentsForPhotoAsync(PhotoId);
+    }
+    async Task CreateComment(Comment comment) {
+        comments.Add(await CommentsService.CreateAsync(comment));
+    }
 
-  async Task CreateComment(Comment comment) {
-    comments.Add(await CommentsService.CreateAsync(comment));
-  }
+    async Task UpdateComment(Comment comment) {
+        comment = await CommentsService.UpdateAsync(comment);
+    }
 
-  async Task UpdateComment(Comment comment) {
-    comment = await CommentsService.UpdateAsync(comment);
-  }
-
-  async Task DeleteComment(Comment comment) {
-    await CommentsService.RemoveAsync(comment.Id);
-    comments.Remove(comment);
-  }
+    async Task DeleteComment(Comment comment) {
+        await CommentsService.RemoveAsync(comment.Id);
+        comments.Remove(comment);
+    }
 }
 ```
 
-We did change the `Photo` model, so if we run the application now the server side complains that the database does not match the model.
-
-Just to test if our frontend works, we're going to temporarily switch the `PhotosRepository` with the old `Memory` one.
-
-This way we stay client side so that we don't run into problems when talking to the server side, which we will fix in the following lab.
+This way we stay client side and we get a list of photos that have comments.
 
 - Open `Program.cs` of the `PhotoSharingApplication.Frontend.Client` project 
 - Comment the following line

@@ -1,41 +1,43 @@
-﻿<MatCard>
-    <MatH3>Upload Photo</MatH3>
-    <MatCardContent>
-        <EditForm Model="@Photo" OnValidSubmit="@(async ()=> await OnSave.InvokeAsync(Photo))">
-            <p>
-                <MatTextField @bind-Value="Photo.Title" Label="Title" FullWidth ></MatTextField> 
-            </p>
-            <p>
-                <MatTextField @bind-Value="Photo.Description" Label="Description (optional):" FullWidth></MatTextField>  
-            </p>
-            <p>
-                <MatFileUpload OnChange="HandleMatFileSelected" ></MatFileUpload>
-            </p>
-            <p>
-                <MatButton Type="Submit">Upload</MatButton>
-            </p>
-        </EditForm>
-        <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
-    </MatCardContent>
-</MatCard>
+﻿<MudCard>
+    <MudForm Model="Photo">
+        <MudCardContent>
+            <MudTextField @bind-Value="Photo.Title"
+                          For="@(() => Photo.Title)"
+                          Label="Title" />
+            <MudTextField @bind-Value="Photo.Description"
+                          Lines="3"
+                          For="@(() => Photo.Description)"
+                          Label="Description" />
+            <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileSelected">
+                <ButtonTemplate>
+                    <MudFab HtmlTag="label"
+                            Color="Color.Secondary"
+                            StartIcon="@Icons.Material.Filled.Image"
+                            Label="Load picture"
+                            for="@context" />
+                </ButtonTemplate>
+            </MudFileUpload>
+            <MudImage Fluid Src="@(Photo.PhotoFile == null ? "" : $"data:{Photo.ImageMimeType};base64,{Convert.ToBase64String(Photo.PhotoFile)}")" Elevation="25" Class="rounded-lg" />
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Filled.FileUpload" OnClick="@(async ()=> await OnSave.InvokeAsync(Photo))">Upload</MudIconButton>
+    </MudCardActions>
+</MudCard>
 
 @code {
-    [Parameter]
-    public Photo Photo { get; set; }
+    [Parameter, EditorRequired]
+    public Photo Photo { get; set; } = default!;
 
     [Parameter]
     public EventCallback<Photo> OnSave { get; set; }
 
-    private async Task HandleMatFileSelected(IMatFileUploadEntry[] files) {
-        IMatFileUploadEntry? file = files.FirstOrDefault();
-        if(file is null){
-            return;
-        }
-        Photo.ImageMimeType = file.Type;
+    private async Task HandleFileSelected(IBrowserFile args) {
+        Photo.ImageMimeType = args.ContentType;
 
-        using (var stream = new System.IO.MemoryStream()) {
-            await file.WriteToStreamAsync(stream);
-            Photo.PhotoFile = stream.ToArray();
+        using (var streamReader = new System.IO.MemoryStream()) {
+            await args.OpenReadStream().CopyToAsync(streamReader);
+            Photo.PhotoFile = streamReader.ToArray();
         }
     }
 }

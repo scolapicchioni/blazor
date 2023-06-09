@@ -1,5 +1,4 @@
-﻿namespace PhotoSharingApplication.Shared.Entities;
-
+﻿namespace PhotoSharingApplication.Shared.Entities; 
 public class PhotoImage {
     public int Id { get; set; }
     public byte[]? PhotoFile { get; set; }

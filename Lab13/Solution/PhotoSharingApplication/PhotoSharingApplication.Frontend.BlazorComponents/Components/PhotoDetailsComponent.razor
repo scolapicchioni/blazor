@@ -1,42 +1,38 @@
 ﻿@inject IUserService UserService
 @inject IAuthorizationService<Photo> PhotosAuthorizationService
-
-<MatCard>
-    <div>
-        <MatHeadline6>
-            @Photo.Id - @Photo.Title
-        </MatHeadline6>
-        <MatSubtitle2>
-            @Photo.CreatedDate.ToShortDateString() by @Photo.UserName
-        </MatSubtitle2>
-    </div>
-    <MatCardContent>
-        <PhotoPictureComponent Photo="Photo"></PhotoPictureComponent>
-        <MatBody2>
-            @Photo.Description
-        </MatBody2>
-    </MatCardContent>
-    <MatCardActions>
-        <MatCardActionButtons>
-            @if (Details) {
-                <MatButton Link="@($"photos/details/{Photo.Id}")">Details</MatButton>
-            }
-            @if (Edit && mayEdit) {
-                <MatButton Link="@($"photos/update/{Photo.Id}")">Update</MatButton>
-            }
-            @if (Delete && mayDelete) {
-                <MatButton Link="@($"photos/delete/{Photo.Id}")">Delete</MatButton>
-            }
-            @if (DeleteConfirm  && mayDelete) {
-                <MatButton OnClick="@(async()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))">Confirm Deletion</MatButton>
-            }
-        </MatCardActionButtons>
-    </MatCardActions>
-</MatCard>
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.body1">@Photo.Id</MudText>
+            <MudText Typo="Typo.body2">@Photo.Title</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardMedia Image="@Photo.ImageUrl" Height="250" />
+    <MudCardContent>
+        <MudText Typo="Typo.body2">@Photo.Description</MudText>
+        <MudText Typo="Typo.subtitle1">Uploaded on @Photo.CreatedDate.ToShortDateString() by @Photo.UserName</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        @if (Details)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Photo" Color="Color.Default" Href="@($"photos/details/{Photo.Id}")" />
+        }
+        @if (Edit && mayEdit) {
+            <MudIconButton Icon="@Icons.Material.Filled.PhotoSizeSelectLarge" Color="Color.Default" Href="@($"photos/update/{Photo.Id}")" />
+        }
+        @if (Delete && mayDelete) {
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" Href="@($"photos/delete/{Photo.Id}")" />
+        }
+        @if (DeleteConfirm && mayDelete) {
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Href="photos/all" />
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" OnClick="@(async ()=> await OnDeleteConfirmed.InvokeAsync(Photo.Id))" />
+        }
+    </MudCardActions>
+</MudCard>
 
 @code {
-    [Parameter]
-    public Photo Photo { get; set; }
+    [Parameter, EditorRequired]
+    public Photo Photo { get; set; } = default!;
 
     [Parameter]
     public bool Details { get; set; }

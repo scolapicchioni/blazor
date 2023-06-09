@@ -1,44 +1,32 @@
-﻿@using PhotoSharingApplication.Shared.Entities
-@using PhotoSharingApplication.Shared.Interfaces
-@inject IPhotosService photosService
+﻿@page "/photos/details/{id:int}"
 
-@page "/photos/details/{id:int}"
+@using PhotoSharingApplication.Shared.Interfaces
+@using PhotoSharingApplication.Shared.Entities
+@inject IPhotosService photosService
 
 <PageTitle>Photo Details - @photo?.Title</PageTitle>
 
-<MatH3>Details</MatH3>
-
 @if (photo is null) {
-    <p>...Loading...</p>
+    <MudText Typo="Typo.body1">...Loading...</MudText>
 } else {
-        <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <MatCard>
-                    <div>
-                        <MatHeadline6>
-                            @photo.Id - @photo.Title
-                        </MatHeadline6>
-                        <MatSubtitle2>
-                            @photo.CreatedDate.ToShortDateString()
-                        </MatSubtitle2>
-                    </div>
-                    <MatCardContent>
-                        <MatCardMedia Wide="true" ImageUrl="@(photo.PhotoFile is null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" ></MatCardMedia>
-                        <MatBody2>
-                            @photo.Description
-                        </MatBody2>
-                    </MatCardContent>
-                    <MatCardActions>
-                        <MatCardActionButtons>
-                            <MatButton Link="@($"photos/update/{photo.Id}")">Update</MatButton>
-                            <MatButton Link="@($"photos/delete/{photo.Id}")">Delete</MatButton>
-                        </MatCardActionButtons>
-                    </MatCardActions>
-                </MatCard>
-            </div>
-        </div>
-    </div>
+    <MudCard >
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.body1">@photo.Id</MudText>
+                <MudText Typo="Typo.body2">@photo.Title</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardMedia Image="@(photo.PhotoFile == null ? "" : $"data:{photo.ImageMimeType};base64,{Convert.ToBase64String(photo.PhotoFile)}")" />
+        <MudCardContent>
+            <MudText Typo="Typo.body2">@photo.Description</MudText>
+            <MudText Typo="Typo.subtitle1">@photo.CreatedDate.ToShortDateString()</MudText>
+        </MudCardContent>
+        <MudCardActions>
+            <MudIconButton Icon="@Icons.Material.Filled.Photo" Color="Color.Default" Href="@($"photos/details/{photo.Id}")" />
+            <MudIconButton Icon="@Icons.Material.Filled.PhotoSizeSelectLarge" Color="Color.Default" Href="@($"photos/update/{photo.Id}")" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Warning" Href="@($"photos/delete/{photo.Id}")" />
+        </MudCardActions>
+    </MudCard>
 }
 
 @code {

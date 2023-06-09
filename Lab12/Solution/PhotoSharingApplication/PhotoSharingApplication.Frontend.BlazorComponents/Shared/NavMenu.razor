@@ -1,13 +1,14 @@
-﻿<MatNavMenu>
-    <MatNavItem Href="/photos/all">All Photos <MatIcon Icon="@MatIconNames.List"></MatIcon></MatNavItem>
+﻿<MudNavMenu>
+    <MudNavLink Href="/photos/all" Icon="@Icons.Material.Filled.List">All Photos</MudNavLink>
     <AuthorizeView>
         <Authorized>
-            <MatHeadline6>Hello, @context.User.Identity.Name!</MatHeadline6>
-            <MatNavItem Href="/photos/upload">Upload Photo <MatIcon Icon="@MatIconNames.Add"></MatIcon></MatNavItem>
-            <MatNavItem Href="@context.User.FindFirst("bff:logout_url")?.Value">Log out <MatIcon Icon="@MatIconNames.Exit_to_app"></MatIcon></MatNavItem>
+            <MudNavLink Href="/photos/upload" Icon="@Icons.Material.Filled.AddAPhoto">Add Photo</MudNavLink>
+            <MudText Typo="Typo.button">Hello, @context.User.Identity.Name!</MudText>
+            <MudNavLink Icon="@Icons.Material.Filled.Logout" Href="@context.User.FindFirst("bff:logout_url")?.Value" />
         </Authorized>
         <NotAuthorized>
-            <MatNavItem Href="bff/login">Log in <MatIcon Icon="@MatIconNames.Account_circle"></MatIcon></MatNavItem>
+            <MudSpacer />
+            <MudNavLink Icon="@Icons.Material.Filled.Login" Href="bff/login" />
         </NotAuthorized>
     </AuthorizeView>
-</MatNavMenu>
+</MudNavMenu>

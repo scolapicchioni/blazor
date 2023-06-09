@@ -3,15 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using PhotoSharingApplication.Shared.Entities;
 using PhotoSharingApplication.Shared.Interfaces;
 
-namespace PhotoSharingApplication.WebServices.Rest.Photos.Controllers;
-
-[Route("[controller]")]
+namespace PhotoSharingApplication.WebServices.REST.Photos.Controllers; 
+[Route("api/[controller]")]
 [ApiController]
 public class PhotosController : ControllerBase {
     private readonly IPhotosService service;
 
-    public PhotosController(IPhotosService service) => this.service = service;
-
+    public PhotosController(IPhotosService service) {
+        this.service = service;
+    }
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos() => await service.GetPhotosAsync();
 
@@ -25,7 +25,7 @@ public class PhotosController : ControllerBase {
     [HttpPost]
     public async Task<ActionResult<Photo>> CreateAsync(Photo photo) {
         Photo? p = await service.UploadAsync(photo);
-        return CreatedAtRoute("Find", photo, new { id = photo.Id });
+        return CreatedAtRoute("Find", new { id = photo.Id }, photo);
     }
 
     [HttpPut("{id}")]

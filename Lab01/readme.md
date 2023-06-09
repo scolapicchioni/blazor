@@ -6,7 +6,7 @@ Since we don't have a working backend, our data won't come from a real database 
 
 Let's start by building the client side application using **Blazor**.
 
-From the [official Blazor documentation:](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0)
+From the [official Blazor documentation:](https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-7.0)
 
 ## What is Blazor?
 
@@ -15,8 +15,9 @@ From the [official Blazor documentation:](https://docs.microsoft.com/en-us/aspne
 > - Share server-side and client-side app logic written in .NET.
 > - Render the UI as HTML and CSS for wide browser support, including mobile browsers.
 > - Integrate with modern hosting platforms, such as Docker.
+> - Build hybrid desktop and mobile apps with .NET and Blazor.
 
-Take some time to read [the whole document](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0) to get a hang of what it is and how it works. Especially because, in order to begin, we need to make a choice between [Blazor Server](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0#blazor-server) and [Blazor Web Assembly](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0#blazor-webassembly).
+Take some time to read [the whole document](https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-7.0) to get a hang of what it is and how it works. Especially because, in order to begin, we need to make a choice between [Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-7.0#blazor-server) and [Blazor Web Assembly](https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-7.0#blazor-webassembly).
 
 Personally, I'm not a big fan of Blazor Server. Sure,
 
@@ -35,7 +36,7 @@ But
 I don't know, it seems like a bad idea to me, but maybe there's something I'm missing. I may probably want to consider such a technology for an intranet application, but for an Internet Web Site? Thanks, I'll pass.
 
 So I guess we're left with Blazor Web Assembly (AKA Blazor Client), which means:
-- The client downloads a ton of code (sorry about that...)
+- The client downloads a ton of code ([but they are working on it](https://www.youtube.com/watch?v=iDLWv3xM1s0))
 - The browser runs our C# code (kind of, it's actually [WASM](https://webassembly.org/), but as far as we're concerned we treat it as if it were C#, ok?)
 - The code on the browser takes care of 
   - Dynamically building / updating the HTML of the page
@@ -49,10 +50,10 @@ So, now that we know what we're going to use, let's see how.
 
 In short, you need:
 - The latest Visual Studio 2022
-- .NET 6  
+- .NET 7  
 
 - [Install the latest Visual Studio 2022](https://visualstudio.microsoft.com/vs/) *with the ASP.NET and web development workload*.
-- [Install .NET 6](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- [Install .NET 7](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
 
 If my instructions don't work it's probably because the version changed, so take a look at the [Get Started](https://dotnet.microsoft.com/learn/aspnet/blazor-tutorial/install) page and follow those instructions on what to install (the versions change *pretty* often).
 
@@ -64,9 +65,11 @@ Anyway, when you're done installing, we can start creating our first project.
 - In the `Solution Name` field, type `PhotoSharingApplication`
 - In the `Project name` field, type `PhotoSharingApplication.Frontend` 
 - Provide a `Location` for the project, such as `Lab01\Start`. 
-- Be sure to select the latest .net version (.Net 6.0)
+- Be sure to select the latest .net version (.Net 7.0)
 - Ensure that the `ASP.NET Core hosted` Checkbox is checked.
-- Leave the rest as default: No authentication Type, Enable Https, no Progressive Web Application 
+- None for the `Authentication Type`
+- Check `Enable Https`
+- Uncheck `Progressive Web Application`
 - Select `Create`.
 
 Three projects are created for us:
@@ -93,7 +96,13 @@ If you open `index.html`, you will find in the `<body>` section two interesting 
 
 The first one is 
 ```html
-<div id="app">Loading...</div>
+<div id="app">
+    <svg class="loading-progress">
+        <circle r="40%" cx="50%" cy="50%" />
+        <circle r="40%" cx="50%" cy="50%" />
+    </svg>
+    <div class="loading-progress-text"></div>
+</div>
 ```
 
 The second one is
@@ -102,14 +111,14 @@ The second one is
 <script src="_framework/blazor.webassembly.js"></script>
 ```
 
-The `<script>` tag is where the magic happens: that is the file that starts downloading `dotnet.wasm` and lots and lots and *lots* of dlls. If you run the application and type `F12` in your browser (opening the developer tools), you can see on the *network* tab all the files that the client gets (I told you they were a lot).
+The `<script>` tag is where the magic happens: that is the file that starts downloading `dotnet.wasm` and lots and lots and *lots* of dlls. If you run the application and type `F12` in your browser (opening the developer tools), you can see on the *Network* tab all the files that the client gets (I told you they were a lot).
 Between those dll you should see `PhotoSharingApplication.Frontend.Client.dll`, which is where our code resides.
 
 So whenever you navigate to your server (no matter the address):
 
 - `index.html` gets served
 - `index.html` downloads `blazor.webassembly.js`
-- `blazor.webassembly.js` downloads `dotnet.wasm` and all the necessary libraries
+- `blazor.webassembly.js` downloads `dotnet.wasm` and all the necessary libraries, including our Blazor code
 
 From now on, your server is free to shut itself down if it pleases, because your client is not going to need it anymore. All what follows happens on the browser.
 
@@ -121,7 +130,7 @@ From now on, your server is free to shut itself down if it pleases, because your
   - builds and runs the `WebAssemblyHost`
 - The `WebAssemblyHost` now looks for the `app` id (which we saw on the `index.html`) and replaces it with the `App` component
 - The `App` component (which you can find in the root of your project, it's called `App.razor`) contains the `Router`  component (that `<Router>` tag that you see in `App.razor`)
-- The [`Router` component](https://docs.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-6.0) (which is a Microsoft component,  not part of our project source code)
+- The [`Router` component](https://learn.microsoft.com/en-gb/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-7.0) (which is a Microsoft component,  not part of our project source code)
   - Checks the address in the browser
   - Checks if there's any component that registered itself on that address
   - If it finds it, it renders its content
@@ -160,11 +169,13 @@ We did it! We created our first *Razor component*!
 
 ## Ok, but what is, actually, a *Razor component*?
 
-Let's read some more [documentation](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0):
+Let's read some more [documentation](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-7.0):
 
-> A component is a self-contained chunk of user interface (UI), such as a page, dialog, or form. A component includes HTML markup and the processing logic required to inject data or respond to UI events. Components are flexible and lightweight. They can be nested, reused, and shared among projects.
+> A component is a self-contained chunk of user interface (UI), such as a page, dialog, or form. Components can be nested, reused, and shared among projects.
 
-Read the [Component Classes](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0#component-classes) chapter on the docs to understand how a component works.
+
+
+Read the [Component Classes](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-7.0#component-classes) chapter on the docs to understand how a component works.
 
 As a recap: each component contains
 - UI
@@ -186,22 +197,30 @@ For the time being we will display a simple list retrieved from memory.
 
 Let's add some data and use it to dynamically render the UI.
 
-According to the [docs](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-6.0#component-classes): 
+According to the [docs](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/?view=aspnetcore-7.0#markup): 
 
-> Component members can be used as part of the component's rendering logic using C# expressions that start with @. For example, a C# field is rendered by prefixing @ to the field name. 
+> A component's UI is defined using Razor syntax, which consists of Razor markup, C#, and HTML. When an app is compiled, the HTML markup and C# rendering logic are converted into a component class. The name of the generated class matches the name of the file.
+> 
+> Members of the component class are defined in one or more @code blocks. In @code blocks, component state is specified and processed with C#:
+> 
+> - Property and field initializers.
+> - Parameter values from arguments passed by parent components and route parameters.
+> - Methods for user event handling, lifecycle events, and custom component logic.
+> 
+> Component members are used in rendering logic using C# expressions that start with the @ symbol. For example, a C# field is rendered by prefixing @ to the field name. 
 
 So we need:
 - a component member
 - a C# expression that start with @
 
-We write a component member as a variable or property in the code section. We write the C# expression starting with the @ in the HTML.
+We write a component member as a variable or property in the `code` section. We write the C# expression starting with the `@` in the HTML.
 
 Let's change the `AllPhotos.razor` component like this:
 
 ```cs
 @page "/photos/all"
 
-<h3>AllPhotos</h3>
+<h3>All Photos</h3>
 
 <p>@photoTitle</p>
 
@@ -217,7 +236,7 @@ Now of course we want to show something more than just a  title, so let's create
 ```cs
 @page "/photos/all"
 
-<h3>AllPhotos</h3>
+<h3>All Photos</h3>
 
 <p>@photo.Id</p>
 <p>@photo.Title</p>
@@ -235,12 +254,12 @@ Now of course we want to show something more than just a  title, so let's create
 ```
 
 Right now, running the application would result in an exception because our photo is null. 
-Let's correct the UI to handle this problem, by testing if the photo is null and conditionally render a loading message if it is. For this we will use an [if Razor control structure](https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-6.0#control-structures):
+Let's correct the UI to handle this problem, by testing if the photo is null and conditionally render a loading message if it is. For this we will use an [if Razor control structure](https://learn.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-7.0#control-structures):
 
 ```cs
 @page "/photos/all"
 
-<h3>AllPhotos</h3>
+<h3>All Photos</h3>
 
 @if (photo is null)
 {
@@ -254,7 +273,7 @@ else
 }
 ```
 
-We need to create a new Photo instance and we can do it in one of the [lifecycle](https://docs.microsoft.com/en-us/aspnet/core/blazor/components/lifecycle?view=aspnetcore-6.0) methods of our component:  
+We need to create a new Photo instance and we can do it in one of the [lifecycle](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/lifecycle?view=aspnetcore-7.0) methods of our component:  
 
 ```cs
 protected override void OnInitialized()
@@ -265,14 +284,14 @@ protected override void OnInitialized()
 
 Running the application now should show the data we have.
 
-We are expecting more than one picture, so let's change the code to have a List and let's loop through the list to build multiple UI elements by using a [foreach Razor control structure](https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-6.0#control-structures).
+We are expecting more than one picture, so let's change the code to have a List and let's loop through the list to build multiple UI elements by using a [foreach Razor control structure](https://learn.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-7.0#looping-for-foreach-while-and-do-while).
 
 The final code will look like this:
 
 ```cs
 @page "/photos/all"
 
-<h3>AllPhotos</h3>
+<h3>All Photos</h3>
 
 @if (photos is null)
 {
